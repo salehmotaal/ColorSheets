@@ -176,12 +176,12 @@ $(function (app) {
             return text;
         }, 1000);
     }
+
     /**
      * Draws the halftone and supercell graph.
      *
      * @param {Object} calculations from jive calls.
      */
-
     function updateGraph(f) {
         updateGraph.timeOut = setTimeout(function (f) {
             if (updateExplaination.timeOut) {
