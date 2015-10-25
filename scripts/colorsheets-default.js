@@ -193,9 +193,9 @@ $(function (app) {
             if (!f) return jiveAll(undefined, undefined);
 
             var options = updateGraph.options,
-                context = options.canvas.getContext("2d"),
-                $canvas = $(options.canvas),
-                $wrapper = $(options.wrapper),
+                // context = options.canvas.getContext("2d"),
+                // $canvas = $(options.canvas),
+                // $wrapper = $(options.wrapper),
                 repaintOnly = ('calculations' in updateGraph, 'parameters' in updateGraph) && (f === updateGraph.calculations) && [f.spi, f.lpi, f.theta, f.cells].equals(updateGraph.parameters);
             // Save calculations and parameters to compare for repainting
             updateGraph.calculations = f;
@@ -254,9 +254,10 @@ $(function (app) {
                     // mirror: (clippingBox.yMax - clippingBox.yMin) * scale,
                 });
             //console.log(grasppe.canvas.pathsToDataArray([intendedBox, halftoneBox, supercellBox]));
-            var chart = new grasppe.canvas.Chart('#stage-canvas'),
+            var chart = (updateGraph.chart instanceof grasppe.canvas.Chart) ? updateGraph.chart : new grasppe.canvas.Chart(options.canvas),
                 halftonePixelBox = []; // new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneStyle);
                 
+            updateGraph.chart = chart;
             // console.log(chart);
             chart.draw([halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, supercellBox, halftoneBox, intendedBox], {
                 xModifier: xTransform,
@@ -299,8 +300,8 @@ $(function (app) {
             backgroundStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
             frameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
             legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
-            canvas: document.getElementById('vector-canvas'),
-            wrapper: document.getElementById('stage-canvas-wrapper'),
+            canvas: document.getElementById('stage-canvas'),
+            // wrapper: document.getElementById('stage-canvas-wrapper'),
             labels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSuperCell'],
         },
     });

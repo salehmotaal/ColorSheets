@@ -20,11 +20,14 @@
             },
             context: {
                 get: function () {
-                    // if (!this._context) this._context = this.canvas.getContext("2d");
-                    return this.canvas.getContext("2d"); //this._context;
+                    return this.canvas.getContext("2d");
                 }
             },
             container: {
+                value: undefined,
+                writable: true,
+            },
+            legend: {
                 value: undefined,
                 writable: true,
             },
@@ -36,6 +39,7 @@
                 value: {
                     width: undefined,
                     height: undefined,
+                    current: {},
                 },
                 writable: true,
             },
@@ -55,6 +59,7 @@
                     height = ('height' in options) ? $canvas.css('height', options.height * scale).height() : $canvas.height();
                 $canvas[0].width = width;
                 $canvas[0].height = height;
+                if (this.drawFunction.isCancelling) return;
                 context.clearRect(0, 0, width, height);
                 context.bufferScale = (typeof options.bufferScale === 'number') ? options.bufferScale : 1;
                 with(context) {
@@ -71,6 +76,7 @@
              */
             drawUnderlay: function () {
                 // if ('grid' in this.options) {}
+                if (this.drawFunction.isCancelling) return;
                 return this;
             },
             drawPaths: function () {
@@ -83,77 +89,35 @@
                 yModifier.bufferScale = this.options.bufferScale;
                 // console.log('Canvas.drawPaths', this, paths, context);
                 this.paths.forEach(function (path) {
+                    if (this.drawFunction.isCancelling) return;
                     if (path.draw) path.draw.call(path, context, xModifier, yModifier);
                     // while (context.canvas && context.canvas.drawing > 0 ) {};
-                });
+                }.bind(this));
                 return this;
             },
             /**
              * Renders overlay aspects.
              */
             drawOverlay: function (forceRepaint) {
-                var $canvas = $(this.canvas),
-                    $container = $(this.container),
-                    context = $canvas[0].getContext("2d"),
-                    //this.context,
-                    options = this.options,
-                    scale = (typeof options.bufferScale === 'number') ? options.bufferScale : 1,
-                    width = ('width' in options) ? $canvas.css('width', options.width * scale).width() : $canvas.width(),
-                    height = ('height' in options) ? $canvas.css('height', options.height * scale).height() : $canvas.height();
-                context.bufferScale = (typeof options.bufferScale === 'number') ? options.bufferScale : 1;
-                if ('legend' in options) {
-                    var legend = $container.find('.legend-wrapper'),
+                if ('legend' in this.options) {
+                    var options = this.options,
                         legendText = options.legend.labels,
                         legendStyles = options.legend.styles,
-                        legendBoxStyle = options.legend.boxStyle;
-                    if (legend.length === 0) {
-                        legend = $('<div class="legend-wrapper container-fluid" style="width: 100%; top: 0; left: 0; position: relative; background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo($container);
+                        legendBoxStyle = options.legend.boxStyle,
+                        $legend;
+
+                    if (options.current.labels === options.legend.labels.join('|').replace(/\s*/g,'')) return;
+                    
+                    $legend = (this.legend instanceof HTMLElement) ? $(this.legend) : $(this.container).find('.legend-wrapper');
+                    if ($legend.length === 0) {
+                        $legend = $('<div class="legend-wrapper container-fluid" style="width: 100%; top: 0; left: 0; position: relative; background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo(this.container);
                         legendText.forEach(function (text, index) {
-                            legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="padding: 4px; white-space: no-wrap;"><span class="fontawesome-sign-blank legend-symbol" style="color: ' + legendStyles[index].strokeStyle + ';"></span><span class="legend-text">' + text.replace('\n', ' ') + '</span></div>'));
+                            $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="padding: 4px; white-space: no-wrap;"><span class="fontawesome-sign-blank legend-symbol" style="color: ' + legendStyles[index].strokeStyle + ';"></span><span class="legend-text">' + text.replace('\n', ' ') + '</span></div>'));
                         });
                     }
-                    // var typeScale = 1, //options.typeScale,
-                    //     lineScale = 1, // options.lineScale,
-                    //     legendText = options.legend.labels,
-                    //     legendStyles = options.legend.styles,
-                    //     legendBoxStyle = options.legend.boxStyle, // Object.assign({}, options.legend.boxStyle, 'lineWidth: 2'.toLiteral()),
-                    //     lineHeight = 28 * typeScale,
-                    //     markerXOffset = lineHeight * 2.75,
-                    //     markerLength = lineHeight * 1.75,
-                    //     markerThickness = 8 * lineScale,
-                    //     legendSpacing = lineHeight,
-                    //     legentYOffset = markerXOffset / 2,
-                    //     legendStep = (width) / 3,
-                    //     textXOffset = lineHeight * 5.25,
-                    //     textYOffset = legentYOffset,
-                    //     textFont = context.font.replace(/\d+/, lineHeight - 2);
-                    //     
-                    // function textPath(text, x, y, font, lineHeight, fillStyle) {
-                    //     context.save();
-                    //     if (font) context.font = font;
-                    //     context.fillStyle = fillStyle || 'black';
-                    //     if (font) context.font = font;
-                    //     context.fillStyle = fillStyle || 'black';
-                    //     text.split('\n').forEach(function (text, line) {
-                    //         context.fillText(text, x, y + (line * lineHeight));
-                    //     })
-                    //     context.restore();
-                    // }
-                    // // if (!options.vector) save();
-                    // new grasppe.canvas.Rectangle(markerXOffset / 2,  legentYOffset, width - markerXOffset, lineHeight * 3, legendBoxStyle).draw(context);
-                    // // if (!options.vector) restore();
-                    // legendText.forEach(function (text, index) {
-                    //     context.save();
-                    //     textPath(text, index * legendStep + textXOffset, legentYOffset + textYOffset, textFont, lineHeight, 'black');
-                    //     context.lineWidth = markerThickness;
-                    //     context.strokeStyle = legendStyles[index].strokeStyle;
-                    //     context.beginPath();
-                    //     context.moveTo(index * legendStep + markerXOffset, legentYOffset + textYOffset - lineHeight / 4);
-                    //     context.lineTo(index * legendStep + markerXOffset + markerLength, legentYOffset + textYOffset - lineHeight / 4);
-                    //     context.closePath();
-                    //     context.stroke();
-                    //     context.restore();
-                    // });
+                    options.current.labels = options.legend.labels.join('|').replace(/\s*/g,'');
+                } else {
+                     $(this.container).find('.legend-wrapper').remove();
                 }
                 return this;
             },
@@ -163,20 +127,105 @@
              * @param {Object} DataTable or PathsArray.
              */
             draw: function (data, options) {
-                // console.log('Canvas.draw', arguments, this);
-                if (options) Object.assign(this.options, options);
-                this.canvas.drawing = 0;
-                this.drawCanvas();
-                this.context.save();
-                if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
-                this.drawUnderlay();
-                if (Array.isArray(data)) this.paths = data;
-                else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
-                this.drawPaths();
-                this.drawOverlay();
-                if (typeof this.options.callback === 'function') this.options.callback(this);
-                this.updateCanvas();
+                // var this.drawFunction = function(target, data, options) {
+                //     // console.log($$(), this, arguments);
+                //     //return;
+                //     switch (this.nextStep) {
+                //         default:
+                //             if (options) Object.assign(this.options, options);
+                //             this.canvas.drawing = 0;
+                //             return $$().continue('draw-canvas');
+                //         case 'draw-canvas':
+                //             this.drawCanvas();
+                //             this.context.save();
+                //             if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
+                //             return $$().continue('draw-underlay');
+                //         case 'draw-underlay':
+                //             this.drawUnderlay();
+                //             return $$().continue('draw-paths');
+                //         case 'draw-paths':
+                //             if (Array.isArray(data)) this.paths = data;
+                //             else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
+                //             this.drawPaths();
+                //             return $$().continue('draw-overlay');
+                //         case 'draw-overlay':
+                //             this.drawOverlay();
+                //             return $$().continue('trigger-callbacks');
+                //         case 'callback':
+                //             if (typeof this.options.callback === 'function') this.options.callback(this);
+                //             return $$().continue('update-canvas');
+                //         case 'update-canvas':
+                //             this.updateCanvas();
+                //             return $$().complete();
+                //     }
+                //     return this.complete();
+                // }, drawHandler = grasppe.FunctionHandler(this.drawFunction.bind(this), {
+                //     title: 'Grasppe-Canvas-Draw',
+                //     steps: ['draw-canvas', 'draw-underlay', 'draw-paths', 'draw-overlay', 'trigger-callback', 'update-canvas'],
+                //     target: this,
+                // });                
+                
+                this.drawFunction = grasppe.FunctionHandler((data, options) => {
+                        // console.log('Arrow Function', this.drawFunction.nextStep, {'self': self, 'this': this, '$$()': $$(), 'arguments': arguments});
+                        switch (this.drawFunction.nextStep) {
+                            case 'draw-canvas':
+                                this.drawCanvas();
+                                this.context.save();
+                                if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
+//                                 if (this.drawFunction.isCancelling) return;
+//                                 return this.drawFunction.next('draw-underlay');
+//                             case 'draw-underlay':
+                                this.drawUnderlay();
+//                                 if (this.drawFunction.isCancelling) return;
+//                                 return this.drawFunction.next('draw-paths');
+//                             case 'draw-paths':
+                                if (Array.isArray(data)) this.paths = data;
+                                else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
+                                this.drawPaths();
+//                                 if (this.drawFunction.isCancelling) return;
+//                                 return this.drawFunction.next('draw-overlay');
+//                             case 'draw-overlay':
+                                this.drawOverlay();
+                                if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                                return this.drawFunction.next('trigger-callback');
+                            case 'trigger-callback':
+                                if (typeof this.options.callback === 'function') this.options.callback(this);
+                                if (this.drawFunction.isCancelling) return;
+                                return this.drawFunction.next('update-canvas');
+                            case 'update-canvas':
+                                this.updateCanvas();
+                                if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                                return this.drawFunction.complete();
+                            default:
+                                if (options) Object.assign(this.options, options);
+                                this.canvas.drawing = 0;
+                                if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                                return this.drawFunction.next('draw-canvas');
+                        }
+                        return $$().complete();
+                    }, {
+                    title: 'Grasppe-Canvas-Draw',
+                    steps: ['draw-canvas', 'draw-underlay', 'draw-paths', 'draw-overlay', 'trigger-callback', 'update-canvas'],
+                    target: this,
+                });     
+                
+                // console.log(this.drawFunction());
+                
+                if (this.drawFunction.isRunning)
+                    this.drawFunction.cancel(function() {
+                        this.drawFunction.nextStep = 'draw-canvas';
+                        setTimeout(function() {this.drawFunction.execute(data, options);}.bind(this), 10);
+                    });
+                else 
+                    this.drawFunction.execute(data, options);
+                
+                
             },
+            /**
+             * Copies the rendered canvas from buffer to container's background-image
+             *
+             * @param {Object} DataTable or PathsArray.
+             */
             updateCanvas: function() {
                 if (this.canvas.drawing > 0) setTimeout(function() {this.updateCanvas();}.bind(this), 100);
                 else {
