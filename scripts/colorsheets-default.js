@@ -255,7 +255,7 @@ $(function (app) {
                 });
             //console.log(grasppe.canvas.pathsToDataArray([intendedBox, halftoneBox, supercellBox]));
             var chart = new grasppe.canvas.Chart('#stage-canvas'),
-                halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneStyle);
+                halftonePixelBox = []; // new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneStyle);
                 
             // console.log(chart);
             chart.draw([halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, supercellBox, halftoneBox, intendedBox], {
