@@ -255,44 +255,10 @@ $(function (app) {
                 });
             //console.log(grasppe.canvas.pathsToDataArray([intendedBox, halftoneBox, supercellBox]));
             var chart = new grasppe.canvas.Chart('#stage-canvas'),
-                pixelFunction = function(points) {
-                    var output = [];
-                    for (var i = 1; i <= points.length; i++) {
-                        var point = points[i - 1].getPoint(),
-                            nextPoint = points[(i % points.length)].getPoint(),
-                            x1 = Math.round(point[0]),
-                            y1 = Math.round(point[1]),
-                            x2 = Math.round(nextPoint[0]),
-                            y2 = Math.round(nextPoint[1]),
-                            x = x1,
-                            y = y1,
-                            n = 0,
-                            dX = function (x) {
-                                return Math.abs(x2 - x);
-                            },
-                            dY = function (y) {
-                                return Math.abs(y2 - y);
-                            },
-                            d = function (x, y) {
-                                return dX(x) ^ 2 - dY(y) ^ 2
-                            },
-                            dXY = d(x, y);
-                            
-                        while (n++ < 1000 && (x !== x2 || y !== y2)) {
-                            x += (x > x2) ? -1 : (x < x2) ? + 1 : 0; output.push([x,y]);
-                            y += (y > y2) ? -1 : (y < y2) ? + 1 : 0; output.push([x, y]);
-                            // dXY = d(x, y); x += (d(x-1,y) < dXY) ? -1 : (d(x+1,y) < dXY) ? + 1 : 0; output.push([x,y]);
-                            // dXY = d(x, y); y += (d(x, y-1) < dXY) ? -1 : (d(x, y+1) < dXY) ? + 1 : 0; output.push([x,y]);
-                        }                    
-                    }
-                    
-                    return output;
-
-                };
-                // halftonePixels = new grasppe.canvas.PointFilter(halftoneBox, pixelFunction, options.halftoneStyle),
-                // supercellPixels = new grasppe.canvas.PointFilter(supercellBox, pixelFunction, options.supercellStyle);
+                halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneStyle);
+                
             // console.log(chart);
-            chart.draw([gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, supercellBox, halftoneBox, intendedBox], {
+            chart.draw([halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, supercellBox, halftoneBox, intendedBox], {
                 xModifier: xTransform,
                 yModifier: yTransform,
                 width: width,

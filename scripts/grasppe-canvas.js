@@ -9,7 +9,12 @@
             // Property Descriptions
             canvas: {
                 get: function () {
-                    if (!this._canvas) this._canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none;">').appendTo('body')[0];
+                    if (!this._canvas) this._canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none; \
+                    image-rendering: optimizeSpeed;\
+                    image-rendering: -moz-crisp-edges; \
+                    image-rendering: -webkit-optimize-contrast; \
+                    image-rendering: optimize-contrast; \
+                    -ms-interpolation-mode: nearest-neighbor;">').appendTo('body')[0];
                     return this._canvas;
                 }
             },
@@ -79,6 +84,7 @@
                 // console.log('Canvas.drawPaths', this, paths, context);
                 this.paths.forEach(function (path) {
                     if (path.draw) path.draw.call(path, context, xModifier, yModifier);
+                    // while (context.canvas && context.canvas.drawing > 0 ) {};
                 });
                 return this;
             },
@@ -159,6 +165,7 @@
             draw: function (data, options) {
                 // console.log('Canvas.draw', arguments, this);
                 if (options) Object.assign(this.options, options);
+                this.canvas.drawing = 0;
                 this.drawCanvas();
                 this.context.save();
                 if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
@@ -168,8 +175,14 @@
                 this.drawPaths();
                 this.drawOverlay();
                 if (typeof this.options.callback === 'function') this.options.callback(this);
-                this.context.restore();
-                $(this.container).css('background', 'transparent URL(' + this.canvas.toDataURL("image/png") + ') no-repeat center center').css('background-size', 'contain');
+                this.updateCanvas();
+            },
+            updateCanvas: function() {
+                if (this.canvas.drawing > 0) setTimeout(function() {this.updateCanvas();}.bind(this), 100);
+                else {
+                    $(this.container).css('background', 'transparent URL(' + this.canvas.toDataURL("image/png") + ') no-repeat center center').css('background-size', 'contain');
+                    this.context.restore();
+                }
                 return this;
             },
             /**

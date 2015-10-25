@@ -243,7 +243,7 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         return this.getPoint(index)[1];
     },
     draw: function (context, xModifier, yModifier, scale) {
-        if (context.save) context.save();
+        // if (context.save) context.save();
         if ('lineWidth' in this) context.lineWidth = this.lineWidth * (context.bufferScale ? context.bufferScale : 1);
         if ('strokeStyle' in this) context.strokeStyle = this.strokeStyle;
         if ('fillStyle' in this) context.fillStyle = this.fillStyle;
@@ -257,7 +257,7 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         context.closePath();
         if ('lineWidth' in this || 'strokeStyle' in this || 'stroked' in this) context.stroke();
         if ('fillStyle' in this || 'filled' in this) context.fill();
-        if (context.restore) context.restore();
+        // if (context.restore) context.restore();
         return this;
     },
     push: function () {
@@ -342,7 +342,7 @@ grasppe.canvas.Lines.prototype = Object.assign(Object.create(grasppe.canvas.Path
     constructor: grasppe.canvas.Lines,
     draw: function (context, xModifier, yModifier, scale) {
         var bufferScale = (context.bufferScale ? context.bufferScale : 1);
-        if (context.save) context.save();
+        // if (context.save) context.save();
         if ('lineWidth' in this) context.lineWidth = this.lineWidth * bufferScale;
         if ('strokeStyle' in this) context.strokeStyle = this.strokeStyle;
         if ('fillStyle' in this) context.fillStyle = this.fillStyle;
@@ -359,7 +359,7 @@ grasppe.canvas.Lines.prototype = Object.assign(Object.create(grasppe.canvas.Path
             context.closePath();
             if (isStroked) context.stroke();
         };
-        if (context.restore) context.restore();
+        // if (context.restore) context.restore();
         return this;
     },
     getPointsData: function (xModifier, yModifier) {
@@ -521,11 +521,10 @@ grasppe.canvas.PointFilter.prototype = Object.assign(Object.create(grasppe.canva
     },
 });
 
-grasppe.canvas.ImageFilter = function(path, filter, parameters) {
+grasppe.canvas.ImageFilter = function(path, parameters) {
     var args = Array.prototype.slice.call(arguments);
     parameters = (args.length > 0 && grasppe.Utility.isLiteralObject(args[args.length - 1])) ? args.pop() : undefined;
     this._path = path;
-    this._filter = filter;
     grasppe.canvas.Path.call(this, parameters);
     this.apply();
 };
@@ -568,23 +567,30 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
 }), grasppe.canvas.Path.prototype, {
     // Prototype
     apply: function() {
-        var points = this._path.getPoints(),
+        var // points = this._path.getPoints(),
             $canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none;">').appendTo('body'),
             canvas = $canvas[0],
             context = canvas.getContext("2d"),
             bounds = this.bounds || {},
-            xMin = Math.floor(this.bounds.xMin) || 0,
-            xMax = Math.ceil(this.bounds.xMax) || 0,
-            yMin = Math.floor(this.bounds.yMin) || 0,
-            yMax = Math.ceil(this.bounds.yMax) || 0;
+            offset = 0,
+            xMin = this.path.xMin,
+            yMin = this.path.yMin;
             
-        delete this.clipping;
-        this.clipping = new grasppe.canvas.BoundingBox([[xMin, yMin], [xMax, yMax]]);
-        canvas.width = xMax - xMin;
-        canvas.height = yMax - yMin;
+        this.clipping = {
+            xMin: Math.floor(this.bounds.xMin) || 0,
+            xMax: Math.ceil(this.bounds.xMax -xMin) || 0,
+            yMin: Math.floor(this.bounds.yMin) || 0,
+            yMax: Math.ceil(this.bounds.yMax -yMin) || 0,
+        }
+            
+        // delete this.clipping;
+        // this.clipping = new grasppe.canvas.BoundingBox([[xMin, yMin], [xMax, yMax]]);
+        canvas.width = this.clipping.xMax - this.clipping.xMin;
+        canvas.height = this.clipping.yMax - this.clipping.yMin;
+        // console.log(this.clipping, canvas);
             
         try {
-            grasppe.canvas.Path.prototype.draw.call(this, context);
+            grasppe.canvas.Path.prototype.draw.call(this.path, context, - xMin, - yMin, 1);
             this._image = canvas.toDataURL("image/png");
         } catch (err) {
             console.error(err);
@@ -593,20 +599,37 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         delete canvas;
     },
     draw: function (context, xModifier, yModifier, scale) {
+        this.apply();
         var bufferScale = (context.bufferScale ? context.bufferScale : 1),
             xOffset = typeof xModifier === 'number' ? xModifier : 0,
             yOffset = typeof yModifier === 'number' ? yModifier : 0,
             xTransform = typeof xModifier === 'function' ? xModifier : null,
             yTransform = typeof yModifier === 'function' ? yModifier : null,
             clipping = this.clipping || {},
-            x = this.clipping.xMin,
-            y = this.clipping.yMin;
-
-        if (context.save) context.save();
-
-        //age(imageObj, x, y, width, height)
-
-        if (context.restore) context.restore();
+            xMin = this.clipping.xMin,
+            yMin = this.clipping.yMin,
+            xMax = this.clipping.xMax,
+            yMax = this.clipping.yMax,
+            x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale,
+            y = yTransform ? yTransform(yMin, yTransform) : (yOffset + yMin) * scale,
+            x2 = xTransform ? xTransform(xMax, xTransform) : (xOffset + xMax) * scale,
+            y2 = yTransform ? yTransform(yMax, yTransform) : (yOffset + yMax) * scale,
+            width = x2 - x,
+            height = y2 - y,
+            imageObject = new Image();
+            
+        context.canvas.drawing +=1;
+            
+        imageObject.onload = function() {
+            context.canvas.drawing -=1;
+            console.error(context, {x: x, y: y, width: width, height: height});
+            context.drawImage(imageObject, x, y, width, height); //, width, height);
+        }
+        
+        imageObject.src = this._image; // 'images/Grasppe-ColorSheets-Icon-256.png'; //this._image;
+        
+        // if (context.save) context.save();
+        // if (context.restore) context.restore();
         return this;
     },
 });
