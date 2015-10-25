@@ -251,7 +251,7 @@ $(function (app) {
                 }, {
                     offset: offset[1],
                     scale: scale,
-                    mirror: (clippingBox.yMax - clippingBox.yMin) * scale,
+                    // mirror: (clippingBox.yMax - clippingBox.yMin) * scale,
                 });
             //console.log(grasppe.canvas.pathsToDataArray([intendedBox, halftoneBox, supercellBox]));
             var chart = new grasppe.canvas.Chart('#stage-canvas'),
@@ -307,10 +307,11 @@ $(function (app) {
                 },
                 transform: function(context, canvas){
                     // translate context to center of canvas
-                    context.translate(canvas.width / 2, canvas.height / 2);
+                    context.translate(canvas.width / 1, canvas.height / 1);
 
                     // flip context horizontally
-                    context.scale(1, -1);
+                    context.scale(-1, -1);
+                    // context.rotate(Math.PI);
                 },
             });
             setLoadingState();
