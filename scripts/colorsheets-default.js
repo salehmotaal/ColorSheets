@@ -255,11 +255,11 @@ $(function (app) {
                 });
             //console.log(grasppe.canvas.pathsToDataArray([intendedBox, halftoneBox, supercellBox]));
             var chart = (updateGraph.chart instanceof grasppe.canvas.Chart) ? updateGraph.chart : new grasppe.canvas.Chart(options.canvas),
-                halftonePixelBox = []; // new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneStyle);
+                halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneFillStyle);
                 
             updateGraph.chart = chart;
             // console.log(chart);
-            chart.draw([halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, supercellBox, halftoneBox, intendedBox], {
+            chart.draw([halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, intendedBox, supercellBox, halftoneBox], {
                 xModifier: xTransform,
                 yModifier: yTransform,
                 width: width,
@@ -292,8 +292,9 @@ $(function (app) {
             bufferScale: $('body').is('.iPad,.iPhone') ? 1 : 2,
             typeScaleFactor: 1 / 72,
             lineScaleFactor: 1 / 72 / 12,
-            intendedStyle: 'lineWidth: 2; strokeStyle: "#FF0000"; lineDash: [48, 36]'.toLiteral(),
-            halftoneStyle: 'lineWidth: 2; strokeStyle: "#00FF00"'.toLiteral(),
+            intendedStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]'.toLiteral(),
+            halftoneStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
+            halftoneFillStyle: 'fillStyle: "#AAFFAA"'.toLiteral(),
             supercellStyle: 'lineWidth: 2; strokeStyle: "black"'.toLiteral(),
             supercellLineStyle: 'lineWidth: 0.5; strokeStyle: "black"; lineDash: [6, 12]'.toLiteral(),
             gridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
@@ -431,6 +432,8 @@ $(function (app) {
                     ['THETA', parameters.theta],
                     ['CELLS', parameters.cells]
                 ];
+                if (stack.THETA===0) stack.THETA = 0.005;
+                else if (stack.THETA===90) stack.THETA = 89.995;
                 var jiver = new GrasppeJive({}, model.definitions.scenarios),
                     output = jiver.run(scenario, stack),
                     error = jiver.errors;
