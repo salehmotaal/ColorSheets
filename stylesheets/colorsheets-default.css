@@ -256,7 +256,7 @@ span.center {
 	text-decoration:none;
 }
 
-.loading-state > div:first-child:before {
+.loading-state > div:first-child:after {
 /*
 	content:"\e031";
 	font-family:'Glyphicons Halflings';
