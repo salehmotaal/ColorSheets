@@ -126,88 +126,51 @@
              *
              * @param {Object} DataTable or PathsArray.
              */
-            draw: function (data, options) {
-                // var this.drawFunction = function(target, data, options) {
-                //     // console.log($$(), this, arguments);
-                //     //return;
-                //     switch (this.nextStep) {
-                //         default:
-                //             if (options) Object.assign(this.options, options);
-                //             this.canvas.drawing = 0;
-                //             return $$().continue('draw-canvas');
-                //         case 'draw-canvas':
-                //             this.drawCanvas();
-                //             this.context.save();
-                //             if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
-                //             return $$().continue('draw-underlay');
-                //         case 'draw-underlay':
-                //             this.drawUnderlay();
-                //             return $$().continue('draw-paths');
-                //         case 'draw-paths':
-                //             if (Array.isArray(data)) this.paths = data;
-                //             else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
-                //             this.drawPaths();
-                //             return $$().continue('draw-overlay');
-                //         case 'draw-overlay':
-                //             this.drawOverlay();
-                //             return $$().continue('trigger-callbacks');
-                //         case 'callback':
-                //             if (typeof this.options.callback === 'function') this.options.callback(this);
-                //             return $$().continue('update-canvas');
-                //         case 'update-canvas':
-                //             this.updateCanvas();
-                //             return $$().complete();
-                //     }
-                //     return this.complete();
-                // }, drawHandler = grasppe.FunctionHandler(this.drawFunction.bind(this), {
-                //     title: 'Grasppe-Canvas-Draw',
-                //     steps: ['draw-canvas', 'draw-underlay', 'draw-paths', 'draw-overlay', 'trigger-callback', 'update-canvas'],
-                //     target: this,
-                // });                
-                
-                this.drawFunction = grasppe.FunctionHandler((data, options) => {
-                        // console.log('Arrow Function', this.drawFunction.nextStep, {'self': self, 'this': this, '$$()': $$(), 'arguments': arguments});
-                        switch (this.drawFunction.nextStep) {
-                            case 'draw-canvas':
-                                this.drawCanvas();
-                                this.context.save();
-                                if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
-//                                 if (this.drawFunction.isCancelling) return;
-//                                 return this.drawFunction.next('draw-underlay');
-//                             case 'draw-underlay':
-                                this.drawUnderlay();
-//                                 if (this.drawFunction.isCancelling) return;
-//                                 return this.drawFunction.next('draw-paths');
-//                             case 'draw-paths':
-                                if (Array.isArray(data)) this.paths = data;
-                                else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
-                                this.drawPaths();
-//                                 if (this.drawFunction.isCancelling) return;
-//                                 return this.drawFunction.next('draw-overlay');
-//                             case 'draw-overlay':
-                                this.drawOverlay();
-                                if (this.drawFunction.isCancelling) return this.drawFunction.resume();
-                                return this.drawFunction.next('trigger-callback');
-                            case 'trigger-callback':
-                                if (typeof this.options.callback === 'function') this.options.callback(this);
-                                if (this.drawFunction.isCancelling) return;
-                                return this.drawFunction.next('update-canvas');
-                            case 'update-canvas':
-                                this.updateCanvas();
-                                if (this.drawFunction.isCancelling) return this.drawFunction.resume();
-                                return this.drawFunction.complete();
-                            default:
-                                if (options) Object.assign(this.options, options);
-                                this.canvas.drawing = 0;
-                                if (this.drawFunction.isCancelling) return this.drawFunction.resume();
-                                return this.drawFunction.next('draw-canvas');
-                        }
-                        return $$().complete();
-                    }, {
+            draw: function (data, options) {                
+                // this.drawFunction = grasppe.FunctionHandler((data, options) => {
+                this.drawFunction = $$(function (data, options) {
+                    console.log('Arrow Function', this.drawFunction.nextStep, {'this': this, '$$()': $$(), 'arguments': arguments});
+                    switch (this.drawFunction.nextStep) {
+                    case 'draw-canvas':
+                        this.drawCanvas();
+                        this.context.save();
+                        if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
+                        //                                 if (this.drawFunction.isCancelling) return;
+                        //                                 return this.drawFunction.next('draw-underlay');
+                        //                             case 'draw-underlay':
+                        this.drawUnderlay();
+                        //                                 if (this.drawFunction.isCancelling) return;
+                        //                                 return this.drawFunction.next('draw-paths');
+                        //                             case 'draw-paths':
+                        if (Array.isArray(data)) this.paths = data;
+                        else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
+                        this.drawPaths();
+                        //                                 if (this.drawFunction.isCancelling) return;
+                        //                                 return this.drawFunction.next('draw-overlay');
+                        //                             case 'draw-overlay':
+                        this.drawOverlay();
+                        if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                        return this.drawFunction.next('trigger-callback');
+                    case 'trigger-callback':
+                        if (typeof this.options.callback === 'function') this.options.callback(this);
+                        if (this.drawFunction.isCancelling) return;
+                        return this.drawFunction.next('update-canvas');
+                    case 'update-canvas':
+                        this.updateCanvas();
+                        if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                        return this.drawFunction.complete();
+                    default:
+                        if (options) Object.assign(this.options, options);
+                        this.canvas.drawing = 0;
+                        if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                        return this.drawFunction.next('draw-canvas');
+                    }
+                    return $$().complete();
+                }.bind(this), {
                     title: 'Grasppe-Canvas-Draw',
                     steps: ['draw-canvas', 'draw-underlay', 'draw-paths', 'draw-overlay', 'trigger-callback', 'update-canvas'],
                     target: this,
-                });     
+                });
                 
                 // console.log(this.drawFunction());
                 
