@@ -5,7 +5,7 @@
         $(this.container).children().remove();
     };
     $(function () {
-        grasppe.canvas.Chart.prototype = Object.assign(Object.create(google.visualization.ScatterChart, {
+        grasppe.canvas.Chart.prototype = Object.assign(Object.create((typeof google === 'object' && typeof google.visualization === 'object' && google.visualization.ScatterChart === 'function') ? google.visualization.ScatterChart : Object, {
             // Property Descriptions
             canvas: {
                 get: function () {
