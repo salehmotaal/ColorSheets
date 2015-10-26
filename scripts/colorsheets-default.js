@@ -1,23 +1,12 @@
 if (typeof window.grasppe !== 'function') window.grasppe = function () {};
 var agentDetect = new MobileDetect(window.navigator.userAgent);
 $(function (app) {
-    // console.log(app);
     $('body').addClass([agentDetect.is('iPhone') ? 'iPhone' : '', agentDetect.is('iPad') ? 'iPad' : ''].join(' '));
     Object.assign(app, {
         controls: {},
         definitions: {
             scenarios: ['Base Calculations', 'Halftone Calculations', 'Halftone Results', 'SuperCell Calculations', 'SuperCell Results'],
-            columns: JSON.parse('\
-            {"results":[\
-                {"id":"index","type":"number"},\
-                {"id":"variable","type":"string","label":"Variable"},\
-                {"id":"halftone","type":"number","label":"Halftone","role":"annotation"},\
-                {"id":"supercell","type":"number","label":"SuperCell"}],\
-            "calculations":[\
-                {"id":"index","type":"number"},\
-                {"id":"variable","type":"string","label":"Variable"},\
-                {"id":"halftone","type":"number","label":"Halftone","role":"annotation"},\
-                {"id":"supercell","type":"number","label":"SuperCell"}]}'),
+            columns: {},
             formatters: {},
         },
         layoutFunctions: {
@@ -31,19 +20,14 @@ $(function (app) {
                     canvasSize = Math.max(canvasWidth, canvasHeight);
                 $stageWrapper = $('#stage-wrapper'), stageWidth = $canvasWrapper.innerWidth(), stageHeight = $canvasWrapper.innerHeight(), boundingSize = stageWidth, // Math.min(stageWidth, stageHeight),
                 newSize = Math.max(200, Math.min(600, boundingSize - 25));
-                // console.log(('width: "' + newSize + 'px", height: "' + newSize + 'px"').toLiteral());
-                // if (Math.abs(canvasSize-boundingSize)>5)
                 $canvasWrapper.children().first().css(('width: "' + newSize + 'px", height: "' + newSize + 'px"').toLiteral()); // .height(newSize);
-                // $stageWrapper.css('min-height', newSize);
-                // else $canvasWrapper.css('min-height', minWidth).children().first().width(newSize-15).height(newSize-15);
-                //.children().first().css('width', Math.min(1, $('#stage-wrapper').innerWidth() / ($('#stage-canvas-wrapper').children().first().outerWidth() + 20)));
             },
             hidePopovers: function () {
                 $('div.popover').popover('hide');
             },
         },
     });
-    // console.log(app, model);
+
     /**
      * Initiate calls to calculate and display results for current parameters.
      */
@@ -72,7 +56,7 @@ $(function (app) {
     }
 
     function setLoadingState(state, container) {
-        return;
+        // return;
         if (!container) container = $('#stage-canvas-wrapper').add('.loading-state');
         if (state === true) $(container).addClass('loading-state');
         else window.setTimeout(function (container) {
@@ -255,11 +239,12 @@ $(function (app) {
                 });
             //console.log(grasppe.canvas.pathsToDataArray([intendedBox, halftoneBox, supercellBox]));
             var chart = (updateGraph.chart instanceof grasppe.canvas.Chart) ? updateGraph.chart : new grasppe.canvas.Chart(options.canvas),
-                halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneFillStyle);
+                halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneFillStyle),
+                supercellPixelBox = new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellStyle), options.supercellFillStyle);
                 
             updateGraph.chart = chart;
             // console.log(chart);
-            chart.draw([halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, intendedBox, supercellBox, halftoneBox], {
+            chart.draw([supercellPixelBox, halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, intendedBox, supercellBox, halftoneBox], {
                 xModifier: xTransform,
                 yModifier: yTransform,
                 width: width,
@@ -292,11 +277,12 @@ $(function (app) {
             bufferScale: $('body').is('.iPad,.iPhone') ? 1 : 2,
             typeScaleFactor: 1 / 72,
             lineScaleFactor: 1 / 72 / 12,
-            intendedStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]'.toLiteral(),
+            intendedStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.5)"'.toLiteral(),
             halftoneStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
-            halftoneFillStyle: 'fillStyle: "#AAFFAA"'.toLiteral(),
-            supercellStyle: 'lineWidth: 2; strokeStyle: "black"'.toLiteral(),
-            supercellLineStyle: 'lineWidth: 0.5; strokeStyle: "black"; lineDash: [6, 12]'.toLiteral(),
+            halftoneFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
+            supercellStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
+            supercellFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.125)"'.toLiteral(),
+            supercellLineStyle: 'lineWidth: 0.5; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
             gridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
             backgroundStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
             frameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
