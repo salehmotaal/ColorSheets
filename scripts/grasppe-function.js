@@ -8,9 +8,7 @@ grasppe.FunctionHandler = function (callback, options) {
             data: options.data || options || {},
             options: options,
         };
-        // console.log(callback)
         var handler = (callback.handler instanceof grasppe.FunctionHandler) ? callback.handler : new grasppe.FunctionHandler(parameters);
-        // callback.bind(handler);
         return handler;
     } else if (typeof callback === 'object') {
         this.data = callback.data;
@@ -53,7 +51,6 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
         },
         set: function (engage) {
             if (engage === true) this.state = 'cancelled';
-            // console.log(this.state, this);
         },
     },
     isRunning: {
@@ -62,7 +59,6 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
         },
         set: function (engage) {
             if (engage === true) this.state = 'running';
-            // console.log(this.state, this);
         },
     },
     isPaused: {
@@ -71,7 +67,6 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
         },
         set: function (engage) {
             if (engage === true) this.state = 'paused';
-            // console.log(this.state, this);
         },
     },
 
@@ -81,7 +76,6 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
         },
         set: function (engage) {
             if (engage === true) this.state = 'cancelling';
-            // console.log(this.state, this);
         },
     },
     isComplete: {
@@ -90,7 +84,6 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
         },
         set: function (engage) {
             if (engage === true) this.state = 'completed';
-            // console.log(this.state, this);
         },
     },
 
@@ -104,35 +97,42 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
             if (typeof this._callback === 'function') {
                 this.isRunning = true;
                 // console.log('callback.apply', this._callback);
+                // console.log('%s\t%s\t%s', '🔶', this.options.title, 'Running');
                 this._callback.apply(this, this._arguments);
             }
         }.bind(this), 1);
+        // console.log('%s\t%s\t%s', '🔷', this.options.title, 'Executing');
         return this;
     },
     complete: function () {
         //if (this.isPaused || this.isRunning) this.isComplete = true;
         // console.log('complete', this);
         this.isComplete = true;
+        // console.log('%s\t%s\t%s', '⚪️', this.options.title, 'Completed');
         return this;
     },
     pause: function () {
         if (this.isPaused) return this; // 'Already paused!';
-        else this.isPaused = true;
+        else {
+            this.isPaused = true;
+            // console.log('%s\t%s\t%s', '❗️', this.options.title, 'Paused');
+        }
         return this;
     },
     resume: function () {
         if (this.isPaused) setTimeout(function () {
             if (typeof this._callback === 'function') {
                 this.isRunning = true;
+                // console.log('%s\t%s\t%s', '🔶', this.options.title, 'Running');
                 this._callback.apply(this, this._arguments);
                 if (this.isRunning) this.isPaused = true;
             }
         }.bind(this), 1);
+        // console.log('%s\t%s\t%s', '🔹', this.options.title, 'Resuming');
         return this;
     },
     next: function(nextStep) {
         this._nextStep = nextStep;
-        // console.log('continue', this, arguments);
         this.pause();
         setTimeout(function () {
             this.resume();
@@ -151,7 +151,9 @@ grasppe.FunctionHandler.prototype = Object.assign(Object.create(Object.getProtot
                 var callback = this.cancelQueue.pop();
                 if (typeof callback === 'function') callback();
             }
+            // console.log('%s\t%s\t%s', '❌', this.options.title, 'Cancelling');
         };
+        // console.log('%s\t%s\t%s', '‼️', this.options.title, 'Cancelling');
         return this;
     },
 });
@@ -179,31 +181,31 @@ function TestFunctionHandle() {
                 switch (this.i) {
                 case 5:
                     this.i = 0;
-                    console.log('%s\t%s\t%s', '🔴', this.j + '-' + this.i, 'Completing');
+                    // console.log('%s\t%s\t%s', '√', this.j + '-' + this.i, 'Completing');
                     this.j++;
                     console.groupEnd();
                     return this.complete();
                     break;
                 case 3:
                     return this.cancel(function () {
-                        console.log('%s\t%s\t%s', '❌', this.j + '-' + this.i, 'Cancelled');
+                        // console.log('%s\t%s\t%s', 'X', this.j + '-' + this.i, 'Cancelled');
                         setTimeout(function (handler) {
-                            console.log('%s\t%s\t%s', '🔵', this.j + '-' + this.i, 'Executing');
+                            // console.log('%s\t%s\t%s', '-', this.j + '-' + this.i, 'Executing');
                             this.execute(new Date().getTime());
                         }.bind(this), 500, this);
                     }.bind(this));
                     break;
                 case 1:
                     console.group(this.j + '-' + this.i);
-                    console.log('%s\t%s\t%s', '🔳', this.j + '-' + this.i, 'Running');
+                    // console.log('%s\t%s\t%s', '+', this.j + '-' + this.i, 'Running');
                 default:
                     if (this.isRunning === true) {
                         //console.log('testFunction-' + this.i, this.j);
                         setTimeout(function (handler) {
-                            console.log('%s\t%s\t%s', '🔹', this.j + '-' + this.i, 'Resuming');
+                            // console.log('%s\t%s\t%s', '+', this.j + '-' + this.i, 'Resuming');
                             this.resume();
                         }.bind(this), 100, this);
-                        console.log('%s\t%s\t%s', '🔸', this.j + '-' + this.i, 'Pausing');
+                        // console.log('%s\t%s\t%s', '-', this.j + '-' + this.i, 'Pausing');
                         return this.pause();
                     }
                 }
@@ -222,3 +224,5 @@ function TestFunctionHandle() {
 
     });
 }
+
+// TestFunctionHandle();
