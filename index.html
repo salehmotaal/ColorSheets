@@ -106,10 +106,11 @@
                             if (typeof app === 'object') app.model = request.result.response.result;
                             else app.model = request.result.response.result;
                             model = app.model;
-                            //console.log(model.parameters);
-                            model.parameters = 'spi: 2540, lpi: 150; theta: 45; cells:4'.toLiteral();
+                            console.log(model);
+                            model.parameters = 'spi: 2540, lpi: 150; theta: 35; cells:4'.toLiteral();
                             app.parameters = model.parameters, parameters = app.parameters
                             definitions = model.definitions;
+                            app.definitions.columns = model.definitions.columns;
                             // console.log(event.type, app.model);
                         }
                     });
