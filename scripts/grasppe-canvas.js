@@ -129,7 +129,7 @@
             draw: function (data, options) {                
                 // this.drawFunction = grasppe.FunctionHandler((data, options) => {
                 this.drawFunction = $$(function (data, options) {
-                    console.log('Arrow Function', this.drawFunction.nextStep, {'this': this, '$$()': $$(), 'arguments': arguments});
+                    // console.log('Arrow Function', this.drawFunction.nextStep, {'this': this, '$$()': $$(), 'arguments': arguments});
                     switch (this.drawFunction.nextStep) {
                     case 'draw-canvas':
                         this.drawCanvas();
