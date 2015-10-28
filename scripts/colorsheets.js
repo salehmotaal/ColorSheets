@@ -25,99 +25,6 @@ if (typeof grasppe.colorSheets !== 'function') grasppe.colorSheets = function (c
 };
 window.$CS = grasppe.colorSheets;
 
-grasppe.colorSheets.Slider = function () {
-    jQuery.ui.slider.apply(this, arguments);
-};
-grasppe.colorSheets.Slider.prototype = Object.assign(Object.create(jQuery.ui.slider.prototype, {}), {
-    // Prototype
-    constructor: grasppe.colorSheets.Slider,
-}),
-
-grasppe.colorSheets.Slider.DEFAULTS = {}
-
-grasppe.map = function () {
-    var arr = Array.prototype.slice.call(arguments);
-    if (arguments.length % 2) return arr;
-    for (var i = 0; i < arguments.length; i += 2) {
-        if (typeof arguments[i] === 'string') arr[arr[i]] = arr[i + 1];
-    }
-    return arr;
-};
-
-grasppe.prefix = function(arr, prefix) {
-    return arr.map(function(value) { return prefix + value});
-};
-
-grasppe.columns = {};
-grasppe.columns.sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-grasppe.columns.allSizes = grasppe.prefix(grasppe.columns.sizes, 's').concat(grasppe.prefix(grasppe.columns.sizes, 'm')).concat(grasppe.prefix(grasppe.columns.sizes, 'l'));
-grasppe.columns.bootstrapColumnSizes = grasppe.prefix(grasppe.columns.sizes, 'col-xs-').concat(grasppe.prefix(grasppe.columns.sizes, 'col-sm-')).concat(grasppe.prefix(grasppe.columns.sizes, 'col-md-')).concat(grasppe.prefix(grasppe.columns.sizes, 'col-lg-')).concat(grasppe.prefix(grasppe.columns.sizes, 'col-xl-'));
-grasppe.columns.lanscapeSelectors = grasppe.prefix(grasppe.columns.allSizes, '.landscape-');
-grasppe.columns.portraitSelectors = grasppe.prefix(grasppe.columns.allSizes, '.portrait-');
-
-// console.log(grasppe.columns);
-
-
-$(function () {
-    grasppe.agent = new MobileDetect(window.navigator.userAgent);
-    grasppe.agent.getOrientation = function () {
-        return window.matchMedia("(orientation: portrait)").matches ? 'portrait' : 'landscape'; // (window.matchMedia("(orientation: landscape)").matches
-    };
-    grasppe.agent.getWindowWidth = function () {
-        var width = $(window).width(),
-            windowWidth =  width < 544 ? 'xs' : width < 768 ? 'sm' : width < 992 ? 'md' : width < 1200 ? 'lg' : 'xl';
-        return(windowWidth);
-    };
-    
-    grasppe.columns.getAspect = function(){
-        return [(grasppe.agent.is('iPad') ? 'tablet' : grasppe.agent.is('iPhone') ? 'phone' : 'other'), grasppe.agent.getWindowWidth(), grasppe.agent.getOrientation()].join('-');
-    }
-
-    $('body').addClass([grasppe.agent.is('iPhone') ? 'iPhone' : '', grasppe.agent.is('iPad') ? 'iPad' : '', window.orientation].join(' '));
-    $(window).resize(function (event) {
-        // console.log($('body'));
-        
-        var width = $(window).width(),
-            windowWidth =  grasppe.agent.getWindowWidth();
-            
-        if (windowWidth !== grasppe.columns.windowWidth) $(window).trigger('window.width', {width: width, from: grasppe.columns.windowWidth , to: windowWidth});
-        
-        grasppe.columns.windowWidth = windowWidth;
-        
-        $('body').removeClass('window-xs window-sm window-md window-lg').addClass(width < 544 ? 'window-xs' : width < 768 ? 'window-sm' : width < 992 ? 'window-md' : width < 1200 ? 'window-lg' : 'window-xl');
-        
-        if (!grasppe.agent.is('iPhone') && !grasppe.agent.is('iPad')) return;
-        $('body').removeClass('landscape portrait').addClass(grasppe.agent.getOrientation());
-        var orientation = grasppe.agent.getOrientation(),
-            enabled = '.show-' + orientation,
-            disabled = '.hide-' + orientation,
-            enabling = '.showing-' + orientation,
-            disabling = '.hiding-' + orientation,
-            landscapeSelectors = grasppe.columns.lanscapeSelectors.join(', '),
-            portraitSelectors = grasppe.columns.portraitSelectors.join(', '),
-            sizingClasses = grasppe.columns.allSizes.join(' ');
-
-        $(enabled).not('.collapse').show();
-        $(disabled).not('.collapse').hide();
-        $(enabled + '.collapse').collapse('show');
-        $(disabled + '.collapse').collapse('hide');
-        $(enabling + ' .collapse').addClass('in').first().collapse('show');
-        $(disabling + ' .collapse').removeClass('in').first().collapse('hide');
-
-        $('.col').find(landscapeSelectors + ', ' + portraitSelectors).removeClass(sizingClasses);
-        // console.log($('.col').find(landscapeSelectors + ', ' + portraitSelectors), $('.col').find(orientation === 'portrait' ? landscapeSelectors : portraitSelectors));
-
-        $('.col').find(orientation === 'portrait' ? landscapeSelectors : portraitSelectors).each(function () {
-            var classes = $(this).attr('class'),
-                newClasses = classes.replace(/\b(portrait|landscape)-(s|m|l)(\d*)\b/g, '$1-$2$3 $2$3');
-            // console.log($(this), classes, newClasses);
-            $(this).attr('class', newClasses);
-        });
-        
-
-    });
-    $(window).resize();
-});
 
 // console.log(grasppe.colorSheets.Slider, jQuery.ui.slider);
 
@@ -138,9 +45,6 @@ grasppe.colorSheets.prototype = Object.assign(Object.create({}, {
                 var selector = '.' + prefix + '-' + definitions[key].prefix + ',' + '.' + prefix + '-sheet-' + definitions[key].prefix;
                 $CS().Utility.defineElementProperties(key, '_' + key, context, selector);
             });
-        },
-        drawControls: function (container, controls) {
-            // console.log('drawControls', this, arguments);
         },
         setElementProperty: function (property, element, context) {
             if (!context) context = this;
@@ -225,7 +129,12 @@ grasppe.colorSheets.Sheet = function (container) {
         buttons: {
             value: {},
         },
-
+        modals: {
+            value: {},
+        },
+        template: {
+            value: {},
+        },
         parameters: {
             value: prototype.parameters || {},
         },
@@ -296,11 +205,12 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
     attachElement: function (id) {
         var prototype = Object.getPrototypeOf(this),
             sheet = this;
-        prefix = this.prefix; //prototype.constructor.name.replace(/(ColorSheet|Sheet)$/,'').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-        // this.element = undefined;
-        // console.log('attachElements', this.element);
+        prefix = this.prefix;
     },
     detachElement: function (id) {},
+    setStatus: function(section, status) {
+        return $('#' + ('' + section).toLowerCase() + '-status').html(status) || true;
+    },
     setParameter: function (id, value) {
         this.parameters[id] = value;
     },
@@ -314,8 +224,6 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                     this.detachElement(key);
                     $(this.elements[key]).data('colorSheet', null);
                     this.elements[key] = $(element).find('.' + this.prefix + '-' + this.elements._definitions_[key].prefix).first().data('colorSheet', this);
-                    
-                    // var v = this.elements[key];console.log(v); // ['_' + key].selector);
                 }.bind(this));
                 this.drawSheet();
             }
@@ -328,14 +236,17 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
     drawSheet: function () {
         var parameters = Array.prototype.slice.call(arguments);
         $(function () {
-            var elements = this.elements;
-            // Object.keys(this.elements).forEach(function(key) {console.log('drawSheet', key, this.elements[key], parameters);}.bind(this))
-            // Draw Sheet Container
+            var elements = this.elements,
+                template = this.template,
+                prefix = this.prefix;
             $(this.elements.sheet).addClass('panel panel-default');
             
             Object.keys(elements).forEach(function (key) {
                 if (key.indexOf('_')===0) return;
-                $(elements[key]).addClass('color-sheet-' + key + '-element');
+                $(elements[key]).addClass('color-sheet-' + key + '-element').attr({
+                    id: prefix + '-sheet-' + key + '-element',
+                    'data-element-key': key,
+                });
             })
 
             // Draw Sheet Container Header
@@ -362,8 +273,10 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             elements.bottom = $(elements.body).find('.color-sheet-body-bottom');
             if (elements.bottom.length === 0) elements.bottom = $('<div class="color-sheet-body-bottom col-xs-12">').appendTo(elements.body);
 
-            $([elements.stage, elements.parameters, elements.results, elements.overview]).addClass('z-depth-0').css('display', 'inline-block').each(function() {
+            $([elements.stage, elements.parameters, elements.results, elements.overview]).addClass('z-depth-0 panel').css('display', 'inline-block').each(function() {
+                console.log('each', this, arguments);
                 var title = $(this).attr('title'),
+                    key = $(this).attr('data-element-key'),
                     heading = $(this).find('.panel-heading').first().remove(),
                     container = $(this).find('.panel-body').first(),
                     contents = $(container).add(this).children(),
@@ -372,25 +285,22 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 if (container.length === 0) container = $('<div class="panel-body">');
                 container.addClass('collapse in white').appendTo(this).append(contents);
                 if (typeof title !== 'string' || title === '') return;
-                if (heading.length === 0) heading = $('<div class="black-text">');
+                if (heading.length === 0) heading = $('<div class="black-text truncate">');
                 heading.addClass('panel-heading ' + headingShade + ' ' + headingColor + '-text').text(title).prependTo(this).show().on('click', function(event) {
                     container.collapse('toggle');
-                });
+                }).append('<small class="status color-sheet-' + key + '-status">');
+                
+                template[key + '-status'] = heading.find('.status').first();
+                
             });
             $([elements.stage]).addClass('');
             $([elements.parameters]).addClass('');
             $([elements.results, elements.overview]).addClass('showing-landscape hiding-portrait');
-            /*$(elements.parameters).addClass('col-md-8 col-md-pull-4');*/
-            //$([elements.parameters]).addClass('col-md-pull-8');
-            //$([elements.results]).addClass('col-md-push-8');
-            /*$([elements.results, elements.overview]).addClass('col-md-push-8');*/
 
-            //$([elements.results, elements.overview]).addClass('collapse');
             
             $(window).on('window.width', function(event, data) {
                 // console.log(data.to);
-                // console.log(grasppe.agent.getWindowWidth(), grasppe.agent.getOrientation(), grasppe.agent.is('iPhone') ? 'iPhone' : grasppe.agent.is('iPad') ? 'iPad' : '');
-                
+                                
                 var allClasses = grasppe.columns.bootstrapColumnSizes.concat(['col-vertical', 'col-horizontal']).join(' '),
                     $stage = $(elements.stage),
                     $parameters = $(elements.parameters),
@@ -462,15 +372,15 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             
              $(window).trigger('window.width');
 
-            $(elements.sheet).addClass('card');
+            $(elements.sheet).addClass('card grey lighten-4');
 
-            // Draw Sheet Controls
+            // Draw Sheet Controls, Buttons, and Modals
             this.drawControls();
-
+            this.drawModals();
             this.drawButtons();
             
             elements.footer = $(elements.sheet).find('.panel-footer');
-            if (elements.footer.length === 0) elements.footer = $('<div class="panel-footer grey lighten-3 color-sheet-footer">').appendTo(elements.sheet);
+            if (elements.footer.length === 0) elements.footer = $('<div class="panel-footer grey lighten-3 color-sheet-footer">').html('<small>Copyright &copy; 2015, Franz Sigg and Saleh Abdel Motaal</small>').appendTo(elements.sheet);
 
 
 
@@ -483,19 +393,23 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         if (target.length === 0) target = $('<div class="sheet-heading-buttons">').prependTo(this.elements.heading);
         target.addClass('pull-right');
 
-        if (this.elements.overview) {
-            this.buttons.overview = $(this.elements.title).find('.sheet-overview-button');
-            if (this.buttons.overview.length === 0) this.buttons.overview = $('<a class="' + classes + ' blue" title="Overview" role="button"><i class="fa fa-info white-text"></i></a>').prependTo(target).data('collapsable', $(this.elements.overview)).on('click', function () {
-                $(this).data('collapsable').find('.collapse').collapse('toggle');
+        
+        if (this.modals.documentation) {
+            this.modals.documentation.attr('id', this.prefix + '-documentation-modal');
+            this.buttons.documentation = $(this.elements.title).find('.sheet-documentation-button');
+            if (this.buttons.documentation.length === 0) this.buttons.documentation = $('<a class="modal-trigger ' + classes + ' orange" title="Documentation" role="button" data-target="' + this.prefix + '-documentation-modal"><i class="fa fontawesome-book white-text"></i></a>').prependTo(target).data('modal', $(this.modals.documentation));
+            
+            this.buttons.documentation.leanModal({
+              dismissible: true, // Modal can be dismissed by clicking outside of the modal
+              opacity: .5, // Opacity of modal background
+              in_duration: 300, // Transition in duration
+              out_duration: 200, // Transition out duration
+              ready: function() { }, // Callback for Modal open
+              complete: function() { } // Callback for Modal close
             });
+            
         }
 
-        if (this.elements.results) {
-            this.buttons.results = $(this.elements.title).find('.sheet-results-button');
-            if (this.buttons.results.length === 0) this.buttons.results = $('<a class="' + classes + ' red" title="Results" role="button"><i class="fa fa-list white-text"></i></a>').prependTo(target).data('collapsable', $(this.elements.results)).on('click', function () {
-                $(this).data('collapsable').find('.collapse').collapse('toggle');
-            });
-        }
     },
     drawControls: function () {
         var prototype = Object.getPrototypeOf(this),
@@ -561,5 +475,51 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             default:
             }
         });
+    },
+    drawModals: function() {
+        
+        if (this.elements.documentation) {
+            if (this.modals.documentation) $(this.modals.documentation).remove();
+            this.modals.documentation = $('<div class="modal modal-fixed-footer">').appendTo('body');
+            
+            var element = $(this.elements.documentation),
+                article = element.find('article').first(),
+                title = article.attr('title'),
+                header = article.find('header'),
+                sectionCount = 1,
+                sectionPrefix = this.prefix + '-paper-section-',
+                sections = article.find('section').each(function() {
+                    $(this).addClass('section scrollspy').attr('id', sectionPrefix + sectionCount++);
+                }),
+                footer = article.find('footer'),
+                author = footer.find('.author').text(),
+                paper = $(header).add(sections), // .add(footer),
+                modalID = this.prefix + '-documentation-modal',
+                modal, contents, footer, paperBody, paperScroll;
+            
+            
+            modal = this.modals.documentation.attr('id', modalID).css('min-height: "80vh"; margin-top: "-5%"'.toLiteral());
+            content = $('<div class="modal-content" style="max-height: 100%; overflow:hidden">').append('<div class="row" style="max-height: 100%; overflow:hidden"><div class="paper-body col s12 m9 l10" style="overflow-y:scroll; max-height: 100%; height: 65vh;"></div><div class="paper-scroll col hide-on-small-only m3 l2"></div></div>').appendTo(modal);
+            footer = $('<div class="modal-footer valign-wrapper">').append($('<small class="caption left-align valign" style="flex:  1;">').html('<b>' + title + '</b><br/>' + author)).append('<a href="#!" class="modal-action modal-close waves-effect waves-green btn right-align right">Close</a>').appendTo(modal);
+            paperBody = content.find('.paper-body').append(element.css('display', 'block'));
+            paperScroll = content.find('.paper-scroll').append('<ul class="section table-of-contents">'),
+            paperScrollList = paperScroll.find('ul').first();
+            
+            paperBody.find('footer').remove();
+            
+            window.grasppe.scrollWithin = function(div, element, speed) {
+                $(div).first().animate({
+                    scrollTop:  $(div).scrollTop() - $(div).offset().top + $(element).offset().top 
+                }, speed == undefined ? 1000 : speed); 
+                return this; 
+            }
+            
+            for (var i = 1; i < sectionCount; i++) {
+                paperScrollList.append('<li><a href="javascript: grasppe.scrollWithin(\'#' + modalID + ' .paper-body\', \'#' + sectionPrefix + i + '\', 200)">' + $(sections[i-1]).attr('title') + '</a></li>');
+            }
+            
+        }
+        
+
     }
 });
