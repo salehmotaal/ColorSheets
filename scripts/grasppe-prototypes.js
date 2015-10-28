@@ -11,9 +11,10 @@ jQuery.fn.scrollTo = function(elem, speed) {
     return this; 
 };
 
-String.prototype.toLiteral = function(){
+String.prototype.toLiteral = function(obj){
     // http://jsfiddle.net/ytyf3e93/
-    return JSON.parse('{' + this.replace(/;/g,',').replace(/([\w-]*)\s*\:\s*/g,'\"$1\": ') + '}');
+    var literal = JSON.parse('{' + this.replace(/\s*;\s*/g,', ').split(', ').join(',').replace(/([\w-]*)\s*\:\s*/g,'\"$1\": ') + '}');
+    return (typeof obj === 'object') ? Object.assign(literal, obj) : literal;
 };
 
 /*Object.prototype.isLiteralObject = function(){
@@ -40,3 +41,16 @@ grasppe.Utility.isLiteralObject = function(obj){
     } catch (err) {};
     return false;
 };
+
+window.getParameter = function (oTarget, sVar) {
+  return decodeURI(oTarget.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
+}
+
+window.location.parameters = {};
+if (location.search.length > 1) {
+    for (var aItKey, nKeyId = 0, aCouples = location.search.substr(1).split("&"); nKeyId < aCouples.length; nKeyId++) {
+        aItKey = aCouples[nKeyId].split("=");
+        window.location.parameters[decodeURIComponent(aItKey[0])] = aItKey.length > 1 ? decodeURIComponent(aItKey[1]) : "";
+    }
+}
+console.log(window.location.parameters);

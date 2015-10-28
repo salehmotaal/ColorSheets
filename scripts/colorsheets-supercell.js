@@ -277,7 +277,7 @@ $(function (app) {
             bufferScale: $('body').is('.iPad,.iPhone') ? 1 : 2,
             typeScaleFactor: 1 / 72,
             lineScaleFactor: 1 / 72 / 12,
-            intendedStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.15)"'.toLiteral(),
+            intendedStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
             halftoneStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
             halftoneFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
             supercellStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),

@@ -5,6 +5,10 @@ if (typeof grasppe.colorSheets !== 'function') grasppe.colorSheets = function ()
 if (typeof grasppe.colorSheets.SupercellSheet !== 'function') {
     function SupercellColorSheet() {
         grasppe.colorSheets.Sheet.apply(this, arguments);
+        var prototype = Object.getPrototypeOf(this),
+            sheet = this;
+            prefix = this.prefix;
+            this.setStatus('abc');
     };
     grasppe.colorSheets.SupercellSheet = SupercellColorSheet;
 }
@@ -86,6 +90,28 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                 canvas: 'prefix: "canvas", type: "div"'.toLiteral(),
                 controls: 'prefix: "controls", type: "div"'.toLiteral(),
             },
+            options: {
+                panning: {
+                    element: 'stage',
+                    type: 'list',
+                    icon: 'fa fontawesome-search',
+                    title: 'Panning',
+                    list: {
+                        cell: 'value: "cell-panning", icon: "glyphicon glyphicon-unchecked", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
+                        supercell: 'value: "supercell-panning", icon: "glyphicon glyphicon-th-large", title: "Super-cell panning", description: "Zoom plot to show the super-cell."'.toLiteral(),
+                    },
+                },
+                shading: {
+                    element: 'stage',
+                    type: 'list',
+                    icon: 'fa fontawesome-edit',
+                    title: 'Shading',
+                    list: {
+                        lines: 'icon: "glyphicon glyphicon-modal-window", title: "Lines only", description: "Only draw the theoretical lines."'.toLiteral(),
+                        fills: 'icon: "glyphicon glyphicon-equalizer", title: "Lines with pixel-fill", description: "Draw the theoretical lines and filled pixels."'.toLiteral(),
+                    },
+                },
+            },
         },
         enumerable: true,
     },
@@ -97,26 +123,44 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             cells: 4,
         },
     },
+    options: {
+        value: {
+            panning: 'cell',
+            shading: 'fills',
+        },
+    },
 }), {
     // Prototype
     constructor: grasppe.colorSheets.SupercellSheet,
     attachElement: function(id){
-        var prototype = Object.getPrototypeOf(this),
-            sheet = this;
-            prefix = this.prefix; //prototype.constructor.name.replace(/(ColorSheet|Sheet)$/,'').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-            
-        // this.element = undefined;
-        // console.log('attachElements', this, arguments);
     },
     detachElement: function(id) {
     },
-    setLoadingState: function(state, container) {
-        if (!container) container = $(this.container).find('#supercell-sheet-stage-canvas').add('.loading-state');
-        if (state === true) $(container).addClass('loading-state');
-        else window.setTimeout(function (container) {
-            $(container).removeClass('loading-state');
-        }, 1, container);
-    },
+    updateData: function() {
+        this.setStatus(null, 'Updating...');
+        PREPARE_TABLES: {
+            if (!this.dataTables) this.dataTables = {};
+            if (!this.dataTables.calculations) this.dataTables.calculations = new google.visualization.DataTable({
+                cols: this.definitions.columns.calculations
+            });
+            if (!this.dataTables.results) this.dataTables.results = new google.visualization.DataTable({
+                cols: this.definitions.columns.results
+            });
+        }
+        RUN_JIVE: {
+            var stack = [
+                ['SPI', getParameter('spi')],
+                ['LPI', getParameter('lpi')],
+                ['THETA', getParameter('theta')],
+                ['CELLS', getParameter('cells')]
+            ];
+            this.timeOut = clearTimeout(this.timeOut) || setTimeout(function (stack) {
+                // jiveAll(stack);
+            }, 1, stack);
+        }
+        setStatus(null, '');
+        //$('#stage-canvas-wrapper').removeClass('glyphicon glyphicon-refresh spinning');
+    }
 
 });
 
