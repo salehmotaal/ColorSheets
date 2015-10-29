@@ -183,7 +183,7 @@
             updateCanvas: function() {
                 if (this.canvas.drawing > 0) setTimeout(function() {this.updateCanvas();}.bind(this), 10);
                 else {
-                    console.log($(this.container).is('img'));
+                    // console.log($(this.container).is('img'));
                     var plotCanvas = $(this.container).find('img.plot-canvas').first();
                     if (plotCanvas.length===1) $(plotCanvas)[0].src = this.canvas.toDataURL("image/png");
                     else $(this.container).css('background', 'transparent URL(' + this.canvas.toDataURL("image/png") + ') no-repeat center center').css('background-size', 'contain');

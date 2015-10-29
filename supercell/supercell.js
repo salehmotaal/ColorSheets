@@ -17,13 +17,14 @@ if (typeof grasppe.colorSheets.SupercellSheet !== 'function') {
             clearTimeout(this.updatePlot.timeOut);
         }).on('changed.calculations', function (event) {
             this.updatePlot();
-        }).on('changing.option', function (event, data) {
-            //this.updatePlot();
-            console.log(event.type, data);
-        }).on('changed.option', function (event, data) {
-            //this.updatePlot();
-            console.log(event.type, data);
-        }).on('resized.window', this.adjustPlotSize);
+        }).on('refresh.option', function (event, data) {
+            try {
+                if (data.option === 'shading' || data.option === 'panning') this.updatePlot();
+            } catch (err) {}
+            console.log(event, data);
+        }).on('resized.window', function (event, data) {
+            this.adjustPlotSize();
+        });
         var scenarios = this.definitions.scenarios;
 
         this.calculateStack();
@@ -196,13 +197,13 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             results: 'fills',
             plotWidth: 600,
             plotHeight: 600,
-            plotBufferScale: 1,
+            plotBufferScale: 2.25,
             plotOptions: {
                 plotTypeFactor: 1 / 72,
                 plotLineFactor: 1 / 72 / 12,
                 plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
                 plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
-                plotGridStyle: 'lineWidth: 1; strokeStyle: "RGBA(127,127,127,0.75)"'.toLiteral(),
+                plotGridStyle: 'lineWidth: 0.5; strokeStyle: "RGBA(127,127,127,0.25)"'.toLiteral(),
             },
             seriesOptions: {
                 intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
@@ -273,7 +274,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                 var paths = [intendedBox, halftoneBox, supercellBox],
                     lines = [supercellVerticals, supercellHorizontals],
                     shapes = paths.concat(lines),
-                    boundingBox = new grasppe.canvas.BoundingBox([intendedBox]),
+                    boundingBox = new grasppe.canvas.BoundingBox((this.options.panning==='cell') ? [intendedBox] : [intendedBox, halftoneBox, supercellBox]),
                     margin = 4 + Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
                 if (timeStamp !== self.timeStamp) return;
             }
@@ -299,7 +300,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     frameRatio = frameWidth / frameHeight;
                 if (timeStamp !== self.timeStamp) return;
                 var clippingBox = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
-                    scale = options.plotWidth / Math.min(clippingBox.xMax, clippingBox.yMax),
+                    scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
                     offset = [-clippingBox.xMin, -clippingBox.yMin],
                     width = (offset[0] + clippingBox.xMax) * scale; // * (frameRatio > 1 ? frameRatio : 1),
                 height = width; // / frameRatio,
@@ -316,8 +317,8 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             }
             DRAWING_OPERATIONS: {
                 var chart = (self.chart instanceof grasppe.canvas.Chart) ? self.chart : new grasppe.canvas.Chart(options.plotCanvas),
-                    halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneSeriesFillStyle),
-                    supercellPixelBox = new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle);
+                    halftonePixelBox = (this.options.shading==='lines') ? [] : new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneSeriesFillStyle),
+                    supercellPixelBox = (this.options.shading==='lines') ? [] : new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle);
                 self.chart = chart;
                 if (timeStamp !== self.timeStamp) return;
                 chart.draw([supercellPixelBox, halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, intendedBox, supercellBox, halftoneBox], {
@@ -367,6 +368,8 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
         return this;
     },
     adjustPlotSize: function() {
+        //if (typeof this.elements !== 'object') return;
+        try{
         var plotCanvas = $(this.elements.contents).find('img.plot-canvas').first(),
             plotWrapper = $(this.elements.contents),
             wrapWidth = plotWrapper.innerWidth(),
@@ -378,6 +381,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
          plotCanvas.height(Math.min(wrapWidth, wrapHeight));
          
          plotCanvas.css('left', (wrapWidth-Math.min(wrapWidth, wrapHeight))/2);
+        } catch (err) {console.error(err);}
     },
     updateExplaination: function (f) {
         self = this.updateExplaination, clearTimeout(self.timeOut), self.timeOut = setTimeout(function (f) {
