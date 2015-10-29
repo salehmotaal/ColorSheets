@@ -7,8 +7,21 @@ if (typeof grasppe.colorSheets.SupercellSheet !== 'function') {
         grasppe.colorSheets.Sheet.apply(this, arguments);
         var prototype = Object.getPrototypeOf(this),
             sheet = this;
-            prefix = this.prefix;
+        prefix = this.prefix;
+        $(function () {
             this.setStatus('abc');
+        }.bind(this));
+        $(this).on('changed.parameter', function (event) {
+            console.log(event.type, arguments);
+            this.updateData();
+        })
+        var scenarios = this.definitions.scenarios;
+
+        // Object.keys(this.definitions.scenarios).forEach(function(scenario) {console.table(this.definitions.scenarios[scenario]);}.bind(this));
+/*Object.keys(this.definitions.formatters).forEach(function (key) {
+            this.definitions.formatters[key] = eval('new ' + this.definitions.formatters[key].formatter + '({pattern: "' + this.definitions.formatters[key].pattern + '", suffix: "<span class=\'suffix\'>' + this.definitions.formatters[key].suffix + '</span>"})');
+        }.bind(this));*/
+        this.calculateStack();
     };
     grasppe.colorSheets.SupercellSheet = SupercellColorSheet;
 }
@@ -90,6 +103,44 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                 canvas: 'prefix: "canvas", type: "div"'.toLiteral(),
                 controls: 'prefix: "controls", type: "div"'.toLiteral(),
             },
+            scenarios: {
+                _order: ['Base_Calculations', 'Halftone_Calculations', 'Halftone_Results', 'SuperCell_Calculations', 'SuperCell_Results'],
+                Base_Calculations: Object.assign([], {
+                    0: 'id: "spi", hidden: true, type: "p", fn: "SPI", name: "", description: ""'.toLiteral(),
+                    1: 'id: "lpi", hidden: true, type: "p", fn: "LPI", name: "", description: ""'.toLiteral(),
+                    2: 'id: "theta", hidden: true, type: "p", fn: "THETA", name: "", description: ""'.toLiteral(),
+                    3: 'id: "thetaRadians", hidden: true, type: "c", fn: "theta * (PI/180)", unit: "º rad", name: "Line Angle (Radians)", description: ""'.toLiteral(),
+                    4: 'id: "cells", hidden: true, type: "p", fn: "CELLS", name: "", description: ""'.toLiteral(),
+                }),
+                Halftone_Calculations: Object.assign([], {
+                    0: 'id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: ""'.toLiteral(),
+                    1: 'id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: ""'.toLiteral(),
+                    2: 'id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(thetaRadians)", unit: "spots", name: "halftone spots in x direction", description: ""'.toLiteral(),
+                    3: 'id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "halftone spots in y direction", description: ""'.toLiteral(),
+                    4: 'id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots))", unit: "spots", name: "halftone spots in x direction", description: ""'.toLiteral(),
+                    5: 'id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots))", unit: "spots", name: "halftone spots in x direction", description: ""'.toLiteral(),
+                    6: 'id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "Round halftone spots at screening angle", description: ""'.toLiteral(),
+                }),
+                Halftone_Results: Object.assign([], {
+                    0: 'id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "Single-cell Line Ruling (Round)", description: ""'.toLiteral(),
+                    1: 'id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "Single-cell Line Angle (Round)", description: ""'.toLiteral(),
+                    2: 'id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "Single-cell Gray Levels (1-bit)", description: ""'.toLiteral(),
+                    3: 'id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "Single-cell Screen ruling error", description: ""'.toLiteral(),
+                    4: 'id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "Single-cell Screen angle error", description: ""'.toLiteral(),
+                }),
+                SuperCell_Calculations: Object.assign([], {
+                    0: 'id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots*cells))", unit: "spots", name: "super-cell spots in x direction", description: ""'.toLiteral(),
+                    1: 'id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots*cells))", unit: "spots", name: "super-cell spots in y direction", description: ""'.toLiteral(),
+                    2: 'id: "cellSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2))/cells", unit: "spots", name: "Round super-cell spots at screening angle", description: ""'.toLiteral(),
+                }),
+                SuperCell_Results: Object.assign([], {
+                    0: 'id: "cellRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*cellSpots)", unit: "lpi", name: "Super-cell Line Ruling (Round)", description: ""'.toLiteral(),
+                    1: 'id: "cellRoundTheta", group: "roundTheta", type: "r", fn: "(atan2(cellRoundYSpots, cellRoundXSpots) * (180/PI))", unit: "º", name: "Super-cell Line Angle (Round)", description: ""'.toLiteral(),
+                    2: 'id: "cellGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI/cells, 2))+1", unit: "levels", name: "Super-cell Gray Levels (1-bit)", description: ""'.toLiteral(),
+                    3: 'id: "cellErrorLPI", group: "errorLPI", type: "r", fn: "(cellRoundLPI-lpi)/lpi*100", unit: "%", name: "Super-cell Screen ruling error", description: ""'.toLiteral(),
+                    4: 'id: "cellErrorTheta", group: "errorTheta", type: "r", fn: "cellRoundTheta-theta", unit: "º", name: "Super-cell Screen angle error", description: ""'.toLiteral(),
+                }),
+            },
             options: {
                 panning: {
                     element: 'stage',
@@ -97,8 +148,8 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     icon: 'fa fontawesome-search',
                     title: 'Panning',
                     list: {
-                        cell: 'value: "cell-panning", icon: "glyphicon glyphicon-unchecked", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
-                        supercell: 'value: "supercell-panning", icon: "glyphicon glyphicon-th-large", title: "Super-cell panning", description: "Zoom plot to show the super-cell."'.toLiteral(),
+                        cell: 'value: "cell-panning", icon: "glyphicon glyphicon-stop", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
+                        supercell: 'value: "supercell-panning", icon: "glyphicon glyphicon-th", title: "Super-cell panning", description: "Zoom plot to show the super-cell."'.toLiteral(),
                     },
                 },
                 shading: {
@@ -111,6 +162,16 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                         fills: 'icon: "glyphicon glyphicon-equalizer", title: "Lines with pixel-fill", description: "Draw the theoretical lines and filled pixels."'.toLiteral(),
                     },
                 },
+                results: {
+                    element: 'results',
+                    type: 'list',
+                    icon: 'fa fontawesome-edit',
+                    title: 'Shading',
+                    list: {
+                        lines: 'icon: "glyphicon glyphicon-modal-window", title: "Lines only", description: "Only draw the theoretical lines."'.toLiteral(),
+                        fills: 'icon: "glyphicon glyphicon-equalizer", title: "Lines with pixel-fill", description: "Draw the theoretical lines and filled pixels."'.toLiteral(),
+                    },
+                }
             },
         },
         enumerable: true,
@@ -127,48 +188,344 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
         value: {
             panning: 'cell',
             shading: 'fills',
+            results: 'fills',
+            plotWidth: 600,
+            plotHeight: 600,
+            plotBufferScale: 2,
+            plotOptions: {
+                plotTypeFactor: 1 / 72,
+                plotLineFactor: 1 / 72 / 12,
+                plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
+                plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
+                plotGridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
+            },
+            seriesOptions: {
+                intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                halftoneSeriesStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
+                halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
+                supercellSeriesStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
+                supercellSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.125)"'.toLiteral(),
+                supercellSeriesLineStyle: 'lineWidth: 0.5; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
+            },
+            legendOptions: {
+                seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSuperCell'],
+                legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
+            }
         },
     },
 }), {
     // Prototype
     constructor: grasppe.colorSheets.SupercellSheet,
-    attachElement: function(id){
+    properties: {
+        calculations: {
+            value: {},
+        },
     },
-    detachElement: function(id) {
-    },
-    updateData: function() {
-        this.setStatus(null, 'Updating...');
-        PREPARE_TABLES: {
-            if (!this.dataTables) this.dataTables = {};
-            if (!this.dataTables.calculations) this.dataTables.calculations = new google.visualization.DataTable({
-                cols: this.definitions.columns.calculations
-            });
-            if (!this.dataTables.results) this.dataTables.results = new google.visualization.DataTable({
-                cols: this.definitions.columns.results
-            });
-        }
+    attachElement: function (id) {},
+    detachElement: function (id) {},
+    updateData: function () {
+        this.setStatus('Updating...');
+        PREPARE_TABLES: {}
         RUN_JIVE: {
-            var stack = [
-                ['SPI', getParameter('spi')],
-                ['LPI', getParameter('lpi')],
-                ['THETA', getParameter('theta')],
-                ['CELLS', getParameter('cells')]
-            ];
+            var stack = this.createStack();
             this.timeOut = clearTimeout(this.timeOut) || setTimeout(function (stack) {
-                // jiveAll(stack);
-            }, 1, stack);
+                this.calculateStack(stack);
+            }.bind(this), 1, stack);
         }
-        setStatus(null, '');
-        //$('#stage-canvas-wrapper').removeClass('glyphicon glyphicon-refresh spinning');
-    }
+        this.setStatus('');
+    },
+    updatePlot: function(f) {
+        self = this.updatePlot,
+        clearTimeout(self.timeOut);
+        
+        self.timeOut = setTimeout(function(f, self) {
+            clearTimeout (this.updateExplaination.timeOut);
+            if (!this.calculations) return false;
+            if (!f) f = this.calculations.values;
+            if (!f) return this.calculateStack();
+            this.setLoadingState(true);
+            var options = self.options;
+            
+            BOX_CALCULATIONS: {
+                var intendedBox = new grasppe.canvas.Box(0, 0, f.lineXSpots, f.lineYSpots, options.intendedSeriesStyle),
+                    halftoneBox = new grasppe.canvas.Box(0, 0, f.lineRoundXSpots, f.lineRoundYSpots, options.halftoneSeriesStyle),
+                    supercellBox = new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle),
+                    supercellVerticals = new grasppe.canvas.Lines([supercellBox[1][0] / f.cells, supercellBox[1][1] / f.cells], Object.assign({
+                        offset: supercellBox.getPoint(3),
+                    }, options.supercellSeriesLineStyle)),
+                    supercellHorizontals = new grasppe.canvas.Lines([supercellBox[3][0] / f.cells, supercellBox[3][1] / f.cells], Object.assign({
+                        offset: supercellBox.getPoint(1),
+                    }, options.supercellSeriesLineStyle));
+                for (var i = 2; i < f.cells; i++) {
+                    supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]);
+                    supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
+                }
+            }
+            BOUNDING_CALCULATIONS: {
+                var paths = [intendedBox, halftoneBox, supercellBox],
+                    lines = [supercellVerticals, supercellHorizontals],
+                    shapes = paths.concat(lines),
+                    boundingBox = new grasppe.canvas.BoundingBox([intendedBox]),
+                    margin = Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
+            }
+            ADDRESSABILITY_GRID: {
+                var gridMargin = 0 + margin,
+                    gridMin = [Math.floor(boundingBox.xMin - gridMargin / 2), Math.floor(boundingBox.yMin - gridMargin / 8)],
+                    gridMax = [Math.ceil(boundingBox.xMax + gridMargin / 2), Math.ceil(boundingBox.yMax + gridMargin * (1 + f.cells))],
+                    gridSteps = Math.max(gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]),
+                    gridVerticals = new grasppe.canvas.Lines(gridMin, Object.assign({
+                        offset: [0, gridSteps],
+                    }, options.plotGridStyle)),
+                    gridHorizontals = new grasppe.canvas.Lines(gridMin, Object.assign({
+                        offset: [gridSteps, 0],
+                    }, options.plotGridStyle));
+                for (var i = 0; i <= gridSteps; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i]) && gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+            }
+            SIZING_CALCULATIONS: {
+                var clippingBox = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps, gridSteps),
+                    scale = 600 / Math.max(clippingBox.xMax, clippingBox.yMax),
+                    offset = [-clippingBox.xMin, -clippingBox.yMin],
+                    width = Math.min(offset[0] + clippingBox.xMax, offset[1] + clippingBox.yMax) * scale,
+                    height = width,
+                    xTransform = Object.assign(function (x, self) {
+                        if (!self) self = xTransform;
+                        return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                    }, {
+                        offset: offset[0],
+                        scale: scale,
+                    }),
+                    yTransform = Object.assign(function (y, self) {
+                        if (!self) self = yTransform;
+                        var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                        if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
+                        else return fY;
+                    }, {
+                        offset: offset[1],
+                        scale: scale,
+                    });
+            }
+            DRAWING_OPERATIONS: {
+                var chart = (self.chart instanceof grasppe.canvas.Chart) ? self.chart : new grasppe.canvas.Chart(options.plotCanvas),
+                    halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneSeriesFillStyle),
+                    supercellPixelBox = new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle);
+                self.chart = chart;
+                chart.draw([supercellPixelBox, halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, intendedBox, supercellBox, halftoneBox], {
+                    xModifier: xTransform,
+                    yModifier: yTransform,
+                    width: width,
+                    height: height,
+                    bufferScale: options.plotBufferScale,
+                    typeScale: options.plotBufferScale * options.plotTypeFactor,
+                    lineScale: options.plotBufferScale * options.plotLineFactor,
+                    legend: {
+                        labels: options.seriesLabels,
+                        styles: [options.intendedSeriesStyle, options.halftoneSeriesStyle, options.supercellSeriesLineStyle],
+                        boxStyle: options.legendBoxStyle
+                    },
+                    transform: function(context, canvas){
+                        context.translate(canvas.width / 1, canvas.height / 1);
+                        context.scale(-1, -1);
+                    },
+                });
+                this.setLoadingState();
+                this.updateExplaination();
 
+            }
+
+        }.bind(this), 10, f, self);
+        if (!self.options) self.options = Object.assign({
+            plotWidth: 600,
+            plotHeight: 600,
+            plotBufferScale: $('body').is('.iPad,.iPhone') ? 1 : 2,
+            plotTypeFactor: 1 / 72,
+            plotLineFactor: 1 / 72 / 12,
+            intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+            halftoneSeriesStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
+            halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
+            supercellSeriesStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
+            supercellSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.125)"'.toLiteral(),
+            supercellSeriesLineStyle: 'lineWidth: 0.5; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
+            plotGridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
+            plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
+            plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
+            legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
+            seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSuperCell'],
+            plotCanvas: $(this.elements.contents).find('div').first(),
+        }, this.options, this.options.plotOptions, this.options.seriesOptions, this.options.legendOptions);
+    },
+    updateExplaination: function (f) {
+        self = this.updateExplaination,
+        clearTimeout(self.timeOut);
+        self.timeOut = setTimeout(function (f) {
+            if (!f) f = this.calculations.values;
+            if (!f) return this.calculateStack();
+            var t = {};
+            Object.keys(f).forEach(function (id) {
+                t[id] = Math.round(f[id] * 10) / 10;
+            });
+            var text = "<div><p></p><!--h4>Details</h4-->";
+            text += "<p>To produce a " + t.lpi + " lines-per-inch screen ";
+            text += "at a " + t.theta + "º degree angle ";
+            text += "with an addressability of " + t.spi + " spots-per-inch, ";
+            text += "each line should measure " + t.lineXSpots + " × " + t.lineYSpots + " in the x and y dimensions at the imaging angle.</p>";
+            text += "<p>Since imaging must be done in full spot units, rounding must be applied. ";
+            text += "If rounding is applied to each line, ";
+            text += "each would measure " + t.lineRoundXSpots + " × " + t.lineRoundYSpots + ", ";
+            text += "resulting in a rounded resolution of " + t.lineRoundLPI + " at " + t.lineRoundTheta + "º degrees.</p>";
+            text += "<p>With SuperCell, rounding will be applied for every " + t.cells + " halftone line" + (Number(f.cells) > 1 ? "s, " : ", ");
+            text += "allowing more flexibility for the lines to mesh within the bounds of each cell-block.";
+            text += "Then, each cell-block would measure " + t.cellRoundXSpots + " × " + t.cellRoundYSpots + ", ";
+            text += "resulting in a rounded resolution of " + t.cellRoundLPI + " at " + t.cellRoundTheta + "º degrees.</p>";
+            text += "<p>Due to the rounding, the effective spot size for single halftones versus SuperCells ";
+            text += "will be " + t.lineSpots + " µ vs. " + t.cellSpots + " µ (microns), ";
+            text += "which will produce " + t.lineGrayLevels + " vs. " + t.cellGrayLevels + " gray-levels, ";
+            text += "line angle error of " + t.lineErrorTheta + "º vs. " + t.cellErrorTheta + "º degrees, ";
+            text += "and, resolution error of " + t.lineErrorLPI + "% vs. " + t.cellErrorLPI + "%.</p>";
+            text += "</div>";
+            // $('#results-explaination').html(text);
+            $(this.elements.overview).find('.panel-body').first().html(text);
+            return text;
+        }.bind(this), 1000);
+    },
+    updateTable: function () {
+        $(this.elements.results).find('.panel-body').first().html(this.createTable());
+    },
+    createTable: function (definitions, scenarios, container) {
+        var table = [],
+            tableHeader = ['\t\t<thead>\n\t\t\t<tr>'];
+        tableBody = ['\t\t<tbody>'];
+        tableModel = this.getTableModel(definitions, scenarios), tableColumns = ['Variable', 'Value'], tableJSON = '';
+
+        tableColumns.forEach(function (header) {
+            tableHeader.push('\t\t\t\t<th>' + header + '</th>');
+        });
+        tableHeader.push('\t\t\t</tr>\n\t\t</thead>');
+        Object.keys(tableModel).forEach(function (scenario) {
+            var data = tableModel[scenario];
+            tableBody.push('\t\t\t<tr><td class="table-group-header" colspan="' + tableColumns.length + '"><div>' + scenario.replace('_', ' ') + '</div></td></tr>');
+            var odd = true;
+            data.forEach(function (row, index) {
+                var id = row.id,
+                    value = row.value,
+                    last = index === data.length - 1;
+                tableBody.push('\t\t\t<tr class="' + (odd ? 'table-odd-row ' : 'table-even-row ') + (last ? 'table-last-row' : '') + '"><td>' + id + '</td><td>' + value + '</td></tr>');
+                odd = !odd;
+            });
+        });
+        tableBody.push('\t\t</tbody>');
+        table = ["<div id='" + this.prefix + "-data-table'>\n\t<table>"].concat(tableHeader, tableBody, ["\t</table>\n</div>"]);
+        return table.join('\n');
+    },
+    getTableModel: function (definitions, scenarios, calculations) {
+        if (!calculations) calculations = this.calculations;
+        if (!definitions) definitions = this.definitions.scenarios;
+        if (!scenarios) scenarios = definitions._order || (Array.isArray(definitions) ? undefined : Object.keys(definitions));
+        var tableModel = {},
+            doCalculations = typeof calculations.text === 'object';
+        if (!scenarios) {
+            definitions = {
+                'Scenario': definitions
+            };
+            scenarios = ['Scenario'];
+        }
+        scenarios.forEach(function (scenario) {
+            definition = definitions[scenario];
+            tableModel[scenario] = [];
+            definition.forEach(function (item, index) {
+                var id = definition[index].id,
+                    item = Object.assign({}, item);
+                if (doCalculations && id in calculations.text) item.value = calculations.text[id];
+                else item.value = null;
+                tableModel[scenario].push(item);
+            });
+            tableModel[scenario] = JSON.parse(JSON.stringify(tableModel[scenario]));
+        });
+        return tableModel;
+    },
+    createStack: function (stack) {
+        return [['SPI', this.getParameter('spi')], ['LPI', this.getParameter('lpi')], ['THETA', this.getParameter('theta')], ['CELLS', this.getParameter('cells')]].concat(stack ? [stack] : []);
+    },
+    calculateStack: function (context, stack) {
+        if (!context) context = 'Base Calculations';
+        if (!stack) stack = this.createStack();
+
+        var processStack = function (context, output) {
+                // console.log('processStack', arguments);
+                output.forEach(function (fn, i) {
+                    // console.log('\toutput', fn);
+                    fn.scenario = context.scenario;
+                });
+                if (Array.isArray(context.stack)) {
+                    output = context.stack.concat(output);
+                    // console.table(output.map(function(element) {return [element.id, element.value, element.fn];}));
+                }
+                this.calculateStack(context, output);
+            }.bind(this),
+            runScenario = function (scenario, stack) {
+                // console.log('runScenario', arguments);
+                if (stack.THETA === 0) stack.THETA = 0.005;
+                else if (stack.THETA === 90) stack.THETA = 89.995;
+                //console.log('\trun', this.definitions.scenarios);
+                var jiver = new GrasppeJive({}, this.definitions.scenarios),
+                    output = jiver.run(scenario, stack),
+                    error = jiver.errors;
+                delete jiver;
+                return (output === false) ? stack : output;
+            }.bind(this),
+            scenarios = this.definitions.scenarios._order,
+            lastScenario = (typeof context === 'object' && context.scenario) ? context.scenario : '',
+            nextIndex = Math.max(0, scenarios.indexOf(lastScenario) + 1),
+            nextScenario = (typeof context === 'string') ? context : (nextIndex < scenarios.length) ? scenarios[nextIndex] : undefined;
+
+        if (nextScenario) {
+            this.setStatus('Calculating...');
+            window.setTimeout(function (scenario, stack) {
+                processStack({
+                    scenario: scenario,
+                    stack: stack,
+                }, runScenario(scenario, stack));
+            }.bind(this), 1, nextScenario, stack);
+        } else {
+            var spanned = 'p: {className: "spanned"}'.toLiteral(),
+                types = 'c: " ⚙ ", p: "⇢⚙ ", r: " ⚙⇢"'.toLiteral(),
+                groupings = {};
+
+            Object.assign(this.calculations, {
+                complete: false,
+                stack: stack,
+                values: {},
+                text: {},
+                values: {},
+                info: {},
+            });
+
+            stack.forEach(function (fn, index) {
+                if (typeof fn === 'object' && fn.value) {
+                    var id = fn.id,
+                        value = fn.value,
+                        name = fn.name || fn.id,
+                        unit = fn.unit || fn.id,
+                        code = ("" + (typeof fn.fn === 'function') && fn.fn.name || fn.fn).replace('/\\/g', '\\'),
+                        // text = (this.definitions.formatters[id]) ? this.definitions.formatters[id].formatValue(value) : [Math.round(Number(fn.value) * 10000) / 10000, unit].join(' ').replace(/(.\d.*?)0{3,}\d(\D)*/, '$1$2'),
+                        gear = fn.type && types[fn.type] || ' ⚙ ',
+                        type = (fn.type === 'p' ? 'requested parameter' : fn.description);
+                    this.calculations.text[id] = [Math.round(Number(fn.value) * 10000) / 10000, unit].join(' ').replace(/(.\d.*?)0{3,}\d(\D)*/, '$1$2'), this.calculations.info[id] = '<h6>' + gear + (fn.group || id) + '<br/><small>' + code + '</small></h6><p><b>' + (fn.name || fn.group || id) + ':&nbsp</b>' + type + '</p>';
+                    this.calculations.values[id] = value;
+                }
+                lastScenario = fn.scenario;
+            }.bind(this));
+            this.calculations.complete = this.setStatus('') || true;
+            console.log(this.calculations);
+            this.updateTable();
+            this.updatePlot();
+            // this.updateExplaination();
+        }
+
+    },
 });
 
 Object.assign(grasppe.colorSheets.SupercellSheet, grasppe.colorSheets.Sheet, {
-    
+
 });
 
-
-(function (app) {
-    console.log(app.title, app);
-}(new grasppe.colorSheets.SupercellSheet('#colorSheets-container')))
+(function (app) {}(new grasppe.colorSheets.SupercellSheet('#colorSheets-container')))

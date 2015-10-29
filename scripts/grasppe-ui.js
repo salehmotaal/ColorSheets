@@ -1,3 +1,10 @@
+
+google.load('visualization', '1.0', {
+    packages: ['table', 'corechart'],
+    // '', 'controls', 
+    callback: function () {}
+});
+
 if (typeof window.grasppe !== 'function') window.grasppe = function() {};
 
 if (!('Factory' in grasppe)) grasppe.Factory = function() {};

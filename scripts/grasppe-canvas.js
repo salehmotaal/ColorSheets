@@ -110,7 +110,7 @@
                     
                     $legend = (this.legend instanceof HTMLElement) ? $(this.legend) : $(this.container).find('.legend-wrapper');
                     if ($legend.length === 0) {
-                        $legend = $('<div class="legend-wrapper container-fluid" style="width: 100%; top: 0; left: 0; position: relative; background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo(this.container);
+                        $legend = $('<div class="legend-wrapper container-fluid" style="margin: 5px 5%; width: auto; top: 0; left: 0; position: relative; background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo(this.container);
                         legendText.forEach(function (text, index) {
                             $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="padding: 4px; white-space: no-wrap;"><span class="fontawesome-sign-blank legend-symbol" style="color: ' + legendStyles[index].strokeStyle + ';"></span><span class="legend-text">' + text.replace('\n', ' ') + '</span></div>'));
                         });

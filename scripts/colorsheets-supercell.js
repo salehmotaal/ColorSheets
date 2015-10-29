@@ -177,9 +177,6 @@ $(function (app) {
             if (!f) return jiveAll(undefined, undefined);
 
             var options = updateGraph.options,
-                // context = options.canvas.getContext("2d"),
-                // $canvas = $(options.canvas),
-                // $wrapper = $(options.wrapper),
                 repaintOnly = ('calculations' in updateGraph, 'parameters' in updateGraph) && (f === updateGraph.calculations) && [f.spi, f.lpi, f.theta, f.cells].equals(updateGraph.parameters);
             // Save calculations and parameters to compare for repainting
             updateGraph.calculations = f;
