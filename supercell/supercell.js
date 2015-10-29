@@ -12,15 +12,20 @@ if (typeof grasppe.colorSheets.SupercellSheet !== 'function') {
             this.setStatus('abc');
         }.bind(this));
         $(this).on('changed.parameter', function (event) {
-            console.log(event.type, arguments);
             this.updateData();
-        })
+        }).on('changing.calculations', function (event) {
+            clearTimeout(this.updatePlot.timeOut);
+        }).on('changed.calculations', function (event) {
+            this.updatePlot();
+        }).on('changing.option', function (event, data) {
+            //this.updatePlot();
+            console.log(event.type, data);
+        }).on('changed.option', function (event, data) {
+            //this.updatePlot();
+            console.log(event.type, data);
+        }).on('resized.window', this.adjustPlotSize);
         var scenarios = this.definitions.scenarios;
 
-        // Object.keys(this.definitions.scenarios).forEach(function(scenario) {console.table(this.definitions.scenarios[scenario]);}.bind(this));
-/*Object.keys(this.definitions.formatters).forEach(function (key) {
-            this.definitions.formatters[key] = eval('new ' + this.definitions.formatters[key].formatter + '({pattern: "' + this.definitions.formatters[key].pattern + '", suffix: "<span class=\'suffix\'>' + this.definitions.formatters[key].suffix + '</span>"})');
-        }.bind(this));*/
         this.calculateStack();
     };
     grasppe.colorSheets.SupercellSheet = SupercellColorSheet;
@@ -48,7 +53,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     name: 'Addressability',
                     description: 'The number of individual imagable spots addressable by the system across one inch in each direction.',
                     unit: 'short: "spi", long: "spot/inch", name: "Spots per Inch", description: "Number of image spots per inch."'.toLiteral(),
-                    range: 'minimum: 2, maximum: 3600, rounding: 2'.toLiteral(),
+                    range: 'minimum: 2, maximum: 3600, rounding: 2, step: 100'.toLiteral(),
                     control: 'type: "slider", minimum: 0, maximum: 3600, step: 2, ticks: [2, 600, 1200, 2400, 3600]'.toLiteral(),
                     type: 'number',
                 },
@@ -57,7 +62,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     name: 'Line Ruling',
                     description: 'The number of individual halftone cells imaged by the system across one inch in each direction.',
                     unit: 'short: "lpi", long: "line/inch", name: "Lines per Inch", description: "Number of halftone cells per inch."'.toLiteral(),
-                    range: 'minimum: 1, maximum: 300, rounding: 1'.toLiteral(),
+                    range: 'minimum: 1, maximum: 300, rounding: 1, step: 5'.toLiteral(),
                     control: 'type: "slider", minimum: 1, maximum: 300, step:1, ticks: [1, 100, 200, 300]'.toLiteral(),
                     type: 'number',
                 },
@@ -66,7 +71,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     name: 'Line Angle',
                     description: 'The angle of rotation of the halftone cells imaged by the system.',
                     unit: 'short: "º", long: "º degrees", name: "Degrees", description: "Angle of halftone cells."'.toLiteral(),
-                    range: 'minimum: 0, maximum: 360, rounding: 0.125'.toLiteral(),
+                    range: 'minimum: 0, maximum: 360, rounding: 0.125, step: 2.5'.toLiteral(),
                     control: 'type: "slider", minimum: 0, maximum: 90, step: 0.125, ticks: [0, 45, 90]'.toLiteral(),
                     type: 'number',
                 },
@@ -75,7 +80,7 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     name: 'Cells',
                     description: 'The number of cells in a SuperCell block.',
                     unit: 'short: "cell", long: "cells/block", name: "Cells per Block", description: "Number of cells."'.toLiteral(),
-                    range: 'minimum: 1, maximum: 20, rounding: 1'.toLiteral(),
+                    range: 'minimum: 1, maximum: 20, rounding: 1, step: 1'.toLiteral(),
                     control: 'type: "slider", minimum: 1, maximum: 10, step: 1, ticks: [1, 4, 8, 10]'.toLiteral(),
                     type: 'number',
                 },
@@ -191,13 +196,13 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             results: 'fills',
             plotWidth: 600,
             plotHeight: 600,
-            plotBufferScale: 2,
+            plotBufferScale: 1,
             plotOptions: {
                 plotTypeFactor: 1 / 72,
                 plotLineFactor: 1 / 72 / 12,
                 plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
                 plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
-                plotGridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
+                plotGridStyle: 'lineWidth: 1; strokeStyle: "RGBA(127,127,127,0.75)"'.toLiteral(),
             },
             seriesOptions: {
                 intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
@@ -221,31 +226,32 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             value: {},
         },
     },
-    attachElement: function (id) {},
+    attachElement: function (id) {
+        /*if (id==='contents') {
+            $(this.elements.contents).find('img.plotCanvas').first();
+            // if (canvas.length===0) canvas = $('<div id="supercell-sheet-stage-canvas" class="color-sheet-stage-canvas"></div>').prependTo(this.elements.contents).clear();
+            // this.elements.canvas = $('<img class="color-sheet-image-canvas">').appendTo(canvas);            
+        }*/
+    },
     detachElement: function (id) {},
     updateData: function () {
-        this.setStatus('Updating...');
-        PREPARE_TABLES: {}
-        RUN_JIVE: {
+        self = this.updateData, clearTimeout(self.timeOut), self.timeOut = setTimeout(function () {
             var stack = this.createStack();
-            this.timeOut = clearTimeout(this.timeOut) || setTimeout(function (stack) {
-                this.calculateStack(stack);
-            }.bind(this), 1, stack);
-        }
-        this.setStatus('');
+            this.setStatus('Updating...');
+            this.calculateStack(stack);
+            this.setStatus('');
+        }.bind(this), 10);
+        return this;
     },
-    updatePlot: function(f) {
-        self = this.updatePlot,
-        clearTimeout(self.timeOut);
-        
-        self.timeOut = setTimeout(function(f, self) {
-            clearTimeout (this.updateExplaination.timeOut);
+    updatePlot: function (f) {
+        self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (f, self) {
+            var timeStamp = self.timeStamp;
+            clearTimeout(this.updateExplaination.timeOut);
             if (!this.calculations) return false;
             if (!f) f = this.calculations.values;
             if (!f) return this.calculateStack();
             this.setLoadingState(true);
             var options = self.options;
-            
             BOX_CALCULATIONS: {
                 var intendedBox = new grasppe.canvas.Box(0, 0, f.lineXSpots, f.lineYSpots, options.intendedSeriesStyle),
                     halftoneBox = new grasppe.canvas.Box(0, 0, f.lineRoundXSpots, f.lineRoundYSpots, options.halftoneSeriesStyle),
@@ -256,59 +262,64 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                     supercellHorizontals = new grasppe.canvas.Lines([supercellBox[3][0] / f.cells, supercellBox[3][1] / f.cells], Object.assign({
                         offset: supercellBox.getPoint(1),
                     }, options.supercellSeriesLineStyle));
+                if (timeStamp !== self.timeStamp) return;
                 for (var i = 2; i < f.cells; i++) {
                     supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]);
                     supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
                 }
+                if (timeStamp !== self.timeStamp) return;
             }
             BOUNDING_CALCULATIONS: {
                 var paths = [intendedBox, halftoneBox, supercellBox],
                     lines = [supercellVerticals, supercellHorizontals],
                     shapes = paths.concat(lines),
                     boundingBox = new grasppe.canvas.BoundingBox([intendedBox]),
-                    margin = Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
+                    margin = 4 + Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
+                if (timeStamp !== self.timeStamp) return;
             }
             ADDRESSABILITY_GRID: {
                 var gridMargin = 0 + margin,
                     gridMin = [Math.floor(boundingBox.xMin - gridMargin / 2), Math.floor(boundingBox.yMin - gridMargin / 8)],
                     gridMax = [Math.ceil(boundingBox.xMax + gridMargin / 2), Math.ceil(boundingBox.yMax + gridMargin * (1 + f.cells))],
-                    gridSteps = Math.max(gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]),
+                    gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
                     gridVerticals = new grasppe.canvas.Lines(gridMin, Object.assign({
-                        offset: [0, gridSteps],
+                        offset: [0, gridSteps[0]],
                     }, options.plotGridStyle)),
                     gridHorizontals = new grasppe.canvas.Lines(gridMin, Object.assign({
-                        offset: [gridSteps, 0],
+                        offset: [gridSteps[1], 0],
                     }, options.plotGridStyle));
-                for (var i = 0; i <= gridSteps; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i]) && gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+                if (timeStamp !== self.timeStamp) return;
+                for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
+                for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+                if (timeStamp !== self.timeStamp) return;
             }
             SIZING_CALCULATIONS: {
-                var clippingBox = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps, gridSteps),
-                    scale = 600 / Math.max(clippingBox.xMax, clippingBox.yMax),
+                var frameWidth = $(options.plotCanvas).width(),
+                    frameHeight = $(options.plotCanvas).height(),
+                    frameRatio = frameWidth / frameHeight;
+                if (timeStamp !== self.timeStamp) return;
+                var clippingBox = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
+                    scale = options.plotWidth / Math.min(clippingBox.xMax, clippingBox.yMax),
                     offset = [-clippingBox.xMin, -clippingBox.yMin],
-                    width = Math.min(offset[0] + clippingBox.xMax, offset[1] + clippingBox.yMax) * scale,
-                    height = width,
-                    xTransform = Object.assign(function (x, self) {
-                        if (!self) self = xTransform;
-                        return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                    }, {
-                        offset: offset[0],
-                        scale: scale,
-                    }),
-                    yTransform = Object.assign(function (y, self) {
-                        if (!self) self = yTransform;
-                        var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                        if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
-                        else return fY;
-                    }, {
-                        offset: offset[1],
-                        scale: scale,
-                    });
+                    width = (offset[0] + clippingBox.xMax) * scale; // * (frameRatio > 1 ? frameRatio : 1),
+                height = width; // / frameRatio,
+                xTransform = Object.assign(function (x, self) {
+                    if (!self) self = xTransform;
+                    return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                }, ('scale: ' + scale + '; offset: ' + offset[0]).toLiteral()), yTransform = Object.assign(function (y, self) {
+                    if (!self) self = yTransform;
+                    var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                    if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
+                    else return fY;
+                }, ('scale: ' + scale + '; offset: ' + offset[1]).toLiteral());
+                if (timeStamp !== self.timeStamp) return;
             }
             DRAWING_OPERATIONS: {
                 var chart = (self.chart instanceof grasppe.canvas.Chart) ? self.chart : new grasppe.canvas.Chart(options.plotCanvas),
                     halftonePixelBox = new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneSeriesFillStyle),
                     supercellPixelBox = new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle);
                 self.chart = chart;
+                if (timeStamp !== self.timeStamp) return;
                 chart.draw([supercellPixelBox, halftonePixelBox, gridVerticals, gridHorizontals, supercellVerticals, supercellHorizontals, intendedBox, supercellBox, halftoneBox], {
                     xModifier: xTransform,
                     yModifier: yTransform,
@@ -322,21 +333,22 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                         styles: [options.intendedSeriesStyle, options.halftoneSeriesStyle, options.supercellSeriesLineStyle],
                         boxStyle: options.legendBoxStyle
                     },
-                    transform: function(context, canvas){
+                    transform: function (context, canvas) {
                         context.translate(canvas.width / 1, canvas.height / 1);
                         context.scale(-1, -1);
                     },
                 });
+                if (timeStamp !== self.timeStamp) return;
+                this.updateTable().updateExplaination();
+                this.adjustPlotSize();
                 this.setLoadingState();
-                this.updateExplaination();
-
             }
 
         }.bind(this), 10, f, self);
         if (!self.options) self.options = Object.assign({
             plotWidth: 600,
             plotHeight: 600,
-            plotBufferScale: $('body').is('.iPad,.iPhone') ? 1 : 2,
+            plotBufferScale: $('body').is('.iPad,.iPhone') ? 1 : 1.5,
             plotTypeFactor: 1 / 72,
             plotLineFactor: 1 / 72 / 12,
             intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
@@ -352,11 +364,23 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSuperCell'],
             plotCanvas: $(this.elements.contents).find('div').first(),
         }, this.options, this.options.plotOptions, this.options.seriesOptions, this.options.legendOptions);
+        return this;
+    },
+    adjustPlotSize: function() {
+        var plotCanvas = $(this.elements.contents).find('img.plot-canvas').first(),
+            plotWrapper = $(this.elements.contents),
+            wrapWidth = plotWrapper.innerWidth(),
+            wrapHeight = plotWrapper.innerHeight(),
+            wrapRatio = wrapWidth / wrapHeight;
+            //console.log(plotCanvas, plotWrapper);
+            
+         plotCanvas.width(Math.min(wrapWidth, wrapHeight));
+         plotCanvas.height(Math.min(wrapWidth, wrapHeight));
+         
+         plotCanvas.css('left', (wrapWidth-Math.min(wrapWidth, wrapHeight))/2);
     },
     updateExplaination: function (f) {
-        self = this.updateExplaination,
-        clearTimeout(self.timeOut);
-        self.timeOut = setTimeout(function (f) {
+        self = this.updateExplaination, clearTimeout(self.timeOut), self.timeOut = setTimeout(function (f) {
             if (!f) f = this.calculations.values;
             if (!f) return this.calculateStack();
             var t = {};
@@ -385,12 +409,17 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             // $('#results-explaination').html(text);
             $(this.elements.overview).find('.panel-body').first().html(text);
             return text;
-        }.bind(this), 1000);
+        }.bind(this), 10);
+        return this;
     },
     updateTable: function () {
         $(this.elements.results).find('.panel-body').first().html(this.createTable());
+        return this;
     },
     createTable: function (definitions, scenarios, container) {
+        if (!definitions) definitions = this.definitions.scenarios;
+        if (!scenarios) scenarios = definitions._order || (Array.isArray(definitions) ? undefined : Object.keys(definitions));
+        //  scenarios.splice(scenarios.indexOf('Base_Calculations'),1);
         var table = [],
             tableHeader = ['\t\t<thead>\n\t\t\t<tr>'];
         tableBody = ['\t\t<tbody>'];
@@ -449,23 +478,18 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
         if (!context) context = 'Base Calculations';
         if (!stack) stack = this.createStack();
 
+        self = this.calculateStack;
+
         var processStack = function (context, output) {
-                // console.log('processStack', arguments);
                 output.forEach(function (fn, i) {
-                    // console.log('\toutput', fn);
                     fn.scenario = context.scenario;
                 });
-                if (Array.isArray(context.stack)) {
-                    output = context.stack.concat(output);
-                    // console.table(output.map(function(element) {return [element.id, element.value, element.fn];}));
-                }
+                if (Array.isArray(context.stack)) output = context.stack.concat(output);
                 this.calculateStack(context, output);
             }.bind(this),
             runScenario = function (scenario, stack) {
-                // console.log('runScenario', arguments);
                 if (stack.THETA === 0) stack.THETA = 0.005;
                 else if (stack.THETA === 90) stack.THETA = 89.995;
-                //console.log('\trun', this.definitions.scenarios);
                 var jiver = new GrasppeJive({}, this.definitions.scenarios),
                     output = jiver.run(scenario, stack),
                     error = jiver.errors;
@@ -477,27 +501,23 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
             nextIndex = Math.max(0, scenarios.indexOf(lastScenario) + 1),
             nextScenario = (typeof context === 'string') ? context : (nextIndex < scenarios.length) ? scenarios[nextIndex] : undefined;
 
+        if (nextIndex === 0) self.timeStamp = Date.now();
+
         if (nextScenario) {
             this.setStatus('Calculating...');
-            window.setTimeout(function (scenario, stack) {
+            window.setTimeout(function (scenario, stack, timeStamp) {
+                if (timeStamp !== self.timeStamp) return;
                 processStack({
                     scenario: scenario,
                     stack: stack,
                 }, runScenario(scenario, stack));
-            }.bind(this), 1, nextScenario, stack);
+            }.bind(this), 10, nextScenario, stack, self.timeStamp);
         } else {
             var spanned = 'p: {className: "spanned"}'.toLiteral(),
                 types = 'c: " ⚙ ", p: "⇢⚙ ", r: " ⚙⇢"'.toLiteral(),
                 groupings = {};
 
-            Object.assign(this.calculations, {
-                complete: false,
-                stack: stack,
-                values: {},
-                text: {},
-                values: {},
-                info: {},
-            });
+            Object.assign(this.calculations, 'complete: false, values: {}, text: {}, info: {}'.toLiteral({stack: stack}));
 
             stack.forEach(function (fn, index) {
                 if (typeof fn === 'object' && fn.value) {
@@ -506,26 +526,21 @@ grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasp
                         name = fn.name || fn.id,
                         unit = fn.unit || fn.id,
                         code = ("" + (typeof fn.fn === 'function') && fn.fn.name || fn.fn).replace('/\\/g', '\\'),
-                        // text = (this.definitions.formatters[id]) ? this.definitions.formatters[id].formatValue(value) : [Math.round(Number(fn.value) * 10000) / 10000, unit].join(' ').replace(/(.\d.*?)0{3,}\d(\D)*/, '$1$2'),
                         gear = fn.type && types[fn.type] || ' ⚙ ',
                         type = (fn.type === 'p' ? 'requested parameter' : fn.description);
-                    this.calculations.text[id] = [Math.round(Number(fn.value) * 10000) / 10000, unit].join(' ').replace(/(.\d.*?)0{3,}\d(\D)*/, '$1$2'), this.calculations.info[id] = '<h6>' + gear + (fn.group || id) + '<br/><small>' + code + '</small></h6><p><b>' + (fn.name || fn.group || id) + ':&nbsp</b>' + type + '</p>';
+                    this.calculations.text[id] = [Math.round(Number(fn.value) * 10000) / 10000, unit].join(' ').replace(/(.\d.*?)0{3,}\d(\D)*/, '$1$2');
+                    this.calculations.info[id] = '<h6>' + gear + (fn.group || id) + '<br/><small>' + code + '</small></h6><p><b>' + (fn.name || fn.group || id) + ':&nbsp</b>' + type + '</p>';
                     this.calculations.values[id] = value;
                 }
                 lastScenario = fn.scenario;
             }.bind(this));
             this.calculations.complete = this.setStatus('') || true;
-            console.log(this.calculations);
-            this.updateTable();
-            this.updatePlot();
-            // this.updateExplaination();
+            $(this).trigger('changed.calculations');
         }
 
     },
 });
 
-Object.assign(grasppe.colorSheets.SupercellSheet, grasppe.colorSheets.Sheet, {
-
-});
+Object.assign(grasppe.colorSheets.SupercellSheet, grasppe.colorSheets.Sheet);
 
 (function (app) {}(new grasppe.colorSheets.SupercellSheet('#colorSheets-container')))

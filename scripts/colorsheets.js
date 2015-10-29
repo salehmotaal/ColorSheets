@@ -150,6 +150,10 @@ grasppe.colorSheets.Sheet = function (container) {
     PREPARE_LAYOUT: {
         this.defineElements(container);
         $(window).on('window.width', this.refreshLayout.bind(this));
+        $(window).resize(function (event, data) {
+            $(sheet).trigger('resized.window', data);
+        });
+
     }
 };
 grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
@@ -210,17 +214,19 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
     },
     detachElement: function (id) {},
     setStatus: function (status, container) {
+        return; 
         container = $(this.element).find('.status').first();
         //.find(typeof container === 'string' ? '.color-sheet-' + container + '-element' : container).add(this.element).find('.status').first();
         // console.log('setStatus', arguments, container);
         return $(container).html(status) || true;
     },
     setLoadingState: function (state, container) {
+        return;
         if (!container) container = $(this.container).find('.color-sheet-contents-element').add('.loading-state');
         if (state === true) $(container).addClass('loading-state');
         else window.setTimeout(function (container) {
             $(container).removeClass('loading-state');
-        }, 1, container);
+        }, 10, container);
     },
     setParameter: function (id, value) {
         var initialValue = this.parameters[id],
@@ -229,12 +235,12 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 value: value,
                 initialValue: initialValue
             };
-        this.setStatus('chaning ' + id + ' to ' + value);
-        if (initialValue !== value) {
+        // this.setStatus('changing ' + id + ' to ' + value);
+        if (initialValue !== value) window.setTimeout(function (data) {
             $(this).trigger('changing.parameter', data);
             this.parameters[id] = value;
             $(this).trigger('changed.parameter', data);
-        }
+        }.bind(this), 10, data);
     },
     getParameter: function (id) {
         return this.parameters[id];
@@ -301,7 +307,8 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             }
             DRAW_PANELS: {
                 $([elements.stage, elements.parameters, elements.results, elements.overview]).addClass('z-depth-0 panel').css('display', 'inline-block').each(function () {
-                    var title = $(this).attr('title'),
+                    var panel = this;
+                        title = $(this).attr('title'),
                         key = $(this).attr('data-element-key'),
                         heading = $(this).find('.panel-heading').first().remove(),
                         container = $(this).find('.panel-body').first(),
@@ -309,12 +316,21 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                         headingColor = $(this).attr('grasppe-heading-color') || 'white',
                         headingShade = $(this).attr('grasppe-heading-shade') || 'grey darken-2';
                     if (container.length === 0) container = $('<div class="panel-body">');
-                    container.addClass('collapse in white').appendTo(this).append(contents);
+                    container.addClass('collapse in white').appendTo(this).append(contents).on('show.bs.collapse', function() {
+                        panel.addClass('panel-open').removeClass('panel-min');
+                    }).on('hide.bs.collapse', function() {;
+                        panel.addClass('panel-closed').addClass('panel-min');
+                    });
                     if (typeof title !== 'string' || title === '') return;
                     if (heading.length === 0) heading = $('<div class="black-text uncollpaser">');
                     heading.addClass('panel-heading uncollpaser ' + headingShade + ' ' + headingColor + '-text').html('<div class="panel-title uncollpaser truncate">' + title + '</div>').prependTo(this).show().on('click', function (event) {
-                        if ($(event.target).is('.collapser')) container.collapse('toggle');
-                        else if ($(event.target).is('.uncollpaser')) container.collapse('show');
+                        if ($(event.target).is('.collapser')) 
+                            container.collapse('toggle');
+                        else if ($(event.target).is('.uncollpaser')) {
+                            container.collapse('show');
+                            if (panel.is('.panel-max')) panel.removeClass('panel-max panel-mid').addClass('panel-mid');
+                            else panel.removeClass('panel-max panel-mid').addClass('panel-max');
+                        } else return;
                     })
                     heading.find('.panel-title').append('<small class="status color-sheet-' + key + '-status">');
                     template[key + '-status'] = heading.find('.status').first();
@@ -322,7 +338,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 });
                 $([elements.stage]).addClass('');
                 $([elements.parameters]).addClass('');
-                $([elements.results, elements.overview]).addClass('showing-landscape hiding-portrait').find('.uncollpaser').addClass('collapser');
+                $([elements.results, elements.overview]).addClass('showing-landscape').find('.uncollpaser').addClass('collapser');
             }
             // Draw Sheet Controls, Buttons, and Modals
             CALL_DELEGATES: {
@@ -343,13 +359,13 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         if (this.modals.documentation) {
             this.modals.documentation.attr('id', this.prefix + '-documentation-modal');
             this.buttons.documentation = $(this.elements.title).find('.sheet-documentation-button');
-            if ($(this.buttons.documentation).length === 0) this.buttons.documentation = $('<a class="modal-trigger ' + classes + ' orange" title="Documentation" role="button" data-target="' + this.prefix + '-documentation-modal"><i class="fa fontawesome-book white-text"></i></a>').prependTo(target).data('modal', $(this.modals.documentation));
+            if ($(this.buttons.documentation).length === 0) this.buttons.documentation = $('<a class="modal-trigger ' + classes + ' orange" title="Documentation" role="button" data-target="' + this.prefix + '-documentation-modal"><span class="fa fontawesome-book white-text"></span></a>').prependTo(target).data('modal', $(this.modals.documentation));
             this.buttons.documentation.leanModal('dismissible: true, opacity: 0.5, in_duration: 300, out_duration: 200'.toLiteral({
                 ready: function () {},
                 complete: function () {}
             }));
         }
-        if ($(this.buttons.reload).length === 0) this.buttons.reload = $('<a class="' + classes + ' red" title="Reload" role="button" href="javascript: location.reload();"><i class="fa fontawesome-refresh white-text"></i></a>').prependTo(target);
+        if ($(this.buttons.reload).length === 0) this.buttons.reload = $('<a class="' + classes + ' red" title="Reload" role="button" href="javascript: location.reload();"><span class="fa fontawesome-refresh white-text"></span></a>').prependTo(target);
     },
     drawOptions: function () {
         var definitions = this.options._definitions_,
@@ -364,7 +380,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 elementClass = this.prefix + '-' + parentElement + '-option-element',
                 parent = $(this.container).find('.color-sheet-' + parentElement + '-element'),
                 target = $(parent).find('.color-sheet-element-options'),
-                code = '<a href="javascript:" class="' + elementClass + ' ' + classes + ' grey" title="' + (definition.title ? definition.title : '') + '"><i class="fa ' + (definition.icon ? definition.icon : 'fontawesome-spinner') + ' white-text"></i></a>';
+                code = '<a href="javascript:" class="' + elementClass + ' ' + classes + ' grey" title="' + (definition.title ? definition.title : '') + '"><span class="fa ' + (definition.icon ? definition.icon : 'fontawesome-spinner') + ' white-text"></span></a>';
 
             if (target.length === 0) target = $('<div class="color-sheet-element-options pull-right">').prependTo($(parent).find('.panel-heading').first());
 
@@ -382,8 +398,18 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 element.addClass('dropdown-toggle').attr('data-toggle', "dropdown");
 
                 Object.keys(definition.list).forEach(function (item) {
-                    listElement.append('<li><a href="javascript:"><span class="' + (definition.list[item].icon ? definition.list[item].icon : 'fontawesome-spinner') + ' black-text"></span>&nbsp;' + definition.list[item].title + '</a></li>');
-                });
+                    listElement.append($('<li>').append($('<a href="javascript:"><span class="' + (definition.list[item].icon ? definition.list[item].icon : 'fontawesome-spinner') + ' black-text"></span>&nbsp;' + definition.list[item].title + '</a>)').data('controller', this).on('click', function (event) {
+                        var controller = $(this).data('controller'),
+                            last = typeof controller.options === 'object' ? controller.options[key] : undefined;
+                        if (typeof controller.options === 'object' && last!== item) {
+                            $(controller).trigger('changing.option', {option: key, value: item, last: last});
+                            controller.options[key] = item;
+                            $(controller).trigger('changed.option', {option: key, value: item, last: last});
+                        }
+                        $(controller).trigger('refresh.option', {option: key, value: item, last: last});
+                        
+                    })));
+                }.bind(this));
             }
 
             // console.log(element.attr('data-activates'));
@@ -425,7 +451,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                         value: value,
                         min: definition.range.minimum,
                         max: definition.range.maximum,
-                        step: definition.control.step,
+                        step: definition.range.step || definition.control.step,
                     }).appendTo(control.group).change(function () {
                         var control = $(this).data('control'),
                             value = Math.max(control.definition.range.minimum, Math.min(control.definition.range.maximum, Number($(this).val())));
@@ -511,8 +537,8 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         case 'tablet-xl-landscape':
             $stage.removeClass(allClasses).addClass('col-xs-12').appendTo(elements.left);
             $parameters.removeClass(allClasses).addClass('col-xs-12').appendTo(elements.left);
-            $overview.removeClass(allClasses).addClass('col-xs-12 col-horizontal').appendTo(elements.right);
             $results.removeClass(allClasses).addClass('col-xs-12 col-horizontal').appendTo(elements.right);
+            $overview.removeClass(allClasses).addClass('col-xs-12 col-horizontal').appendTo(elements.right);
             $bottom.remove();
             $left.appendTo($body);
             $right.appendTo($body);
@@ -524,8 +550,8 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         case 'phone-sm-landscape':
             $stage.removeClass(allClasses).addClass('col-xs-8 col-lg-7 col-horizontal').appendTo(elements.body);
             $parameters.removeClass(allClasses).addClass('col-xs-4 col-lg-5 col-vertical').insertAfter($stage);
-            $overview.removeClass(allClasses).addClass('col-xs-12 col-md-5 col-lg-6').appendTo(elements.bottom);
             $results.removeClass(allClasses).addClass('col-xs-12 col-md-7 col-lg-6 col-horizontal').appendTo(elements.bottom);
+            $overview.removeClass(allClasses).addClass('col-xs-12 col-md-5 col-lg-6').appendTo(elements.bottom);
             $left.remove();
             $right.remove();
             $bottom.appendTo($body);
@@ -536,8 +562,8 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         case 'tablet-lg-portrait':
             $stage.removeClass(allClasses).addClass('col-xs-12').prependTo(elements.body);
             $parameters.removeClass(allClasses).addClass('col-xs-12 col-horizontal').insertAfter($stage);
-            $overview.removeClass(allClasses).addClass('col-xs-6 col-vertical').appendTo(elements.bottom);
             $results.removeClass(allClasses).addClass('col-xs-6 col-vertical').appendTo(elements.bottom);
+            $overview.removeClass(allClasses).addClass('col-xs-6 col-vertical').appendTo(elements.bottom);
             $left.remove();
             $right.remove();
             $bottom.appendTo($body);
@@ -550,8 +576,8 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         case 'phone-xs-portrait':
             $stage.removeClass(allClasses).addClass('col-xs-12 col-horizontal').prependTo(elements.body);
             $parameters.removeClass(allClasses).addClass('col-xs-12').insertAfter($stage);
-            $overview.removeClass(allClasses).addClass('col-xs-12 col-horizontal').appendTo(elements.bottom);
             $results.removeClass(allClasses).addClass('col-xs-12 col-horizontal').appendTo(elements.bottom);
+            $overview.removeClass(allClasses).addClass('col-xs-12 col-horizontal').appendTo(elements.bottom);
             $left.remove();
             $right.remove();
             $bottom.appendTo($body);

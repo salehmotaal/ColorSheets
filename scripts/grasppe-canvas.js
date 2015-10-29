@@ -2,7 +2,7 @@
     if (!grasppe.canvas) grasppe.canvas = function () {};
     if (!grasppe.canvas.Chart) grasppe.canvas.Chart = function (container) {
         this.container = container;
-        $(this.container).children().remove();
+        // $(this.container).children().remove();
     };
     $(function () {
         grasppe.canvas.Chart.prototype = Object.assign(Object.create((typeof google === 'object' && typeof google.visualization === 'object' && google.visualization.ScatterChart === 'function') ? google.visualization.ScatterChart : Object, {
@@ -110,7 +110,7 @@
                     
                     $legend = (this.legend instanceof HTMLElement) ? $(this.legend) : $(this.container).find('.legend-wrapper');
                     if ($legend.length === 0) {
-                        $legend = $('<div class="legend-wrapper container-fluid" style="margin: 5px 5%; width: auto; top: 0; left: 0; position: relative; background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo(this.container);
+                        $legend = $('<div class="legend-wrapper container-fluid" style="background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo(this.container);
                         legendText.forEach(function (text, index) {
                             $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="padding: 4px; white-space: no-wrap;"><span class="fontawesome-sign-blank legend-symbol" style="color: ' + legendStyles[index].strokeStyle + ';"></span><span class="legend-text">' + text.replace('\n', ' ') + '</span></div>'));
                         });
@@ -135,21 +135,12 @@
                         this.drawCanvas();
                         this.context.save();
                         if (typeof this.options.transform === 'function') this.options.transform(this.context, this.canvas);
-                        //                                 if (this.drawFunction.isCancelling) return;
-                        //                                 return this.drawFunction.next('draw-underlay');
-                        //                             case 'draw-underlay':
                         this.drawUnderlay();
-                        //                                 if (this.drawFunction.isCancelling) return;
-                        //                                 return this.drawFunction.next('draw-paths');
-                        //                             case 'draw-paths':
                         if (Array.isArray(data)) this.paths = data;
                         else if (data instanceof google.visualization.DataTable) this.setPathsFromDataTable(data);
                         this.drawPaths();
-                        //                                 if (this.drawFunction.isCancelling) return;
-                        //                                 return this.drawFunction.next('draw-overlay');
-                        //                             case 'draw-overlay':
                         this.drawOverlay();
-                        if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                        if (this.drawFunction.isCancelling) return; // this.drawFunction.resume();
                         return this.drawFunction.next('trigger-callback');
                     case 'trigger-callback':
                         if (typeof this.options.callback === 'function') this.options.callback(this);
@@ -157,12 +148,12 @@
                         return this.drawFunction.next('update-canvas');
                     case 'update-canvas':
                         this.updateCanvas();
-                        if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                        if (this.drawFunction.isCancelling) return; // this.drawFunction.resume();
                         return this.drawFunction.complete();
                     default:
                         if (options) Object.assign(this.options, options);
                         this.canvas.drawing = 0;
-                        if (this.drawFunction.isCancelling) return this.drawFunction.resume();
+                        if (this.drawFunction.isCancelling) return; // this.drawFunction.resume();
                         return this.drawFunction.next('draw-canvas');
                     }
                     return $$().complete();
@@ -190,9 +181,12 @@
              * @param {Object} DataTable or PathsArray.
              */
             updateCanvas: function() {
-                if (this.canvas.drawing > 0) setTimeout(function() {this.updateCanvas();}.bind(this), 100);
+                if (this.canvas.drawing > 0) setTimeout(function() {this.updateCanvas();}.bind(this), 10);
                 else {
-                    $(this.container).css('background', 'transparent URL(' + this.canvas.toDataURL("image/png") + ') no-repeat center center').css('background-size', 'contain');
+                    console.log($(this.container).is('img'));
+                    var plotCanvas = $(this.container).find('img.plot-canvas').first();
+                    if (plotCanvas.length===1) $(plotCanvas)[0].src = this.canvas.toDataURL("image/png");
+                    else $(this.container).css('background', 'transparent URL(' + this.canvas.toDataURL("image/png") + ') no-repeat center center').css('background-size', 'contain');
                     this.context.restore();
                 }
                 return this;

@@ -299,6 +299,10 @@ body.iPhone #page-panel,body.iPad #page-panel {
 		padding:0;
 	}
 	
+	.color-sheet-sheet-element {
+    	
+    }
+	
 	.color-sheet-sheet-element > .panel-body {
 		flex:1;
 		width:100%;
@@ -396,15 +400,39 @@ body.iPhone #page-panel,body.iPad #page-panel {
 		min-height:400px;
 	}
 	
+    .supercell-sheet-stage-canvas {
+    	/*border: 1px solid rgba(227,227,227,0.5);*/
+    	padding: 0;
+    	margin: 0;
+    }
+
+	
     .color-sheet-contents-element {
     	vertical-align:middle;
     	display: flex;
     	min-width: 50vmin;
     	min-height: 50vmin;
+    	max-width: 100%;
+    	max-height: 100%;
     	margin: 0 auto;
+    	overflow: hidden;
+    }
+    
+    
+    .color-sheet-contents-element .plot-canvas {
+        max-width: 100%;
+        max-height: 100%;
+        position: absolute;
+        margin: 0;
+    }
+    
+    .color-sheet-contents-element .legend-wrapper {
+        position: relative;
+        margin: 5px 2vmin -100% 2vmin; width: auto;
+        position: relative;
     }
 
-    .color-sheet-contents-element > :first-Child {
+    .color-sheet-contents-element > :first-child {
     	flex: 1;
     }
 	
