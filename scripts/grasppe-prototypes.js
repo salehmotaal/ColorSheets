@@ -4,17 +4,22 @@ Array.prototype.equals = function (array) {
         return this_i == array[i]
     })
 }
+String.prototype.toLiteral = function(obj){
+    // http://jsfiddle.net/ytyf3e93/
+    try{
+        var literal = JSON.parse('{' + this.replace(/\s*;\s*/g,', ').split(', ').join(',').replace(/([\w-]*)\s*\:\s*/g,'\"$1\": ') + '}');
+    } catch (err) {
+        console.error('toLiteral', 'Failed to parse object from string: \n' + this);
+    }
+        
+    return (typeof obj === 'object') ? Object.assign(literal, obj) : literal;
+};
+
 jQuery.fn.scrollTo = function(elem, speed) { 
     $(this).animate({
         scrollTop:  $(this).scrollTop() - $(this).offset().top + $(elem).offset().top 
     }, speed == undefined ? 1000 : speed); 
     return this; 
-};
-
-String.prototype.toLiteral = function(obj){
-    // http://jsfiddle.net/ytyf3e93/
-    var literal = JSON.parse('{' + this.replace(/\s*;\s*/g,', ').split(', ').join(',').replace(/([\w-]*)\s*\:\s*/g,'\"$1\": ') + '}');
-    return (typeof obj === 'object') ? Object.assign(literal, obj) : literal;
 };
 
 /*Object.prototype.isLiteralObject = function(){
@@ -53,4 +58,4 @@ if (location.search.length > 1) {
         window.location.parameters[decodeURIComponent(aItKey[0])] = aItKey.length > 1 ? decodeURIComponent(aItKey[1]) : "";
     }
 }
-console.log(window.location.parameters);
+//console.log(window.location.parameters);

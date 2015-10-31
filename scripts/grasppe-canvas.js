@@ -9,12 +9,7 @@
             // Property Descriptions
             canvas: {
                 get: function () {
-                    if (!this._canvas) this._canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none; \
-                    image-rendering: optimizeSpeed;\
-                    image-rendering: -moz-crisp-edges; \
-                    image-rendering: -webkit-optimize-contrast; \
-                    image-rendering: optimize-contrast; \
-                    -ms-interpolation-mode: nearest-neighbor;">').appendTo('body')[0];
+                    if (!this._canvas) this._canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none;">').appendTo('body')[0];
                     return this._canvas;
                 }
             },
@@ -60,7 +55,9 @@
                 $canvas[0].width = width;
                 $canvas[0].height = height;
                 if (this.drawFunction.isCancelling) return;
-                context.clearRect(0, 0, width, height);
+                context.rect(0, 0, width, height);
+                context.fillStyle='#FFF';
+                context.fill();
                 context.bufferScale = (typeof options.bufferScale === 'number') ? options.bufferScale : 1;
                 with(context) {
                     save();
@@ -89,7 +86,7 @@
                 yModifier.bufferScale = this.options.bufferScale;
                 // console.log('Canvas.drawPaths', this, paths, context);
                 this.paths.forEach(function (path) {
-                    if (this.drawFunction.isCancelling) return;
+                    // if (this.drawFunction.isCancelling) return;
                     if (path.draw) path.draw.call(path, context, xModifier, yModifier);
                     // while (context.canvas && context.canvas.drawing > 0 ) {};
                 }.bind(this));
@@ -184,8 +181,27 @@
                 if (this.canvas.drawing > 0) setTimeout(function() {this.updateCanvas();}.bind(this), 10);
                 else {
                     // console.log($(this.container).is('img'));
-                    var plotCanvas = $(this.container).find('img.plot-canvas').first();
-                    if (plotCanvas.length===1) $(plotCanvas)[0].src = this.canvas.toDataURL("image/png");
+                    var plotCanvas = $(this.container).find('.plot-canvas').first();
+                    if (plotCanvas.is('img')) $(plotCanvas)[0].src = this.canvas.toDataURL("image/png");
+                    else if (plotCanvas.is('canvas')) {
+                        //$(plotCanvas)[0].src = this.canvas.toDataURL("image/png");
+                        var context = plotCanvas[0].getContext('2d'),
+                            targetWidth = plotCanvas.width(),
+                            targetHeight = plotCanvas.height(),
+                            targetRatio = targetWidth/targetHeight,
+                            sourceWidth = this.canvas.width,
+                            sourceHeight = this.canvas.height,
+                            sourceRatio = sourceWidth/sourceHeight,
+                            width = Math.min(targetWidth, targetHeight * sourceRatio),
+                            height = width / sourceRatio;
+                            
+                        
+                        //call its drawImage() function passing it the source canvas directly
+                        context.clearRect( 0 , 0 , targetWidth ,targetHeight );
+                        context.drawImage(this.canvas, 0, 0, width, height);
+                        //context.putImageData(this.canvas.getContext('2d').getImageData( 0, 0, sourceWidth, sourceHeight ), 0, 0);
+
+                    }
                     else $(this.container).css('background', 'transparent URL(' + this.canvas.toDataURL("image/png") + ') no-repeat center center').css('background-size', 'contain');
                     this.context.restore();
                 }

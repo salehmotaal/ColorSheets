@@ -66,7 +66,8 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
         yTransform = typeof yTransform === 'function' ? yTransform : function (y) {
             return y;
         };
-        if (this.length === 2) return [xTransform(this[0], xTransform), yTransform(this[1], yTransform)];
+        var rounding = 1; //xTransform.bufferScale ? xTransform.bufferScale : 1;
+        if (this.length === 2) return [Math.round(xTransform(this[0], xTransform)/rounding)*rounding, Math.round(yTransform(this[1], yTransform)/rounding)*rounding];
         else return [NaN, NaN];
     },
     getX: function () {
@@ -77,11 +78,13 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
     },
     moveTo: function (context, xModifier, yModifier, scale) {
         // var point = (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale); console.log('moveTo', point, arguments);
+        xModifier.bufferScale = context.bufferScale || 1;
         context.moveTo.apply(context, (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale));
         return this;
     },
     lineTo: function (context, xModifier, yModifier, scale) {
         // var point = (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale); console.log('lineTo', point, arguments);
+        xModifier.bufferScale = context.bufferScale || 1;
         context.lineTo.apply(context, (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale));
         return this;
     },
@@ -508,7 +511,7 @@ grasppe.canvas.PointFilter.prototype = Object.assign(Object.create(grasppe.canva
         try {
             points = this._filter(points);
         } catch (err) {
-            console.error(err);
+            console.error('grasppe.canvas.Path.apply',  err);
         }
         console.table(points);
         this.set(points);
@@ -621,31 +624,31 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
             // console.log(context);
 
         } catch (err) {
-            console.error(err);
+            console.error('grasppe.canvas.ImageFilter.apply', err);
         }
         $(canvas).remove();
         delete canvas;
     },
     draw: function (context, xModifier, yModifier, scale) {
         this.apply();
-        var bufferScale = (context.bufferScale ? context.bufferScale : 1),
-            xOffset = typeof xModifier === 'number' ? xModifier : 0,
-            yOffset = typeof yModifier === 'number' ? yModifier : 0,
-            xTransform = typeof xModifier === 'function' ? xModifier : null,
-            yTransform = typeof yModifier === 'function' ? yModifier : null,
-            clipping = this.clipping || {},
-            xMin = this.clipping.xMin + 1,
-            yMin = this.clipping.yMin + 1,
-            xMax = this.clipping.xMax,
-            yMax = this.clipping.yMax,
-            x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale,
-            y = yTransform ? yTransform(yMin, yTransform) : (yOffset + yMin) * scale,
-            x2 = xTransform ? xTransform(xMax, xTransform) : (xOffset + xMax) * scale,
-            y2 = yTransform ? yTransform(yMax, yTransform) : (yOffset + yMax) * scale,
-            width = x2 - x,
-            height = y2 - y,
-            data = this._data,
-            rect = new grasppe.canvas.Path([], this.parameters);
+        var bufferScale = (context.bufferScale ? context.bufferScale : 1);
+        var xOffset = typeof xModifier === 'number' ? xModifier : 0;
+        var yOffset = typeof yModifier === 'number' ? yModifier : 0;
+        var xTransform = typeof xModifier === 'function' ? xModifier : null;
+        var yTransform = typeof yModifier === 'function' ? yModifier : null;
+        var clipping = this.clipping || {};
+        var xMin = this.clipping.xMin + 1;
+        var yMin = this.clipping.yMin + 1;
+        var xMax = this.clipping.xMax;
+        var yMax = this.clipping.yMax;
+        var x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale;
+        var y = yTransform ? yTransform(yMin, yTransform) : (yOffset + yMin) * scale;
+        var x2 = xTransform ? xTransform(xMax, xTransform) : (xOffset + xMax) * scale;
+        var y2 = yTransform ? yTransform(yMax, yTransform) : (yOffset + yMax) * scale;
+        var width = x2 - x;
+        var height = y2 - y;
+        var data = this._data;
+        var rect = new grasppe.canvas.Path([], this.parameters);
             // imageObject = new Image();
             
         context.canvas.drawing +=1;

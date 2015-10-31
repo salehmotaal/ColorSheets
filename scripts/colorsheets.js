@@ -147,20 +147,131 @@ grasppe.colorSheets.Sheet = function (container) {
             else if (thisKey in this.options) this.options[thisKey] = (typeof defaultValue === 'number') ? Number(thisValue) : (typeof defaultValue === 'boolean') ? Boolean(thisValue) : thisValue;
         }.bind(this));
     }
-    PREPARE_LAYOUT: {
-        this.defineElements(container);
-        $(window).on('window.width', this.refreshLayout.bind(this));
-        $(window).resize(function (event, data) {
-            $(sheet).trigger('resized.window', data);
-        });
-
-    }
+    grasppe.require(['angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', 'angularMaterial'], function () { // ['angularJS'], function () {
+        CONFIGURE_ANGULAR: {
+            var colorSheetsModule, colorSheetsController, sheetController;
+            try {
+                colorSheetsModule = angular.module('ColorSheets');
+            } catch (err) {
+                colorSheetsModule = angular.module('ColorSheets', ['ngMaterial']);
+            }
+            colorSheetsController = colorSheetsModule.controller('ColorSheetsController', grasppe.colorSheets.Sheet.prototype.$controller);
+            if (typeof this.$controller === 'function' && this.$controller !== grasppe.colorSheets.Sheet.prototype.$controller)
+                colorSheetsController = colorSheetsModule.controller(this.prefix + 'SheetController', this.$controller);
+            Object.defineProperties(this, {
+                $module: {
+                    value: colorSheetsModule,
+                },
+                $controller: {
+                    value: colorSheetsController,
+                },
+                $sheetController: {
+                    value: sheetController,
+                },
+            });
+            colorSheetsModule.bootstrap = function(element) {
+                angular.bootstrap(element, ['ColorSheets']);
+            }
+            // angular.bootstrap(this.elements.sheet, ['ColorSheets']);
+        }
+        PREPARE_LAYOUT: {
+                // var colorSheetsApp = angular.module('ColorSheets', ['ngMaterial']);
+                // colorSheetsApp.controller('ColorSheetsController', ColorSheetsController);
+                // function ColorSheetsController($scope) {
+                //     $scope.greeting = 'Welcome!';
+                //     $scope.reload = function(){
+                //         location.reload();
+                //     };
+                // };
+                $(sheet).trigger('shown');
+                
+                this.defineElements(container);
+                $(window).on('window.width', this.refreshLayout.bind(this));
+                $(window).resize(function (event, data) {
+                    $(sheet).trigger('resized.window', data);
+                });
+                sheet.initialize();
+                $(sheet).trigger('changed.parameter');
+        }
+    }.bind(sheet));
 };
+
+// grasppe.require(grasppe.load.status.initialize, function () { // ['angularJS'], function () {
+//     var colorSheetsApp = angular.module('ColorSheets', []);
+// 
+//     // function ColorSheetsController($scope, $mdDialog) {
+//     colorSheetsApp.controller('ColorSheetsController', function ($scope) {
+//         $scope.greeting = 'Welcome!';
+//     });
+// 
+//     angular.bootstrap(document, ['ColorSheets']);
+// 
+//     //         .controller('ColorSheetsController', function ($scope, $mdDialog) {
+//     //             var alert;
+//     //             $scope.greeting = 'hello!';
+//     // $scope.showAlert = showAlert;
+//     // $scope.reload = reload;
+//     // $scope.showDialog = showDialog;
+//     // $scope.items = [1, 2, 3];
+//     // // Internal method
+//     // 
+//     // function reload() {
+//     //     console.log('reload');
+//     // }
+//     // 
+//     // function showAlert() {
+//     //     alert = $mdDialog.alert({
+//     //         title: 'Attention',
+//     //         content: 'This is an example of how easy dialogs can be!',
+//     //         ok: 'Close'
+//     //     });
+//     //     $mdDialog.show(alert).
+//     //     finally(function () {
+//     //         alert = undefined;
+//     //     });
+//     // }
+//     // 
+//     // function showDialog($event) {
+//     //     var parentEl = angular.element(document.body);
+//     //     $mdDialog.show({
+//     //         parent: parentEl,
+//     //         targetEvent: $event,
+//     //         template: '\
+//     //             <md-dialog aria-label="List dialog">\
+//     //                 <md-dialog-content>\
+//     //                     <md-list><md-list-item ng-repeat="item in items"><p>Number {{item}}</p></md-list-item></md-list>\
+//     //                 </md-dialog-content>\
+//     //                 <div class="md-actions">\
+//     //                     <md-button ng-click="closeDialog()" class="md-primary">Close Dialog</md-button>\
+//     //                 </div>\
+//     //             </md-dialog>',
+//     //         locals: {
+//     //             items: $scope.items
+//     //         },
+//     //         controller: DialogController
+//     //     });
+//     // 
+//     //     function DialogController($scope, $mdDialog, items) {
+//     //         $scope.items = items;
+//     //         $scope.closeDialog = function () {
+//     //             $mdDialog.hide();
+//     //         }
+//     //     }
+//     // }
+//     //         });
+// /*angular.element(document).ready(function () {
+//         });*/
+// });
+
+// angular.module('ColorSheets').controller('ColorSheetsController', function($scope) {
+//       $scope.title1 = 'Button';        
+// });
 grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
     // Property Descriptions
 }), {}, {
     // Prototype
     constructor: grasppe.colorSheets.Sheet,
+    initialize: function () {},
     properties: {
         $CS: {
             get: function () {
@@ -172,6 +283,20 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 return grasppe.colorSheets.prototype.Utility;
             },
         },
+        trigger: {
+            get: function () {
+                return $(this).trigger;
+            }
+        },
+    },
+    get $controller() {
+        function ColorSheetsController($scope) {
+            $scope.greeting = 'Welcome!';
+            $scope.reload = function(){
+                location.reload();
+            };
+        }
+        return ColorSheetsController;
     },
     defineElements: function (container) {
         var prototype = Object.getPrototypeOf(this),
@@ -214,7 +339,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
     },
     detachElement: function (id) {},
     setStatus: function (status, container) {
-        return; 
+        return;
         container = $(this.element).find('.status').first();
         //.find(typeof container === 'string' ? '.color-sheet-' + container + '-element' : container).add(this.element).find('.status').first();
         // console.log('setStatus', arguments, container);
@@ -265,17 +390,19 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         $(function () {
             var elements = this.elements,
                 template = this.template,
-                prefix = this.prefix;
+                prefix = this.prefix,
+                sheet = this;
 
             PREPARE_ELEMENTS: {
-                $(this.elements.sheet).addClass('panel panel-default card grey lighten-4').data('elementDefinition', elements._definitions_).data('elements', elements);
+                $(this.elements.sheet).hide().addClass('card panel panel-default grey lighten-4').attr('ng-controller: "ColorSheetsController", ng-cloak: " "'.toLiteral()).data('elementDefinition', elements._definitions_).data('elements', elements);
                 Object.keys(elements).forEach(function (key) {
                     if (key.indexOf('_') === 0) return;
                     $(elements[key]).addClass('color-sheet-' + key + '-element').attr({
                         id: prefix + '-sheet-' + key + '-element',
                         'data-element-key': key,
-                    }).data('elementDefinition', elements._definitions_[key]).data('parent',elements.sheet);
+                    }).data('elementDefinition', elements._definitions_[key]).data('parent', elements.sheet);
                 });
+
             }
 
             // Draw Sheet Container Header
@@ -307,32 +434,25 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             }
             DRAW_PANELS: {
                 $([elements.stage, elements.parameters, elements.results, elements.overview]).addClass('z-depth-0 panel').css('display', 'inline-block').each(function () {
-                    var panel = this;
-                        title = $(this).attr('title'),
-                        key = $(this).attr('data-element-key'),
-                        heading = $(this).find('.panel-heading').first().remove(),
-                        container = $(this).find('.panel-body').first(),
-                        contents = $(container).add(this).children(),
-                        headingColor = $(this).attr('grasppe-heading-color') || 'white',
-                        headingShade = $(this).attr('grasppe-heading-shade') || 'grey darken-2';
+                    var panel = $(this);
+                    title = $(this).attr('title'), key = $(this).attr('data-element-key'), heading = $(this).find('.panel-heading').first().remove(), container = $(this).find('.panel-body').first(), contents = $(container).add(this).children(), headingColor = $(this).attr('grasppe-heading-color') || 'white', headingShade = $(this).attr('grasppe-heading-shade') || 'grey darken-2';
                     if (container.length === 0) container = $('<div class="panel-body">');
-                    container.addClass('collapse in white').appendTo(this).append(contents).on('show.bs.collapse', function() {
+                    container.addClass('collapse in white').appendTo(this).append(contents).on('show.bs.collapse', function () {
                         panel.addClass('panel-open').removeClass('panel-min');
-                    }).on('hide.bs.collapse', function() {;
+                    }).on('hide.bs.collapse', function () {;
                         panel.addClass('panel-closed').addClass('panel-min');
                     });
                     if (typeof title !== 'string' || title === '') return;
                     if (heading.length === 0) heading = $('<div class="black-text uncollpaser">');
                     heading.addClass('panel-heading uncollpaser ' + headingShade + ' ' + headingColor + '-text').html('<div class="panel-title uncollpaser truncate">' + title + '</div>').prependTo(this).show().on('click', function (event) {
-                        if ($(event.target).is('.collapser')) 
-                            container.collapse('toggle');
+                        if ($(event.target).is('.collapser')) container.collapse('toggle');
                         else if ($(event.target).is('.uncollpaser')) {
                             container.collapse('show');
                             if (panel.is('.panel-max')) panel.removeClass('panel-max panel-mid').addClass('panel-mid');
                             else panel.removeClass('panel-max panel-mid').addClass('panel-max');
                         } else return;
-                    })
-                    heading.find('.panel-title').append('<small class="status color-sheet-' + key + '-status">');
+                    });
+                    heading.find('.panel-title').append('<small class="status color-sheet-' + key + '-status">{{greeting}}</small>');
                     template[key + '-status'] = heading.find('.status').first();
                     $(this).attr('title', '');
                 });
@@ -349,29 +469,49 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 $(window).trigger('window.width');
             }
 
+            $(this.container).show();
+            $(this.elements.sheet).find('.sheet-fade-in').hide();
+            $(this.elements.sheet).find('.sheet-fade-in').removeClass('sheet-fade-in').delay(1000).fadeIn();
+            $(this.elements.sheet).fadeIn().delay(1000, function () {
+                grasppe.require(['angularJS', 'angularRoute', 'angularMaterial'], function () {
+                    this.$module.bootstrap(this.elements.sheet); // angular.bootstrap(this.elements.sheet, this.$module); //['ColorSheets']);
+                }.bind(sheet));
+                $(sheet).trigger('shown');
+                //     var colorSheetsApp = angular.module('ColorSheets', ['ngMaterial']);
+                //     colorSheetsApp.controller('ColorSheetsController', ColorSheetsController);
+                //     function ColorSheetsController($scope) {
+                //         $scope.greeting = 'Welcome!';
+                //         $scope.reload = function(){
+                //             location.reload();
+                //         };
+                //     };
+            });
+
+
         }.bind(this));
     },
     drawButtons: function () {
         var target = $(this.elements.heading).find('.sheet-heading-buttons'),
-            classes = 'waves-effect waves-light btn-flat btn';
-        if (target.length === 0) target = $('<div class="sheet-heading-buttons">').prependTo(this.elements.heading);
+            classes = 'md-raised md-mini '; //'waves-effect waves-light btn-flat btn';
+        if (target.length === 0) target = $('<div class="sheet-heading-buttons sheet-fade-in">').prependTo(this.elements.heading);
         target.addClass('pull-right');
         if (this.modals.documentation) {
             this.modals.documentation.attr('id', this.prefix + '-documentation-modal');
             this.buttons.documentation = $(this.elements.title).find('.sheet-documentation-button');
-            if ($(this.buttons.documentation).length === 0) this.buttons.documentation = $('<a class="modal-trigger ' + classes + ' orange" title="Documentation" role="button" data-target="' + this.prefix + '-documentation-modal"><span class="fa fontawesome-book white-text"></span></a>').prependTo(target).data('modal', $(this.modals.documentation));
-            this.buttons.documentation.leanModal('dismissible: true, opacity: 0.5, in_duration: 300, out_duration: 200'.toLiteral({
+            if ($(this.buttons.documentation).length === 0) this.buttons.documentation = $('<md-button class="' + classes + ' blue darken-2" title="Documentation" ng-click="showDialog($event)" role="button"><span class="fontawesome-book white-text"></span></md-button>').prependTo(target).data('modal', $(this.modals.documentation));
+/*this.buttons.documentation.leanModal('dismissible: true, opacity: 0.5, in_duration: 300, out_duration: 200'.toLiteral({
                 ready: function () {},
                 complete: function () {}
-            }));
+            }));*/
         }
-        if ($(this.buttons.reload).length === 0) this.buttons.reload = $('<a class="' + classes + ' red" title="Reload" role="button" href="javascript: location.reload();"><span class="fa fontawesome-refresh white-text"></span></a>').prependTo(target);
+        if ($(this.buttons.reload).length === 0) this.buttons.reload = $('<md-button class="' + classes + ' grey" role="button" title="Reload" ng-click="reload($event)"><span class="fontawesome-refresh white-text"></span></md-button>').prependTo(target);
+        //.on('click', function () {location.reload();})
     },
     drawOptions: function () {
         var definitions = this.options._definitions_,
             optionElements = this.options._elements_;
         if (typeof definitions !== 'object') return;
-        var classes = 'waves-effect waves-light btn-flat btn';
+        var classes = 'md-flat md-mini '; // waves-effect waves-light sheet-fade-in btn-flat btn';
         if (!this.element) return;
         Object.keys(definitions).forEach(function (key) {
             var definition = definitions[key],
@@ -379,8 +519,8 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 elementID = this.prefix + '-' + parentElement + '-option-element',
                 elementClass = this.prefix + '-' + parentElement + '-option-element',
                 parent = $(this.container).find('.color-sheet-' + parentElement + '-element'),
-                target = $(parent).find('.color-sheet-element-options'),
-                code = '<a href="javascript:" class="' + elementClass + ' ' + classes + ' grey" title="' + (definition.title ? definition.title : '') + '"><span class="fa ' + (definition.icon ? definition.icon : 'fontawesome-spinner') + ' white-text"></span></a>';
+                target = $(parent).find('.color-sheet-element-options').addClass('sheet-fade-in'),
+                code = '<md-button href="javascript:" class="' + elementClass + ' ' + classes + ' grey" title="' + (definition.title ? definition.title : '') + '"><span class="' + (definition.icon ? definition.icon : 'fontawesome-spinner') + ' white-text"></span></md-button>';
 
             if (target.length === 0) target = $('<div class="color-sheet-element-options pull-right">').prependTo($(parent).find('.panel-heading').first());
 
@@ -398,16 +538,28 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 element.addClass('dropdown-toggle').attr('data-toggle', "dropdown");
 
                 Object.keys(definition.list).forEach(function (item) {
-                    listElement.append($('<li>').append($('<a href="javascript:"><span class="' + (definition.list[item].icon ? definition.list[item].icon : 'fontawesome-spinner') + ' black-text"></span>&nbsp;' + definition.list[item].title + '</a>)').data('controller', this).on('click', function (event) {
+                    listElement.append($('<li>').append($('<a class= href="javascript:"><span class="' + (definition.list[item].icon ? definition.list[item].icon : 'fontawesome-spinner') + ' black-text"></span>&nbsp;' + definition.list[item].title + '</a>)').data('controller', this).on('click', function (event) {
                         var controller = $(this).data('controller'),
                             last = typeof controller.options === 'object' ? controller.options[key] : undefined;
-                        if (typeof controller.options === 'object' && last!== item) {
-                            $(controller).trigger('changing.option', {option: key, value: item, last: last});
+                        if (typeof controller.options === 'object' && last !== item) {
+                            $(controller).trigger('changing.option', {
+                                option: key,
+                                value: item,
+                                last: last
+                            });
                             controller.options[key] = item;
-                            $(controller).trigger('changed.option', {option: key, value: item, last: last});
+                            $(controller).trigger('changed.option', {
+                                option: key,
+                                value: item,
+                                last: last
+                            });
                         }
-                        $(controller).trigger('refresh.option', {option: key, value: item, last: last});
-                        
+                        $(controller).trigger('refresh.option', {
+                            option: key,
+                            value: item,
+                            last: last
+                        });
+
                     })));
                 }.bind(this));
             }
@@ -431,7 +583,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             Object.assign(control, {
                 definition: definition,
                 index: index,
-                wrapper: $('<div id="' + id + 'ControlWrapper" class="form-group grasppe">').appendTo(sheet.elements.controls),
+                wrapper: $('<div id="' + id + 'ControlWrapper" class="form-group grasppe sheet-fade-in">').appendTo(sheet.elements.controls),
                 group: $('<div id="' + id + 'ControlGroup" class="input-group">'),
             })
             control.group.appendTo(control.wrapper).append($('<label id="' + id + 'ControlLabel" class="control-label input-group-addon" + for"' + id + 'ControlGroup">' + definition.name + '</label>').popover(Object.assign('viewport: "body", container: "body", placement: "right", trigger: "click"'.toLiteral(), {
@@ -515,7 +667,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 paperScrollList.append('<li class="valign-wrapper"><a class="waves-effect waves-orange btn orange valign right-align white-text z-depth-0" href="javascript: grasppe.scrollWithin(\'#' + modalID + ' .paper-body\', \'#' + sectionPrefix + i + '\', 200)">' + $(sections[i - 1]).attr('title') + '</a></li>');
             }
 
-            $(modal).closeModal();
+            // $(modal).closeModal();
         }
 
     },
@@ -583,9 +735,34 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             $bottom.appendTo($body);
             break;
         default:
-            console.error(grasppe.columns.getAspect());
+            console.error('grasppe.colorSheets.sheet.refreshLayout', grasppe.columns.getAspect());
             return;
         }
         console.log(grasppe.columns.getAspect());
     },
 });
+
+grasppe.colorSheets.loadModule = function (id) {
+    if (!id) id = grasppe.colorSheets.sheetID;
+    if (id) {
+        // grasppe.load(id + '-sheet-styles', id + '.css');
+        grasppe.load(id + '-sheet-script', id + '.js');
+    }
+};
+
+grasppe.require('mobileDetect', function () {
+    console.log('Requirement fullfilled', arguments);
+});
+
+grasppe.require(grasppe.load.status.initialize, function () {
+    // console.log('Requirement fullfilled', grasppe.load.status.initialize.join(','));
+    grasppe.colorSheets.script = document.getElementById('colorsheet-script');
+    if (grasppe.colorSheets.script instanceof HTMLElement) {
+        grasppe.colorSheets.sheetID = grasppe.colorSheets.script.getAttribute('data-sheet-id');
+        //console.log(grasppe.colorSheets.script, grasppe.colorSheets.sheetID)
+        grasppe.colorSheets.loadModule();
+    };
+    grasppe.load('colorSheets-sheet-styles-1', window.location.pathname + grasppe.load.stylePrefix + 'colorsheets.css');
+});
+
+//grasppe.load('colorSheets-sheet-styles-1', window.location.pathname + grasppe.load.stylePrefix + 'colorsheets.css', 'head');
