@@ -30,6 +30,19 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             if (!declared || !supported) return (typeof fallback === 'function') ? fallback() : false;
             else return grasppe.require.apply(null, arguments); // if (supported && declared)
         }
+        
+        static test(actual, expected) {
+            if (arguments.length===1) {
+                if ($ && $(actual).length === 1 && $(actual)[0] instanceof HTMLElement)
+                    console.info('TEST: \n\t%s\t%s\n\tActual:', 'HTMLElement', $('<div>').append(actual).html(), actual);
+                else
+                    console.info('TEST: \n\t%s\t%s\n\tActual:', typeof actual, actual, actual);
+            }
+            else if (actual === expected) console.info('TEST PASS: EXACT\n\t%s\t%s\n\tActual:', typeof actual, actual, actual);
+            else if (actual == expected) console.info('TEST PASS: SIMILAR\n\t%s\t%s\n\tActual:', typeof actual, actual, actual);
+            else console.warn('TEST FAIL:\n\t%s\t%s\n\tActual:%oExpected:%o', typeof actual, actual, actual, expected);
+        }
+        
         static require(requirements, callback, fallback) {
             if (grasppe.checkRequirement(requirements, callback)) SUCCESS: {
                 delete callback.attempts;
@@ -50,6 +63,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return grasppe.require(requirements, callback);
             }, 500, requirements, callback);
         }
+        
         static checkRequirement(requirement) {
             if (!grasppe.load || !grasppe.load.status) return false;
             if (typeof requirement === 'string') {
@@ -141,7 +155,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }, 1);
             };
 
-            var loaderElement = document.getElementById('grasppe-load');
+            var loaderElement = document.getElementById('grasppe-api');
             grasppe.load.stylePrefix = prefix, grasppe.load.scriptPrefix = prefix;
             if (loaderElement instanceof HTMLElement) {
                 if (!prefix) prefix = loaderElement.src.replace(/^.*?#/g, '');
@@ -157,43 +171,41 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
                 jQuery: '           scripts:    ["//code.jquery.com/jquery.min.js"]'.toLiteral(),
-                bootstrap: '        scripts:    ["//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"], \
-                            styles:     ["//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"]'.toLiteral(),
+                bootstrap: '        scripts:    ["bootstrap.min.js"], \
+                                    styles:     ["bootstrap.min.css"]'.toLiteral(),
                 angularJS: '        scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"]'.toLiteral(),
                 angularRoute: '     scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"]'.toLiteral(),
                 angularMessages: '  scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-messages.min.js"]'.toLiteral(),
                 angularAnimate: '   scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.min.js"]'.toLiteral(),
                 angularAria: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-aria.min.js"]'.toLiteral(),
-                // angularJS: '        scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js", \
-                //                                  "//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js", \
-                //                                  "//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-messages.min.js", \
-                //                                  "//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.min.js", \
-                //                                  "//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-aria.min.js"]'.toLiteral(),
                 angularMaterial: '  scripts:    ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.js"], \
-                            styles:     ["//ajax.googleapis.com/ajax/libs/angular_material/1.0.0-rc1/angular-material.min.css"]'.toLiteral(),
+                                    styles:     ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.min.css"]'.toLiteral(),
                 materializeColors: 'styles:     ["materialize-colors.min.css"]'.toLiteral(),
                 materializeCSS: '   styles:     ["materialize.min.css"]'.toLiteral(),
                 materialize: '      scripts:    ["materialize.min.js"], \
-                            styles:     ["materialize.min.css"]'.toLiteral(),
-                jQueryUI: '         scripts:    ["//code.jquery.com/ui/1.11.4/jquery-ui.min.js"], \
-                            styles:     ["//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css"]'.toLiteral(),
+                                    styles:     ["materialize.min.css"]'.toLiteral(),
+                // jQueryUI: '         scripts:    ["//code.jquery.com/ui/1.11.4/jquery-ui.min.js"], \
+                //                     styles:     ["//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css"]'.toLiteral(),
+                jQueryUI: '         scripts:    ["jquery-ui.min.js"], \
+                                    styles:     ["jquery-ui.css"]'.toLiteral(),
                 jQueryTouch: '      scripts:    ["//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"]'.toLiteral(),
-                mobileDetect: '     scripts:    ["//cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.3.0/mobile-detect.min.js"]'.toLiteral(),
+                // mobileDetect: '     scripts:    ["//cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.3.0/mobile-detect.min.js"]'.toLiteral(),
+                mobileDetect: '     scripts:    ["mobile-detect.min.js"]'.toLiteral(),
                 fontAwesome: '      styles:     ["//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"]'.toLiteral(),
-                googleTheme: '      styles:     ["//ssl.gstatic.com/docs/script/css/add-ons.css", \
-                                         "//ssl.gstatic.com/docs/script/css/add-ons1.css", \
-                                         "bootply-google-plus-bootstrap.css"]'.toLiteral(),
+                // googleTheme: '      styles:     ["//ssl.gstatic.com/docs/script/css/add-ons.css", \
+                //                                  "//ssl.gstatic.com/docs/script/css/add-ons1.css", \
+                //                                  "bootply-google-plus-bootstrap.css"]'.toLiteral(),
+                googleTheme: '      styles:     ["add-ons.css", \
+                                                 "add-ons1.css", \
+                                                 "bootply-google-plus-bootstrap.css"]'.toLiteral(),
                 grasppeCore: '      scripts:    ["grasppe-prototypes.js", \
-                                         "grasppe-function.js", \
-                                         "grasppe-ui.js", \
-                                         "grasppe-chorale.js", \
-                                         "grasppe-gapi.js"]'.toLiteral(),
+                                                 "grasppe-function.js", \
+                                                 "grasppe-ui.js", \
+                                                 "grasppe-chorale.js", \
+                                                 "grasppe-gapi.js"]'.toLiteral(),
                 colorSheets: '      scripts:    ["grasppe-canvas.js", \
-                                         "grasppe-geometry.js", \
-                                         "colorsheets-jiver.js"]'.toLiteral(),
-                // styles:     ["colorsheets-glyphics.css", \
-                //              "colorsheets-default.css", \
-                //              "colorsheets-viewport.css", \
+                                                 "grasppe-geometry.js", \
+                                                 "colorsheets-jiver.js"]'.toLiteral(),
             };
             grasppe.load.status.initialize = libraries._order;
             libraries._order.forEach(function (id) { // Object.keys(libraries).forEach(function (id) {

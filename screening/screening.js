@@ -1,3 +1,5 @@
+grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
+
 $(function () {
     if (typeof window.grasppe !== 'function') window.grasppe = function () {};
     grasppe = window.grasppe;
@@ -19,10 +21,10 @@ $(function () {
             }).on('changed.calculations', function (event) {
                 this.updatePlot();
             }).on('refresh.option', function (event, data) {
-                try {
-                    if (data.option === 'shading' || data.option === 'panning') this.updatePlot();
-                } catch (err) {}
                 console.log(event, data);
+                try {
+                    if (data.id === 'shading' || data.id === 'panning') this.updatePlot();
+                } catch (err) {}
             }).on('resized.window', function (event, data) {
                 this.adjustPlotSize();
             });
@@ -208,19 +210,19 @@ $(function () {
                     plotGridStyle: 'lineWidth: 1; strokeStyle: "RGBA(127,127,127,0.25)"'.toLiteral(),
                 },
                 seriesOptions: {
-                    intendedSeriesDefaultStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 6]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                    halftoneSeriesDefaultStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
-                    screeningSeriesDefaultStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
-                    intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 6]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                    halftoneSeriesStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
+                    intendedSeriesDefaultStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                    halftoneSeriesDefaultStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
+                    screeningSeriesDefaultStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
+                    intendedSeriesStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                    halftoneSeriesStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
                     halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.5)"'.toLiteral(),
-                    screeningSeriesStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
+                    screeningSeriesStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
                     screeningSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.25)"'.toLiteral(),
-                    screeningSeriesLineStyle: 'lineWidth: 0; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
+                    screeningSeriesLineStyle: 'lineWidth: 0, strokeStyle: "#0000FF", lineDash: [6, 12]'.toLiteral(),
                 },
                 legendOptions: {
                     seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nScreening'],
-                    legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
+                    legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2'.toLiteral(),
                 }
             },
         },
@@ -235,7 +237,9 @@ $(function () {
         initialize: function () {
             this.adjustPlotSize();
             this.calculateStack();
-            setTimeout(this.updatePlot.bind(this), 1000);
+            setTimeout(function () {
+                this.updatePlot();
+            }.bind(this), 1000);
         },
         attachElement: function (id) {
             if (id === 'contents') {
@@ -311,7 +315,6 @@ $(function () {
                     var screeningPixelBoxes = [];
                     screeningXs = screeningBox[2][0] / f.cells;
                     screeningYs = screeningBox[2][1] / f.cells;
-                    console.log(screeningXs, screeningYs);
                     if (this.options.shading === 'screenings') for (var i = 0; i < f.cells; i++) {
                         for (var j = 0; j < f.cells; j++) {
                             var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
@@ -426,23 +429,23 @@ $(function () {
                 //$('body').is('.iPad,.iPhone') ? 1 : 1.5,
                 plotTypeFactor: 1 / 72,
                 plotLineFactor: 1 / 72 / 12,
-                intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                halftoneSeriesStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
+                intendedSeriesStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 3], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                halftoneSeriesStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
                 halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
-                screeningSeriesStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
+                screeningSeriesStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
                 screeningSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.125)"'.toLiteral(),
-                screeningSeriesLineStyle: 'lineWidth: 0.5; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
-                plotGridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
-                plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
-                plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
-                legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
+                screeningSeriesLineStyle: 'lineWidth: 0.5, strokeStyle: "#0000FF", lineDash: [6, 12]'.toLiteral(),
+                plotGridStyle: 'lineWidth: 0.75, strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
+                plotBoxStyle: 'fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
+                plotFrameStyle: 'strokeStyle: "blue", lineWidth: 1'.toLiteral(),
+                legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2'.toLiteral(),
                 seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nScreening'],
                 plotCanvas: $(this.elements.contents).find('div').first(),
             }, this.options, this.options.plotOptions, this.options.seriesOptions, this.options.legendOptions);
             return this;
         },
         adjustPlotSize: function () {
-            //if (typeof this.elements !== 'object') return;
+            // if (typeof this.elements !== 'object') return;
             try {
                 var plotCanvas = $(this.elements.contents).find('.plot-canvas').first(),
                     plotWrapper = $(this.elements.contents),
@@ -454,7 +457,9 @@ $(function () {
                 if (plotCanvas.length > 0 && (plotCanvas[0].width !== plotSize || plotCanvas[0].height !== plotSize)) {
                     plotCanvas[0].width = plotSize;
                     plotCanvas[0].height = plotSize;
-                    setTimeout(this.updatePlot(), 100, undefined);
+                    setTimeout(function () {
+                        this.updatePlot();
+                    }.bind(this), 100, undefined);
                 }
                 plotCanvas.css('left', (wrapWidth - Math.min(wrapWidth, wrapHeight)) / 2);
             } catch (err) {
@@ -489,13 +494,14 @@ $(function () {
                 text += "and, resolution error of " + t.lineErrorLPI + "% vs. " + t.cellErrorLPI + "%.</p>";
                 text += "</div>";
                 // $('#results-explaination').html(text);
-                $(this.elements.overview).find('.panel-body').first().html(text);
+                //$(this.elements.overview).find('.panel-body').first().html(text);
+                this.template['overview-contents'].html(text);
                 return text;
             }.bind(this), 10);
             return this;
         },
         updateTable: function () {
-            $(this.elements.results).find('.panel-body').first().html(this.createTable()).find('.base-calculations-scenario').hide();
+            this.template['results-contents'].html(this.createTable()).find('.base-calculations-scenario').hide();
             return this;
         },
         createTable: function (definitions, scenarios, container) {

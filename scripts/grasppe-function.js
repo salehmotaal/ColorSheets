@@ -1,4 +1,4 @@
-if (typeof window.grasppe !== 'function') window.grasppe = function () {};
+grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
 
 grasppe.FunctionHandler = function (callback, options) {
     if (typeof options !== 'object') options = {};

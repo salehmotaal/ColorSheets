@@ -1,11 +1,11 @@
+grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
+
 $(function () {
     google.load('visualization', '1.0', {
         packages: ['table', 'corechart'],
         // '', 'controls', 
         callback: function () {}
     });
-
-    if (typeof window.grasppe !== 'function') window.grasppe = function () {};
 
     if (!('Factory' in grasppe)) grasppe.Factory = function () {};
     grasppe.Factory.Modal = function (id, classes, body, heading, footer) {

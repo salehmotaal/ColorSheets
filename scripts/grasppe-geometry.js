@@ -1,4 +1,5 @@
-if (typeof window.grasppe !== 'function') window.grasppe = function () {};
+grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
+
 if (!grasppe.canvas) grasppe.canvas = function () {};
 grasppe.canvas.Point = function (values, parameters) {
     Array.call(this);

@@ -1,6 +1,6 @@
+grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
+
 $(function () {
-    if (typeof window.grasppe !== 'function') window.grasppe = function () {};
-    grasppe = window.grasppe;
     if (typeof grasppe.colorSheets !== 'function') grasppe.colorSheets = function () {};
 
     if (typeof grasppe.colorSheets.SupercellSheet !== 'function') {

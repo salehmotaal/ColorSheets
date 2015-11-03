@@ -1,4 +1,5 @@
-if (typeof window.grasppe !== 'function') window.grasppe = function () {};
+grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
+
 var agentDetect = new MobileDetect(window.navigator.userAgent);
 $(function (app) {
     $('body').addClass([agentDetect.is('iPhone') ? 'iPhone' : '', agentDetect.is('iPad') ? 'iPad' : ''].join(' '));
