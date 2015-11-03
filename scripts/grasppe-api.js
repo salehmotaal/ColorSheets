@@ -167,19 +167,27 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', 'googleAPI', 'modernizr', 'bootstrap', 'angularMaterial', 'materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'colorSheets'],
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial', 'materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'colorSheets'],
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
-                jQuery: '           scripts:    ["//code.jquery.com/jquery.min.js"]'.toLiteral(),
+                // jQuery: '           scripts:    ["//code.jquery.com/jquery.min.js"]'.toLiteral(),
+                jQuery: '           scripts:    ["jquery.min.js"]'.toLiteral(),
                 bootstrap: '        scripts:    ["bootstrap.min.js"], \
                                     styles:     ["bootstrap.min.css"]'.toLiteral(),
-                angularJS: '        scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"]'.toLiteral(),
-                angularRoute: '     scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"]'.toLiteral(),
-                angularMessages: '  scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-messages.min.js"]'.toLiteral(),
-                angularAnimate: '   scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.min.js"]'.toLiteral(),
-                angularAria: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-aria.min.js"]'.toLiteral(),
-                angularMaterial: '  scripts:    ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.js"], \
-                                    styles:     ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.min.css"]'.toLiteral(),
+                // angularJS: '        scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"]'.toLiteral(),
+                // angularRoute: '     scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"]'.toLiteral(),
+                // angularMessages: '  scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-messages.min.js"]'.toLiteral(),
+                // angularAnimate: '   scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.min.js"]'.toLiteral(),
+                // angularAria: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-aria.min.js"]'.toLiteral(),
+                // angularMaterial: '  scripts:    ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.js"], \
+                //                     styles:     ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.min.css"]'.toLiteral(),
+                angularJS: '        scripts:    ["angular.min.js"]'.toLiteral(),
+                angularRoute: '     scripts:    ["angular-route.min.js"]'.toLiteral(),
+                angularMessages: '  scripts:    ["angular-messages.min.js"]'.toLiteral(),
+                angularAnimate: '   scripts:    ["angular-animate.min.js"]'.toLiteral(),
+                angularAria: '      scripts:    ["angular-aria.min.js"]'.toLiteral(),
+                angularMaterial: '  scripts:    ["angular-material.js"], \
+                                    styles:     ["angular-material.min.css"]'.toLiteral(),
                 materializeColors: 'styles:     ["materialize-colors.min.css"]'.toLiteral(),
                 materializeCSS: '   styles:     ["materialize.min.css"]'.toLiteral(),
                 materialize: '      scripts:    ["materialize.min.js"], \
@@ -187,11 +195,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // jQueryUI: '         scripts:    ["//code.jquery.com/ui/1.11.4/jquery-ui.min.js"], \
                 //                     styles:     ["//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css"]'.toLiteral(),
                 jQueryUI: '         scripts:    ["jquery-ui.min.js"], \
-                                    styles:     ["jquery-ui.css"]'.toLiteral(),
-                jQueryTouch: '      scripts:    ["//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"]'.toLiteral(),
+                                    styles:     ["//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css"]'.toLiteral(),
+                // jQueryTouch: '      scripts:    ["//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"]'.toLiteral(),
+                jQueryTouch: '      scripts:    ["jquery.ui.touch-punch.min.js"]'.toLiteral(),
                 // mobileDetect: '     scripts:    ["//cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.3.0/mobile-detect.min.js"]'.toLiteral(),
                 mobileDetect: '     scripts:    ["mobile-detect.min.js"]'.toLiteral(),
-                fontAwesome: '      styles:     ["//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"]'.toLiteral(),
+                // fontAwesome: '      styles:     ["//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"]'.toLiteral(),
+                fontAwesome: '      styles:     ["font-awesome.min.css"]'.toLiteral(),
                 // googleTheme: '      styles:     ["//ssl.gstatic.com/docs/script/css/add-ons.css", \
                 //                                  "//ssl.gstatic.com/docs/script/css/add-ons1.css", \
                 //                                  "bootply-google-plus-bootstrap.css"]'.toLiteral(),
@@ -208,6 +218,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                                  "colorsheets-jiver.js"]'.toLiteral(),
             };
             grasppe.load.status.initialize = libraries._order;
+            
+            // grasppe.load('jQuery', 
             libraries._order.forEach(function (id) { // Object.keys(libraries).forEach(function (id) {
                 var library = libraries[id];
                 grasppe.load.status[id] = {};

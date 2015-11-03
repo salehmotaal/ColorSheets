@@ -1,10 +1,12 @@
 grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
 
 $(function () {
-    google.load('visualization', '1.0', {
-        packages: ['table', 'corechart'],
-        // '', 'controls', 
-        callback: function () {}
+    grasppe.require(['googleAPI'], function() {
+        google.load('visualization', '1.0', {
+            packages: ['table', 'corechart'],
+            // '', 'controls', 
+            callback: function () {}
+        });
     });
 
     if (!('Factory' in grasppe)) grasppe.Factory = function () {};
@@ -109,6 +111,8 @@ $(function () {
                 $(this).attr('class', newClasses);
             });
 
+
+            // $("*[class*='window-xs-']")
 
         });
         $(window).resize();

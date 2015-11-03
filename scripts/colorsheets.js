@@ -61,7 +61,7 @@ grasppe.colorSheets.prototype = Object.assign(Object.create({}, {
             else if (typeof element === 'string' && document.getElementById(element) instanceof HTMLElement) context[property].element = document.getElementById(element);
             else if ($element.length === 1 && $element[0] instanceof HTMLElement) context[property].element = $element[0];
             else context[property].element = undefined;
-            $element.addClass('color-sheet-' + property);
+            $element.addClass('color-sheet-' + property.replace(/^_/, ''));
         },
         defineElementProperties: function (property, reference, context, selector) {
             if (!context) context = this;
@@ -126,9 +126,9 @@ grasppe.colorSheets.Sheet = function (container) {
             template: valueObject({}),
             parameters: valueObject(prototype.parameters || {}),
             options: valueObject(prototype.options || {}),
-            buttons: 'value: {}'.toLiteral(),
-            modals: 'value: {}'.toLiteral(),
-            template: 'value: {}'.toLiteral(),
+            buttons: valueObject({}),
+            modals: valueObject({}),
+            template: valueObject({}),
         });
         Object.defineProperties(this, prototype.properties);
         Object.defineProperties(this, Object.getPrototypeOf(prototype).properties);
@@ -149,7 +149,7 @@ grasppe.colorSheets.Sheet = function (container) {
     grasppe.require(['angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', 'angularMaterial'], function () {
         CONFIGURE_ANGULAR: {
             var colorSheetsModule = grasppe.colorSheets.Sheet.prototype.$getModule(this),
-                colorSheetsController = colorSheetsModule.controller('ColorSheetsController', ['$scope', 'sheet', grasppe.colorSheets.Sheet.prototype.$controller]),
+                colorSheetsController = colorSheetsModule.controller('ColorSheetsController', ['$scope', 'sheet', '$mdDialog', grasppe.colorSheets.Sheet.prototype.$controller]),
                 sheetController = (typeof this.$controller === 'function' && this.$controller !== grasppe.colorSheets.Sheet.prototype.$controller) ? colorSheetsModule.controller(this.prefix + 'SheetController', this.$controller) : undefined;
 
             Object.defineProperties(this, {
@@ -163,6 +163,8 @@ grasppe.colorSheets.Sheet = function (container) {
         }
         PREPARE_LAYOUT: {
             $(sheet).trigger('shown');
+
+            $(sheet).find('md-toolbar').addClass('transparent');
 
             this.defineElements(container);
             $(window).on('window.width', this.refreshLayout.bind(this));
@@ -302,7 +304,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         return colorSheetsModule;
     },
     get $controller() {
-        function ColorSheetsController($scope, sheet) {
+        function ColorSheetsController($scope, sheet, $mdDialog) {
             // console.log('ColorSheetsController', arguments);
             $scope.sheet = sheet;
             $scope.greeting = 'Welcome!';
@@ -313,6 +315,30 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             $scope.selectMenuOption = function ($event, key, item) {
                 // console.log($scope.sheet);
                 $scope.sheet.setOption(key, item);
+            };
+
+            $scope.openDocumentation = function ($event) {
+                //console.log($(<'div'>).append($(sheet.modals.documentation).clone()).html());
+                // console.log(sheet.modals.documentation);
+                // return;
+                $mdDialog.show({
+                    parent: angular.element(document.body),
+                    clickOutsideToClose: true,
+                    scope: $scope,
+                    // use parent scope in template
+                    preserveScope: true,
+                    // do not forget this if use parent scope
+                    // Since GreetingController is instantiated with ControllerAs syntax
+                    // AND we are passing the parent '$scope' to the dialog, we MUST
+                    // use 'vm.<xxx>' in the template markup
+                    template: $('<md-dialog>').append(sheet.modals.documentation).html(),
+                    controller: function DialogController($scope, $mdDialog) {
+                        $scope.closeDialog = function () {
+                            $mdDialog.hide();
+                        }
+                    }
+                });
+
             };
         }
         return ColorSheetsController; // .bind(sheet);
@@ -430,7 +456,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 Object.keys(elements).forEach(function (key) {
                     if (key.indexOf('_') === 0) return;
                     $(elements[key]).addClass('color-sheet-' + key.match(/[\w-]*/)[0] + '-element').attr({
-                        id: prefix + '-sheet-' + key + '-element',
+                        id: prefix + '-sheet-' + key.replace(/^_/, '') + '-element',
                         'data-element-key': key,
                     }).data('elementDefinition', elements._definitions_[key]).data('parent', elements.sheet);
                 });
@@ -454,13 +480,25 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 elements.footer = $(elements.sheet).find('.color-sheet-footer').html('<small>Copyright &copy; 2015, Franz Sigg and Saleh Abdel Motaal</small>');
                 $(this.container).empty().append(elements.sheet);
             }
+            SHEET_TOOLBAR: {
+                var panelToolbarKey = 'sheet-toolbar',
+                    panelToolbarContents = elements.heading.children().remove(),
+                    panelToolbar = factory.createToolbar(elements.heading, []),
+                    panelToolbarContainer = panelToolbar.find('.collection').first();
+
+                panelToolbarContainer.closest('md-toolbar').addClass('transparent'); // + headerColor);
+                panelToolbarContainer.prepend($('<h1 class="panel-title black-text">').append($('<span>').append(panelToolbarContents)).add('<span flex=""></span>'));
+                elements.heading.addClass('with-toolbar').attr('layout', 'row').attr('layout-align', 'start center');
+                template[panelToolbarKey] = panelToolbar;
+            }
+
             CALL_DELEGATES: {
                 this.drawPanels();
                 this.drawOptions();
                 this.drawControls();
                 this.drawModals();
                 this.drawButtons();
-                $(window).trigger('window.width');
+                this.refreshLayout(); //$(window).trigger('window.width');
             }
 
             DISPLAY_ELEMENTS: {
@@ -489,20 +527,33 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             };
         ['stage', 'parameters', 'results', 'overview'].forEach(function (key) {
             var $this = $(elements[key]),
-                panelClass = 'color-sheet-' + key + '-element',
+                panelClass = 'color-sheet-' + key.replace(/^_/, '') + '-element',
                 headerText = $this.attr('title'),
                 headerShading = ($this.attr('grasppe-heading-shade') || 'grey darken-2'),
                 headerColor = ($this.attr('grasppe-heading-color') || 'white') + '-text',
                 panel = factory.createPanel(classes.panel, factory.parseElement(classes.body), factory.parseElement(classes.header), factory.parseElement(classes.footer)).addClass(panelClass),
                 panelBody = $(panel).find('.color-sheet-panel-body').append($this.find('.panel-body').first().add($this).children()),
                 panelHeader = $(panel).find('.color-sheet-panel-heading').addClass(headerShading),
-                panelTitle = $(panelHeader).find('.panel-title').addClass('truncate uncollpaser ' + headerColor).html(headerText),
+                panelTitle = $(panelHeader).find('.panel-title').addClass('uncollpaser ' + headerColor).html(headerText),
                 panelStatus = $('<small class="panel-status truncate">').appendTo(panelTitle),
                 panelFooter = $(panel).find('.color-sheet-panel-footer'),
                 eventData = {
                     panel: panel,
                     body: panelBody,
                 };
+
+            ELEMENT_TOOLBAR: {
+                var panelToolbarKey = key + '-toolbar',
+                    panelToolbarContents = panelHeader.children().remove(),
+                    panelToolbar = factory.createToolbar(panelHeader, []),
+                    panelToolbarContainer = panelToolbar.find('.collection').first();
+
+                panelToolbarContainer.closest('md-toolbar').addClass('transparent'); // + headerColor);
+                panelToolbarContainer.prepend($('<h1 class="panel-title">').append($('<span>').append(panelToolbarContents)).add('<span flex=""></span>'));
+                panelHeader.addClass('with-toolbar');
+                panel.find('.panel-heading').first().attr('layout', 'row').attr('layout-align', 'start center');
+                template[panelToolbarKey] = panelToolbar;
+            }
             ELEMENT_ASSIGNMENT: {
                 Object.assign(template, {
                     [key + '-contents']: panelBody,
@@ -531,17 +582,17 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
 
     },
     drawButtons: function () {
-        var target = $(this.elements.heading).find('.sheet-heading-buttons'),
+        var template = this.template,
+            toolbar = $(template['sheet-toolbar']),
+            //$(this.elements.heading).find('.sheet-heading-buttons'),
             factory = grasppe.Chorale.Factory(),
             modals = this.modals,
             buttons = this.buttons,
             elements = this.elements,
             prefix = this.prefix,
-            classes = 'md-flat md-button md-mini ';
-        if (target.length === 0) target = $('<div class="sheet-heading-buttons sheet-fade-in">').prependTo(elements.heading);
-        target.addClass('pull-right');
-        if (modals.documentation && $(buttons.documentation).length === 0) buttons.documentation = factory.createButton(factory.createIcon('fontawesome-book', 'white-text'), 'modal-trigger orange ' + classes, 'Documentation').prependTo(target).attr('ng-click', 'openDocumentation($event)');
-        if ($(buttons.reload).length === 0) buttons.reload = factory.createButton(factory.createIcon('fontawesome-refresh', 'white-text'), 'grey ' + classes, 'Documentation').prependTo(target).attr('ng-click', 'reload($event)');
+            classes = 'md-mini md-flat';
+        PAGE_RELOAD: if ($(buttons.reload).length === 0) buttons.reload = factory.insertToolbarElement(toolbar, factory.createButton(factory.createIcon('fa fa-refresh', 'white-text button-icon-size', 'font-icon'), 'grey ' + classes, 'Reload').attr('ng-click', 'reload($event)'));
+        DOCUMENTATION: if (modals.documentation && $(buttons.documentation).length === 0) buttons.documentation = factory.insertToolbarElement(toolbar, factory.createButton(factory.createIcon('fa fa-book', 'white-text button-icon-size ', 'font-icon'), 'modal-trigger orange ' + classes, 'Documentation').attr('ng-click', 'openDocumentation($event)'));
 
     },
     drawOptions: function () {
@@ -552,25 +603,24 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             prefix = this.prefix,
             sheet = this,
             definitions = this.options._definitions_,
+            defaultClasses = '  ',
+            iconClasses = ' button-icon-size ' + defaultClasses,
             optionElements = this.options._elements_;
 
         if (typeof definitions !== 'object') return;
         Object.keys(definitions).forEach(function (option) {
             var definition = definitions[option],
                 parentKey = definition.element.toLowerCase().trim(),
-                parent = $(template[parentKey + '-footer']),
+                parent = $(template[parentKey + '-header']),
+                children = parent.children(),
                 id = prefix + '-' + parentKey + '-option-element',
                 toolbarKey = parentKey + '-toolbar',
-                toolbar = ($(template[toolbarKey]).length > 0) ? $(template[toolbarKey]).first() : factory.createToolbar(parent, []).attr({
-                    'md-direction': 'left',
-                }),
+                toolbar = ($(template[toolbarKey]).length > 0) ? $(template[toolbarKey]).first() : factory.createToolbar(parent, []),
                 toolbarContainer = toolbar.find('.collection').first();
 
-            toolbarContainer.closest('md-toolbar').addClass('grey lighten-1');
-
             var elementType = definition.type === 'list' ? 'menu' : definition.type === 'boolean' ? 'toogle' : 'button',
-                elementContents = factory.createIcon(definition.icon || 'fontawesome-spinner', 'white-text'),
-                elementClasses = prefix + '-' + parentKey + '-option-element grey',
+                elementContents = factory.createIcon(definition.icon || 'fa fa-spinner', iconClasses, 'font-icon'),
+                elementClasses = prefix + '-' + parentKey + '-option-element' + defaultClasses,
                 element = (toolbar.find('#' + id).length > 0) ? toolbar.find('#' + id).first() : [];
 
             if (element.length === 0) switch (elementType) {
@@ -578,9 +628,9 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 var menuItemClasses = '',
                     menuItems = Object.keys(definition.list).map(function (key) {
                         var item = definition.list[key];
-                        return factory.createButton(factory.createIcon(item.icon).append(item.title), menuItemClasses, item.description).attr('ng-click', 'selectMenuOption($event, "' + option + '", "' + key + '")');
+                        return factory.createButton(factory.createIcon(item.icon || 'fa fa-spinner', iconClasses, 'font-icon').add($('<span>').append(item.title)), menuItemClasses, item.description).attr('ng-click', 'selectMenuOption($event, "' + option + '", "' + key + '")');
                     });
-                element = factory.createMenu($('<li>').append(factory.createButton('<span class="' + definition.icon + '">' + definition.title + '</span>', menuItemClasses, definition.description).attr('ng-click', '$mdOpenMenu($event)')), menuItems);
+                element = factory.createMenu($('<li>').append(factory.createButton(factory.createIcon(definition.icon || 'fa fa-spinner', iconClasses, 'font-icon').add($('<span>').append(definition.title)), menuItemClasses, definition.description).attr('ng-click', '$mdOpenMenu($event)')), menuItems);
                 factory.insertToolbarElement(toolbar, element);
                 break;
             case 'button':
@@ -589,66 +639,6 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
             optionElements[option] = element;
             template[toolbarKey] = toolbar;
         });
-    },
-    drawOptionsX: function () {
-        var definitions = this.options._definitions_,
-            optionElements = this.options._elements_;
-        if (typeof definitions !== 'object') return;
-        var classes = 'md-flat md-mini '; // waves-effect waves-light sheet-fade-in btn-flat btn';
-        if (!this.element) return;
-        Object.keys(definitions).forEach(function (key) {
-            var definition = definitions[key],
-                parentElement = definition.element.toLowerCase().trim(),
-                elementID = this.prefix + '-' + parentElement + '-option-element',
-                elementClass = this.prefix + '-' + parentElement + '-option-element',
-                parent = $(this.container).find('.color-sheet-' + parentElement + '-element'),
-                target = $(parent).find('.color-sheet-element-options').addClass('sheet-fade-in'),
-                code = '<md-button href="javascript:" class="' + elementClass + ' ' + classes + ' grey" title="' + (definition.title ? definition.title : '') + '"><span class="' + (definition.icon ? definition.icon : 'fontawesome-spinner') + ' white-text"></span></md-button>';
-
-            if (target.length === 0) target = $('<div class="color-sheet-element-options pull-right">').prependTo($(parent).find('.panel-heading').first());
-
-            optionElements[key] = $(target).find('#' + elementID);
-            if (optionElements[key].length === 0) optionElements[key] = $(code).prependTo(target);
-
-            var element = optionElements[key];
-
-            if (typeof definition.list === 'object') {
-                var dropdownElement = element.parent().is('.dropdown') ? element.parent() : element.wrap('<div class="dropdown">').parent(),
-                    listElement = dropdownElement.find('ul').length === 1 ? dropdownElement.find('ul') : $('<ul class="dropdown-menu dropdown-menu-right">').insertAfter(element),
-                    listID = elementID + '-list';
-
-                listElement.attr('id', listID).attr('aria-labelledby', elementID);
-                element.addClass('dropdown-toggle').attr('data-toggle', "dropdown");
-
-                Object.keys(definition.list).forEach(function (item) {
-                    listElement.append($('<li>').append($('<a class= href="javascript:"><span class="' + (definition.list[item].icon ? definition.list[item].icon : 'fontawesome-spinner') + ' black-text"></span>&nbsp;' + definition.list[item].title + '</a>)').data('controller', this).on('click', function (event) {
-                        var controller = $(this).data('controller'),
-                            last = typeof controller.options === 'object' ? controller.options[key] : undefined;
-                        if (typeof controller.options === 'object' && last !== item) {
-                            $(controller).trigger('changing.option', {
-                                option: key,
-                                value: item,
-                                last: last
-                            });
-                            controller.options[key] = item;
-                            $(controller).trigger('changed.option', {
-                                option: key,
-                                value: item,
-                                last: last
-                            });
-                        }
-                        $(controller).trigger('refresh.option', {
-                            option: key,
-                            value: item,
-                            last: last
-                        });
-
-                    })));
-                }.bind(this));
-            }
-
-            // console.log(element.attr('data-activates'));
-        }.bind(this));
     },
     drawControls: function () {
         var prototype = Object.getPrototypeOf(this),
@@ -714,9 +704,23 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
         });
     },
     drawModals: function () {
+        var elements = this.elements,
+            template = this.template,
+            factory = grasppe.Chorale.Factory(),
+            components = {
+                modal: '.modal.color-sheet-modal.animate-show.animate-hide',
+                header: '.modal-heading.color-sheet-modal-heading',
+                body: '.modal-body.color-sheet-modal-body',
+                footer: '.modal-footer.color-sheet-modal-footer',
+            };
+
         if (this.elements.documentation) {
-            if (this.modals.documentation) $(this.modals.documentation).remove();
-            this.modals.documentation = $('<div class="modal modal-fixed-header">').appendTo('body');
+            if (this.modals.documentation) {
+                $(this.modals.documentation).remove();
+                this.modals.documentation = undefined;
+            }
+            this.modals.documentation = factory.createModal(); 
+            // classes.modal, factory.parseElement(classes.body), factory.parseElement(classes.header), factory.parseElement(classes.footer)).appendTo('body');
             var element = $(this.elements.documentation),
                 article = element.find('article').first(),
                 title = article.attr('title'),
@@ -732,34 +736,36 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 modalID = this.prefix + '-documentation-modal',
                 modal, contents, footer, paperBody, paperScroll;
 
-            grasppe.contingent(['materialize'], function () {
+            grasppe.contingent(['angularJS'], function () {
+                var modal = this.modals.documentation.attr('ng-clock', ' '),
+                    modalBody = $(modal).children('md-dialog-content').first().append($(paper).clone()),
+                    modalHeader = $(modal).children('md-toolbar').first().addClass('orange'),
+                    modalFooter = $(modal).children('.md-actions').first().remove();
+                modalHeader.find('.grasppe-header-text').remove();
+                $(header).clone().appendTo(modalHeader).addClass('.grasppe-header-text').attr('layout:"column", layout-align:"space-around center"'.toLiteral()); // .first().append(.clone()),
+                $(modalHeader).find('header').children().addClass('truncate');
+                modalHeader.append($('<span class="pull-right"><md-button ng-click="closeDialog()" class="md-primary pull-right">Close</md-button></span>'))
+            }.bind(this), ['materialize'], function () {
                 modal = this.modals.documentation.attr('id', modalID).css('display', 'none');
                 content = $('<div class="modal-content z-depth-0">').append('<div class="row" style=""><div class="paper-body col s12 m9 l10"></div><div class="paper-scroll col hide-on-small-only m3 l2 pull-right"></div></div>').appendTo(modal);
                 header = $('<div class="modal-header">').append(header).prepend('<a href="javascript:" class="modal-action modal-close close waves-effect waves-orange btn-flat pull-right">×</a>').insertBefore($(content).find('.row').first());
-                // buttons.documentation.leanModal('dismissible: true, opacity: 0.5, in_duration: 300, out_duration: 200'.toLiteral({
-                //     ready: function () {},
-                //     complete: function () {}
-                // }));
-            }.bind(this), ['angularJS'], function () {
-                modal = this.modals.documentation.attr('id', modalID).css('display', 'none');
-                content = $('<div class="modal-content z-depth-0">').append('<div class="row" style=""><div class="paper-body col s12 m9 l10"></div><div class="paper-scroll col hide-on-small-only m3 l2 pull-right"></div></div>').appendTo(modal);
-                header = $('<div class="modal-header">').append(header).prepend('<a href="javascript:" class="modal-action modal-close close waves-effect waves-orange btn-flat pull-right">×</a>').insertBefore($(content).find('.row').first());
-                // console.log('Fallback to angularJS');
+                buttons.documentation.leanModal('dismissible: true, opacity: 0.5, in_duration: 300, out_duration: 200'.toLiteral({
+                    ready: function () {},
+                    complete: function () {}
+                }));
+                paperBody = content.find('.paper-body').append(element); // .css('display', 'block'));
+                paperScroll = content.find('.paper-scroll').append('<ul class="section table-of-contents">'), paperScrollList = paperScroll.find('ul').first();
+                paperBody.find('footer').remove();
+                window.grasppe.scrollWithin = function (div, element, speed) {
+                    $(div).first().animate({
+                        scrollTop: $(div).scrollTop() - $(div).offset().top + $(element).offset().top
+                    }, speed == undefined ? 1000 : speed);
+                    return this;
+                }
+                for (var i = 1; i < sectionCount; i++) {
+                    paperScrollList.append('<li class="valign-wrapper"><a class="waves-effect waves-orange btn orange valign right-align white-text z-depth-0" href="javascript: grasppe.scrollWithin(\'#' + modalID + ' .paper-body\', \'#' + sectionPrefix + i + '\', 200)">' + $(sections[i - 1]).attr('title') + '</a></li>');
+                }
             }.bind(this));
-
-            paperBody = content.find('.paper-body').append(element.css('display', 'block'));
-            paperScroll = content.find('.paper-scroll').append('<ul class="section table-of-contents">'), paperScrollList = paperScroll.find('ul').first();
-            paperBody.find('footer').remove();
-            window.grasppe.scrollWithin = function (div, element, speed) {
-                $(div).first().animate({
-                    scrollTop: $(div).scrollTop() - $(div).offset().top + $(element).offset().top
-                }, speed == undefined ? 1000 : speed);
-                return this;
-            }
-            for (var i = 1; i < sectionCount; i++) {
-                paperScrollList.append('<li class="valign-wrapper"><a class="waves-effect waves-orange btn orange valign right-align white-text z-depth-0" href="javascript: grasppe.scrollWithin(\'#' + modalID + ' .paper-body\', \'#' + sectionPrefix + i + '\', 200)">' + $(sections[i - 1]).attr('title') + '</a></li>');
-            }
-
         }
 
     },
@@ -836,10 +842,7 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
 
 grasppe.colorSheets.loadModule = function (id) {
     if (!id) id = grasppe.colorSheets.sheetID;
-    if (id) {
-        // grasppe.load(id + '-sheet-styles', id + '.css');
-        grasppe.load(id + '-sheet-script', id + '.js');
-    }
+    if (id) grasppe.load(id + '-sheet-script', id + '.js');
 };
 
 grasppe.require(grasppe.load.status.initialize, function () {
@@ -852,4 +855,3 @@ grasppe.require(grasppe.load.status.initialize, function () {
     };
     grasppe.load('colorSheets-sheet-styles-1', window.location.pathname + grasppe.load.stylePrefix + 'colorsheets.css');
 });
-

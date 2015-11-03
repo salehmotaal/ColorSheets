@@ -1,8 +1,6 @@
 grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
 
 $(function () {
-    if (typeof window.grasppe !== 'function') window.grasppe = function () {};
-    grasppe = window.grasppe;
     if (typeof grasppe.colorSheets !== 'function') grasppe.colorSheets = function () {};
 
     if (typeof grasppe.colorSheets.SupercellSheet !== 'function') {
@@ -21,12 +19,13 @@ $(function () {
             }).on('changed.calculations', function (event) {
                 this.updatePlot();
             }).on('refresh.option', function (event, data) {
-                // console.log(event, data);
                 try {
-                    if (data.id === 'shading' || data.id === 'panning') this.updatePlot();
-                } catch (err) {}
+                    if (data.option === 'shading' || data.option === 'panning') this.updatePlot();
+                } catch (err) {console.err('grasppe.colorSheets.SupercellSheet', err)}
             }).on('resized.window', function (event, data) {
                 this.adjustPlotSize();
+            }).on('shown', function(event, data) {
+                this.updateData();
             });
 
         };
@@ -152,8 +151,8 @@ $(function () {
                     panning: {
                         element: 'stage',
                         type: 'list',
-                        icon: 'fa fa-search',
-                        title: 'Zoom',
+                        icon: 'fa fontawesome-search',
+                        title: 'Panning',
                         list: {
                             cell: 'value: "cell-panning", icon: "glyphicon glyphicon-stop", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
                             supercell: 'value: "supercell-panning", icon: "glyphicon glyphicon-th", title: "Super-cell panning", description: "Zoom plot to show the super-cell."'.toLiteral(),
@@ -162,8 +161,8 @@ $(function () {
                     shading: {
                         element: 'stage',
                         type: 'list',
-                        icon: 'fa fa-paint-brush',
-                        title: 'Style',
+                        icon: 'fa fontawesome-edit',
+                        title: 'Shading',
                         list: {
                             wires: 'icon: "glyphicon glyphicon-unchecked", title: "Thin lines", description: "Only draw the theoretical lines with thin strokes."'.toLiteral(),
                             lines: 'icon: "glyphicon glyphicon-modal-window", title: "Normal lines", description: "Only draw the theoretical lines with different stroke widths."'.toLiteral(),
@@ -175,7 +174,7 @@ $(function () {
                     // results: {
                     //     element: 'results',
                     //     type: 'list',
-                    //     icon: 'fa fa-edit',
+                    //     icon: 'fa fontawesome-edit',
                     //     title: 'Shading',
                     //     list: {
                     //         lines: 'icon: "glyphicon glyphicon-modal-window", title: "Lines only", description: "Only draw the theoretical lines."'.toLiteral(),
@@ -210,19 +209,19 @@ $(function () {
                     plotGridStyle: 'lineWidth: 1; strokeStyle: "RGBA(127,127,127,0.25)"'.toLiteral(),
                 },
                 seriesOptions: {
-                    intendedSeriesDefaultStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                    halftoneSeriesDefaultStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
-                    supercellSeriesDefaultStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
-                    intendedSeriesStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                    halftoneSeriesStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
+                    intendedSeriesDefaultStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 6]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                    halftoneSeriesDefaultStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
+                    supercellSeriesDefaultStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
+                    intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 6]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                    halftoneSeriesStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
                     halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.5)"'.toLiteral(),
-                    supercellSeriesStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
+                    supercellSeriesStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
                     supercellSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.25)"'.toLiteral(),
-                    supercellSeriesLineStyle: 'lineWidth: 0, strokeStyle: "#0000FF", lineDash: [6, 12]'.toLiteral(),
+                    supercellSeriesLineStyle: 'lineWidth: 0; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
                 },
                 legendOptions: {
                     seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
-                    legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2'.toLiteral(),
+                    legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
                 }
             },
         },
@@ -236,10 +235,11 @@ $(function () {
         },
         initialize: function () {
             this.adjustPlotSize();
-            this.calculateStack();
-            setTimeout(function () {
-                this.updatePlot();
-            }.bind(this), 1000);
+            //this.calculateStack();
+            $(this.element).show(function(){
+                $(this).trigger('changed.parameter');
+            }.bind(this));
+            //setTimeout(this.updatePlot.bind(this), 1000);
         },
         attachElement: function (id) {
             if (id === 'contents') {
@@ -252,17 +252,20 @@ $(function () {
 
                 plotCanvas[0].width = Math.max(600, plotSize);
                 plotCanvas[0].height = Math.max(600, plotSize);
+                
+                this.calculateStack();
+                this.updateData();
             }
 
         },
         detachElement: function (id) {},
         updateData: function () {
             self = this.updateData, clearTimeout(self.timeOut), self.timeOut = setTimeout(function () {
-                var stack = this.createStack();
-                this.setStatus('Updating...');
-                this.calculateStack(stack);
-                this.setStatus('');
-            }.bind(this), 10);
+                // var stack = this.createStack();
+                // this.setStatus('Updating...');
+                this.calculateStack();
+                //this.setStatus('');
+            }.bind(this), 1);
             return this;
         },
         updatePlot: function (f) {
@@ -315,6 +318,7 @@ $(function () {
                     var supercellPixelBoxes = [];
                     supercellXs = supercellBox[2][0] / f.cells;
                     supercellYs = supercellBox[2][1] / f.cells;
+                    console.log(supercellXs, supercellYs);
                     if (this.options.shading === 'supercells') for (var i = 0; i < f.cells; i++) {
                         for (var j = 0; j < f.cells; j++) {
                             var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
@@ -429,23 +433,23 @@ $(function () {
                 //$('body').is('.iPad,.iPhone') ? 1 : 1.5,
                 plotTypeFactor: 1 / 72,
                 plotLineFactor: 1 / 72 / 12,
-                intendedSeriesStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 3], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                halftoneSeriesStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
+                intendedSeriesStyle: 'lineWidth: 4; strokeStyle: "#FF0000"; lineDash: [12, 3]; fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
+                halftoneSeriesStyle: 'lineWidth: 2; strokeStyle: "#00FF00"; lineDash: [12, 12]'.toLiteral(),
                 halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
-                supercellSeriesStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
+                supercellSeriesStyle: 'lineWidth: 2; strokeStyle: "#0000FF"'.toLiteral(),
                 supercellSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.125)"'.toLiteral(),
-                supercellSeriesLineStyle: 'lineWidth: 0.5, strokeStyle: "#0000FF", lineDash: [6, 12]'.toLiteral(),
-                plotGridStyle: 'lineWidth: 0.75, strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
-                plotBoxStyle: 'fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
-                plotFrameStyle: 'strokeStyle: "blue", lineWidth: 1'.toLiteral(),
-                legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2'.toLiteral(),
+                supercellSeriesLineStyle: 'lineWidth: 0.5; strokeStyle: "#0000FF"; lineDash: [6, 12]'.toLiteral(),
+                plotGridStyle: 'lineWidth: 0.75; strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
+                plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
+                plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
+                legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)"; strokeStyle: "RGBA(0,0,0,0.75)"; lineWidth: 2'.toLiteral(),
                 seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
                 plotCanvas: $(this.elements.contents).find('div').first(),
             }, this.options, this.options.plotOptions, this.options.seriesOptions, this.options.legendOptions);
             return this;
         },
         adjustPlotSize: function () {
-            // if (typeof this.elements !== 'object') return;
+            //if (typeof this.elements !== 'object') return;
             try {
                 var plotCanvas = $(this.elements.contents).find('.plot-canvas').first(),
                     plotWrapper = $(this.elements.contents),
@@ -457,9 +461,7 @@ $(function () {
                 if (plotCanvas.length > 0 && (plotCanvas[0].width !== plotSize || plotCanvas[0].height !== plotSize)) {
                     plotCanvas[0].width = plotSize;
                     plotCanvas[0].height = plotSize;
-                    setTimeout(function () {
-                        this.updatePlot();
-                    }.bind(this), 100, undefined);
+                    setTimeout(this.updatePlot(), 100, undefined);
                 }
                 plotCanvas.css('left', (wrapWidth - Math.min(wrapWidth, wrapHeight)) / 2);
             } catch (err) {
@@ -494,14 +496,13 @@ $(function () {
                 text += "and, resolution error of " + t.lineErrorLPI + "% vs. " + t.cellErrorLPI + "%.</p>";
                 text += "</div>";
                 // $('#results-explaination').html(text);
-                //$(this.elements.overview).find('.panel-body').first().html(text);
-                this.template['overview-contents'].html(text);
+                $(this.elements.overview).find('.panel-body').first().html(text);
                 return text;
             }.bind(this), 10);
             return this;
         },
         updateTable: function () {
-            this.template['results-contents'].html(this.createTable()).find('.base-calculations-scenario').hide();
+            $(this.elements.results).find('.panel-body').first().html(this.createTable()).find('.base-calculations-scenario').hide();
             return this;
         },
         createTable: function (definitions, scenarios, container) {
@@ -565,10 +566,12 @@ $(function () {
             return [['SPI', this.getParameter('spi')], ['LPI', this.getParameter('lpi')], ['THETA', this.getParameter('theta')], ['CELLS', this.getParameter('cells')]].concat(stack ? [stack] : []);
         },
         calculateStack: function (context, stack) {
-            if (!context) context = 'Base Calculations';
+            if (!context) context = 'Base_Calculations';
             if (!stack) stack = this.createStack();
 
             self = this.calculateStack;
+            
+            // console.log('calculateStack');
 
             var processStack = function (context, output) {
                     output.forEach(function (fn, i) {
@@ -591,16 +594,21 @@ $(function () {
                 nextIndex = Math.max(0, scenarios.indexOf(lastScenario) + 1),
                 nextScenario = (typeof context === 'string') ? context : (nextIndex < scenarios.length) ? scenarios[nextIndex] : undefined;
 
-            if (nextIndex === 0) self.timeStamp = Date.now();
 
+            if (nextIndex === 0) clearTimeout (self.timeOut); // self.timeStamp = Date.now();
+            // console.log('nextScenario', nextScenario, context, stack);
             if (nextScenario) {
                 this.setStatus('Calculating...');
-                window.setTimeout(function (scenario, stack, timeStamp) {
-                    if (timeStamp !== self.timeStamp) return;
+                self.timeOut = window.setTimeout(function (scenario, stack, timeStamp) {
+                    // if (timeStamp !== self.timeStamp) return;
+                    try {
                     processStack({
                         scenario: scenario,
                         stack: stack,
                     }, runScenario(scenario, stack));
+                    } catch (err) {
+                        console.err('calculateStack.processStack', err);
+                    }
                 }.bind(this), 10, nextScenario, stack, self.timeStamp);
             } else {
                 var spanned = 'p: {className: "spanned"}'.toLiteral(),

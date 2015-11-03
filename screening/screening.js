@@ -152,8 +152,8 @@ $(function () {
                     panning: {
                         element: 'stage',
                         type: 'list',
-                        icon: 'fontawesome-search',
-                        title: 'Panning',
+                        icon: 'fa fa-search',
+                        title: 'Zoom',
                         list: {
                             cell: 'value: "cell-panning", icon: "glyphicon glyphicon-stop", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
                             screening: 'value: "screening-panning", icon: "glyphicon glyphicon-th", title: "Super-cell panning", description: "Zoom plot to show the super-cell."'.toLiteral(),
@@ -162,8 +162,8 @@ $(function () {
                     shading: {
                         element: 'stage',
                         type: 'list',
-                        icon: 'fontawesome-edit',
-                        title: 'Shading',
+                        icon: 'fa fa-paint-brush',
+                        title: 'Style',
                         list: {
                             wires: 'icon: "glyphicon glyphicon-unchecked", title: "Thin lines", description: "Only draw the theoretical lines with thin strokes."'.toLiteral(),
                             lines: 'icon: "glyphicon glyphicon-modal-window", title: "Normal lines", description: "Only draw the theoretical lines with different stroke widths."'.toLiteral(),
@@ -175,7 +175,7 @@ $(function () {
                     results: {
                         element: 'results',
                         type: 'list',
-                        icon: 'fontawesome-edit',
+                        icon: 'fa fa-edit',
                         title: 'Shading',
                         list: {
                             lines: 'icon: "glyphicon glyphicon-modal-window", title: "Lines only", description: "Only draw the theoretical lines."'.toLiteral(),
