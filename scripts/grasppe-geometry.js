@@ -577,53 +577,45 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
             context = canvas.getContext("2d"),
             bounds = this.bounds || {},
             offset = 0,
+            scale = 10,
             xMin = this.path.xMin,
             yMin = this.path.yMin;
-            
-        this.clipping = {
-            xMin: Math.floor(this.bounds.xMin) -2 || 0,
-            xMax: Math.ceil(this.bounds.xMax -xMin) +2 || 0,
-            yMin: Math.floor(this.bounds.yMin) -2 || 0,
-            yMax: Math.ceil(this.bounds.yMax -yMin) +2 || 0,
-        }
-            
-        // delete this.clipping;
-        // this.clipping = new grasppe.canvas.BoundingBox([[xMin, yMin], [xMax, yMax]]);
-
-        canvas.width = this.clipping.xMax - this.clipping.xMin;
-        canvas.height = this.clipping.yMax - this.clipping.yMin;
-            
+                        
         try {
+            this.clipping = {
+                xMin: Math.floor(this.bounds.xMin) - offset || 0,
+                xMax: Math.ceil(this.bounds.xMax -xMin) + offset || 0,
+                yMin: Math.floor(this.bounds.yMin) - offset || 0,
+                yMax: Math.ceil(this.bounds.yMax -yMin) + offset || 0,
+                scale: scale,
+            }
+            
+            canvas.width = (this.clipping.xMax - this.clipping.xMin) * scale;
+            canvas.height = (this.clipping.yMax - this.clipping.yMin) * scale;
+
             var strokeStyle = this.path.strokeStyle || 'transparent',
                 fillStyle = this.path.fillStyle || 'transparent',
                 lineWidth = this.path.lineWidth || 0;
             this.path.fillStyle = "#FFF";
             this.path.strokeStyle = 'transparent';
             this.path.lineWidth = 2;
-            grasppe.canvas.Path.prototype.draw.call(this.path, context, 2 - xMin, 2 - yMin, 1);
+            context.rect(0, 0, canvas.width, canvas.height), context.fillStyle = "#000", context.fill();
+            grasppe.canvas.Path.prototype.draw.call(this.path, context, offset-xMin*scale, offset-yMin*scale, scale);
             this.path.fillStyle = fillStyle;
             this.path.strokeStyle = strokeStyle;   
             this.path.lineWidth = lineWidth;         
-            var img = canvas.getContext("2d").getImageData(1, 1, canvas.width, canvas.height),
+            var img = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height),
                 imageData = img.data,
-                i, j, r, g, b, a, data = [];
-            for(j = 0; j < canvas.height; j++) { 
+                i, j, v, r, g, b, a, data = [];
+            for(j =  scale/2; j < canvas.height; j+=scale) { 
                 var row = [];
-                for(i = 0; i < canvas.width; i++) {
-                    r = imageData[((canvas.width * j) + i) * 4 + 3];
-                    // r = imageData[((canvas.width * j) + i) * 4];
-                    // g = imageData[((canvas.width * j) + i) * 4 + 1];
-                    // b = imageData[((canvas.width * j) + i) * 4 + 2];
-                    row.push(r>128 ? 1 : 0); // Math.max(r,g,b));
+                for(i =  scale/2; i < canvas.width; i+=scale) {
+                    v = imageData[(Math.round(canvas.width * j) + Math.round(i)) * 4 + 0];
+                    row.push(v>127 ? 1 : 0); // Math.max(r,g,b));
                 }
                 data.push(row);
             }
-            
             this._data = data;
-            
-            // console.table(data);
-            // console.log(context);
-
         } catch (err) {
             console.error('grasppe.canvas.ImageFilter.apply', err);
         }
@@ -638,8 +630,8 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         var xTransform = typeof xModifier === 'function' ? xModifier : null;
         var yTransform = typeof yModifier === 'function' ? yModifier : null;
         var clipping = this.clipping || {};
-        var xMin = this.clipping.xMin + 1;
-        var yMin = this.clipping.yMin + 1;
+        var xMin = this.clipping.xMin;
+        var yMin = this.clipping.yMin;
         var xMax = this.clipping.xMax;
         var yMax = this.clipping.yMax;
         var x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale;
@@ -650,21 +642,15 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         var height = y2 - y;
         var data = this._data;
         var rect = new grasppe.canvas.Path([], this.parameters);
-            // imageObject = new Image();
             
         context.canvas.drawing +=1;
         
         for(j = 0; j < data.length; j++) { 
             for(i = 0; i < data[0].length; i++) {
-                //x = xTransform ? xTransform(i, xTransform) : (xOffset + i) * scale,
-                //y = yTransform ? yTransform(j, yTransform) : (yOffset + j) * scale,
                 v = data[j][i];
-                //console.log(v);
                 if (v===1) {
-                    // rect.set([[x, y], [x+1, y], [x+1, y+1], [x, y+1], [x, y]]);
                     rect.set([[xMin+i, yMin+j], [xMin+i+1, yMin+j], [xMin+i+1, yMin+j+1], [xMin+i, yMin+j+1], [xMin+i, yMin+j]]);
                     grasppe.canvas.Path.prototype.draw.call(rect, context, xModifier, yModifier, scale);
-                    // console.log(this.path);
                     if (this.fillStyle && this.fillStyle !== 'none') context.fillStyle = this.fillStyle;
                     else if (this.path.strokeStyle) context.fillStyle = this.path.strokeStyle;
                     context.fill();
@@ -675,18 +661,6 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         context.canvas.drawing -=1;
         
         delete rect;
-        /* 
-        imageObject.onload = function() {
-            context.canvas.drawing -=1;
-            console.error(context, {x: x, y: y, width: width, height: height});
-            context.drawImage(imageObject, x, y, width, height); //, width, height);
-        }
-        
-        imageObject.src = this._image; // 'images/Grasppe-ColorSheets-Icon-256.png'; //this._image;
-        */
-        
-        // if (context.save) context.save();
-        // if (context.restore) context.restore();
         return this;
     },
 });

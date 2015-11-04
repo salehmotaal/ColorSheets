@@ -1,10 +1,7 @@
 @import https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css;
-
 @import https://code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css;
-
 @import https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css;
-
-@import colorsheets-glyphics.css;
+@import ../stylesheets/colorsheets-glyphics.css;
 
 /* @import url('https://ssl.gstatic.com/docs/script/css/add-ons.css'); */
 /* @import url('https://ssl.gstatic.com/docs/script/css/add-ons1.css'); */
@@ -39,7 +36,6 @@ md-icon {
 		width:100vw;
 		height:100vh;
 	}
-    
 }
 
 /* ! - GLOBALS - */
@@ -382,10 +378,6 @@ md-icon {
 		top:12px;
 		cursor:default;
 	}
-	
-	.ui-slider-handle{
-		z-index: 1 !important;
-    }
 	
 	.form-group.grasppe .ui-slider-horizontal .ui-slider-labels {
 		width:100%;

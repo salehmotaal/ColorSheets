@@ -331,7 +331,7 @@ $(function () {
                                     [x1, y1]
                                 ], strokeStyle);
                             // console.log({style: fillStyle, box: screeningsBox});
-                            screeningPixelBoxes.push(screeningsBox); // new grasppe.canvas.ImageFilter(screeningsBox, fillStyle));
+                            screeningPixelBoxes.push(new grasppe.canvas.ImageFilter(screeningsBox, fillStyle));
                         }
                         this.options.panning = 'screening';
                     }

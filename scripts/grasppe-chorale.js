@@ -241,6 +241,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         createToggle(type, classes, title) {
 
         }
+        
+        // !Chorale Controls createSlider
+        createSlider() {
+
+        }
 
         // !Chorale [Test]
         static Test(target) {

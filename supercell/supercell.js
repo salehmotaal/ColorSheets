@@ -152,7 +152,7 @@ $(function () {
                     panning: {
                         element: 'stage',
                         type: 'list',
-                        icon: 'fa fa-search',
+                        icon: 'glyphicon glyphicon-search',
                         title: 'Zoom',
                         list: {
                             cell: 'value: "cell-panning", icon: "glyphicon glyphicon-stop", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
@@ -162,7 +162,7 @@ $(function () {
                     shading: {
                         element: 'stage',
                         type: 'list',
-                        icon: 'fa fa-paint-brush',
+                        icon: 'glyphicon glyphicon-tint',
                         title: 'Style',
                         list: {
                             wires: 'icon: "glyphicon glyphicon-unchecked", title: "Thin lines", description: "Only draw the theoretical lines with thin strokes."'.toLiteral(),
@@ -312,28 +312,30 @@ $(function () {
                     if (timeStamp !== self.timeStamp) return;
                 }
                 CELL_CALCULATIONS: {
-                    var supercellPixelBoxes = [];
-                    supercellXs = supercellBox[2][0] / f.cells;
-                    supercellYs = supercellBox[2][1] / f.cells;
-                    if (this.options.shading === 'supercells') for (var i = 0; i < f.cells; i++) {
-                        for (var j = 0; j < f.cells; j++) {
-                            var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
-                                strokeStyle = ('strokeStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
-                                x1 = supercellXs * i,
-                                y1 = supercellYs * j,
-                                x2 = supercellBox[2][0] / f.cells,
-                                y2 = supercellBox[2][1] / f.cells,
-                                supercellsBox = new grasppe.canvas.Path([
-                                    [x1, y1],
-                                    [x2, y1],
-                                    [x2, y2],
-                                    [x1, y1],
-                                    [x1, y1]
-                                ], strokeStyle);
-                            // console.log({style: fillStyle, box: supercellsBox});
-                            supercellPixelBoxes.push(supercellsBox); // new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
+                    var supercellPixelBoxes = [],
+                        supercellBoxes = [],
+                        supercellXOffset = supercellBox[3][0] / f.cells,
+                        supercellYOffset = supercellBox[3][1] / f.cells;
+                    if (this.options.shading === 'supercells') {
+                        for (var i = 0; i < f.cells; i++) {
+                            for (var j = 0; j < f.cells; j++) {
+                                var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
+                                    strokeStyle = ('strokeStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
+                                    supercellsBoxOrigin = [(supercellBox[3][0] / f.cells * i) + (supercellBox[1][0] / f.cells * j), (supercellBox[3][1] / f.cells * i) + (supercellBox[1][1] / f.cells * j)],
+                                    supercellsBoxMatrix = [
+                                        [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
+                                        [(supercellBox[1][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[1][1] / f.cells) + (supercellsBoxOrigin[1])],
+                                        [(supercellBox[2][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[2][1] / f.cells) + (supercellsBoxOrigin[1])],
+                                        [(supercellBox[3][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[3][1] / f.cells) + (supercellsBoxOrigin[1])],
+                                        [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
+                                    ],
+                                    supercellsBox = new grasppe.canvas.Path(supercellsBoxMatrix, strokeStyle);
+                                supercellBoxes.push(supercellsBox); // new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
+                                if(((i % 2) + (j % 2) !== 1)) supercellPixelBoxes.push(new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
+                            }
                         }
-                        this.options.panning = 'supercell';
+                        //this.options.panning = 'supercell';
+                        //supercellPixelBoxes = new grasppe.canvas.ImageFilter(supercellBoxes, options.halftoneSeriesFillStyle);
                     }
 
                 }
@@ -341,7 +343,7 @@ $(function () {
                     var paths = [intendedBox, halftoneBox, supercellBox],
                         lines = [supercellVerticals, supercellHorizontals],
                         shapes = paths.concat(lines),
-                        boundingBox = new grasppe.canvas.BoundingBox((this.options.panning === 'cell') ? [intendedBox] : (this.options.shading === 'supercells') ? supercellPixelBoxes : [intendedBox, halftoneBox, supercellBox]),
+                        boundingBox = new grasppe.canvas.BoundingBox((this.options.panning === 'cell') ? [intendedBox] : (this.options.shading === 'supercells') ? [intendedBox, supercellPixelBoxes, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
                         margin = 4 + Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
                     if (timeStamp !== self.timeStamp) return;
                 }
@@ -369,17 +371,26 @@ $(function () {
                     var clippingBox = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
                         scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
                         offset = [-clippingBox.xMin, -clippingBox.yMin],
-                        width = (offset[0] + clippingBox.xMax) * scale; // * (frameRatio > 1 ? frameRatio : 1),
-                    height = width; // / frameRatio,
-                    xTransform = Object.assign(function (x, self) {
-                        if (!self) self = xTransform;
-                        return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                    }, ('scale: ' + scale + '; offset: ' + offset[0]).toLiteral()), yTransform = Object.assign(function (y, self) {
-                        if (!self) self = yTransform;
-                        var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                        if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
-                        else return fY;
-                    }, ('scale: ' + scale + '; offset: ' + offset[1]).toLiteral());
+                        width = (offset[0] + clippingBox.xMax) * scale,
+                        // * (frameRatio > 1 ? frameRatio : 1),
+                        height = width,
+                        // / frameRatio,
+                        xTransform = Object.assign(function (x, self) {
+                            if (!self) self = xTransform;
+                            return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                        }, {
+                            scale: scale,
+                            offset: offset[0],
+                        }),
+                        yTransform = Object.assign(function (y, self) {
+                            if (!self) self = yTransform;
+                            var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                            if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
+                            else return fY;
+                        }, {
+                            scale: scale,
+                            offset: offset[1],
+                        });
                     if (timeStamp !== self.timeStamp) return;
                 }
                 DRAWING_OPERATIONS: {
@@ -389,10 +400,12 @@ $(function () {
                         paths = [];
 
                     if (this.options.shading === 'fills' || this.options.shading === 'pixels') paths.push(supercellPixelBox, halftonePixelBox);
-                    if (this.options.shading === 'supercells') paths = paths.concat(supercellPixelBoxes);
+                    if (this.options.shading === 'supercells') paths = paths.concat(supercellPixelBoxes); // .push(supercellPixelBoxes); // ;
+                    if (this.options.shading === 'supercells') paths = paths.concat(supercellBoxes); // .push(supercellPixelBoxes); // ;
+                    // if (this.options.shading === 'supercells') paths.push(supercellPixelBoxes);
                     paths.push(gridVerticals, gridHorizontals);
                     if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires') paths.push(supercellVerticals, supercellHorizontals);
-                    if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'pixels') paths.push(intendedBox);
+                    if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'pixels' || this.options.shading === 'supercells') paths.push(intendedBox);
                     if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires') paths.push(supercellBox, halftoneBox);
 
                     self.chart = chart;

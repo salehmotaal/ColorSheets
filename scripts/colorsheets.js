@@ -659,12 +659,13 @@ grasppe.colorSheets.Sheet.prototype = Object.assign(Object.create({}, {
                 wrapper: $('<div id="' + id + 'ControlWrapper" class="form-group grasppe sheet-fade-in">').appendTo(sheet.elements.controls),
                 group: $('<div id="' + id + 'ControlGroup" class="input-group">'),
             })
-            control.group.appendTo(control.wrapper).append($('<label id="' + id + 'ControlLabel" class="control-label input-group-addon" + for"' + id + 'ControlGroup">' + definition.name + '</label>').popover(Object.assign('viewport: "body", container: "body", placement: "right", trigger: "click"'.toLiteral(), {
-                content: definition.description,
-            })).on('show.bs.popover', $CS().layoutFunctions.hidePopovers));
+            control.group.appendTo(control.wrapper);
             switch (control.type) {
             case 'slider':
                 Object.assign(control, {
+                    label: $('<label id="' + id + 'ControlLabel" class="control-label input-group-addon" + for"' + id + 'ControlGroup">' + definition.name + '</label>').popover(Object.assign('viewport: "body", container: "body", placement: "right", trigger: "click"'.toLiteral(), {
+                        content: definition.description,
+                    })).on('show.bs.popover', $CS().layoutFunctions.hidePopovers).appendTo(control.group),
                     element: $('<div id="' + id + 'Slider" class="control-slider">').appendTo($('<div class="input-group-addon slider-wrapper">').appendTo(control.group)).slider(grasppe.map('value', value, 'animate', true, 'max', definition.control.maximum || definition.range.maximum, 'min', definition.control.minimum || definition.range.minimum, 'step', definition.control.step, 'slide', function (event, ui) {
                         $('#' + id + 'SliderInput').val(ui.value);
                         sheet.setParameter(id, Number($($(this).data('control').field).val()));
