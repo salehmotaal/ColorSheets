@@ -311,39 +311,39 @@ $(function () {
                     }
                     if (timeStamp !== self.timeStamp) return;
                 }
-                CELL_CALCULATIONS: {
-                    var supercellPixelBoxes = [],
-                        supercellBoxes = [],
-                        supercellXOffset = supercellBox[3][0] / f.cells,
-                        supercellYOffset = supercellBox[3][1] / f.cells;
-                    if (this.options.shading === 'supercells') {
-                        for (var i = 0; i < f.cells; i++) {
-                            for (var j = 0; j < f.cells; j++) {
-                                var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
-                                    strokeStyle = ('strokeStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
-                                    supercellsBoxOrigin = [(supercellBox[3][0] / f.cells * i) + (supercellBox[1][0] / f.cells * j), (supercellBox[3][1] / f.cells * i) + (supercellBox[1][1] / f.cells * j)],
-                                    supercellsBoxMatrix = [
-                                        [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
-                                        [(supercellBox[1][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[1][1] / f.cells) + (supercellsBoxOrigin[1])],
-                                        [(supercellBox[2][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[2][1] / f.cells) + (supercellsBoxOrigin[1])],
-                                        [(supercellBox[3][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[3][1] / f.cells) + (supercellsBoxOrigin[1])],
-                                        [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
-                                    ],
-                                    supercellsBox = new grasppe.canvas.Path(supercellsBoxMatrix, strokeStyle);
-                                supercellBoxes.push(supercellsBox); // new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
-                                if(((i % 2) + (j % 2) !== 1)) supercellPixelBoxes.push(new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
-                            }
-                        }
-                        //this.options.panning = 'supercell';
-                        //supercellPixelBoxes = new grasppe.canvas.ImageFilter(supercellBoxes, options.halftoneSeriesFillStyle);
-                    }
-
-                }
+                // CELL_CALCULATIONS: {
+                //     var supercellPixelBoxes = [],
+                //         supercellBoxes = [],
+                //         supercellXOffset = supercellBox[3][0] / f.cells,
+                //         supercellYOffset = supercellBox[3][1] / f.cells;
+                //     if (this.options.shading === 'supercells') {
+                //         for (var i = 0; i < f.cells; i++) {
+                //             for (var j = 0; j < f.cells; j++) {
+                //                 var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
+                //                     strokeStyle = ('strokeStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
+                //                     supercellsBoxOrigin = [(supercellBox[3][0] / f.cells * i) + (supercellBox[1][0] / f.cells * j), (supercellBox[3][1] / f.cells * i) + (supercellBox[1][1] / f.cells * j)],
+                //                     supercellsBoxMatrix = [
+                //                         [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
+                //                         [(supercellBox[1][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[1][1] / f.cells) + (supercellsBoxOrigin[1])],
+                //                         [(supercellBox[2][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[2][1] / f.cells) + (supercellsBoxOrigin[1])],
+                //                         [(supercellBox[3][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[3][1] / f.cells) + (supercellsBoxOrigin[1])],
+                //                         [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
+                //                     ],
+                //                     supercellsBox = new grasppe.canvas.Path(supercellsBoxMatrix, strokeStyle);
+                //                 supercellBoxes.push(supercellsBox); // new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
+                //                 if(((i % 2) + (j % 2) !== 1)) supercellPixelBoxes.push(new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
+                //             }
+                //         }
+                //         //this.options.panning = 'supercell';
+                //         //supercellPixelBoxes = new grasppe.canvas.ImageFilter(supercellBoxes, options.halftoneSeriesFillStyle);
+                //     }
+                // 
+                // }
                 BOUNDING_CALCULATIONS: {
                     var paths = [intendedBox, halftoneBox, supercellBox],
                         lines = [supercellVerticals, supercellHorizontals],
                         shapes = paths.concat(lines),
-                        boundingBox = new grasppe.canvas.BoundingBox((this.options.panning === 'cell') ? [intendedBox] : (this.options.shading === 'supercells') ? [intendedBox, supercellPixelBoxes, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
+                        boundingBox = new grasppe.canvas.BoundingBox((this.options.panning === 'cell') ? [intendedBox] : (this.options.shading === 'supercells') ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
                         margin = 4 + Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
                     if (timeStamp !== self.timeStamp) return;
                 }
@@ -393,20 +393,21 @@ $(function () {
                         });
                     if (timeStamp !== self.timeStamp) return;
                 }
+
+                var supercellPixelBoxes = this.getSuperCellsPixels(supercellBox, f.cells);
+
                 DRAWING_OPERATIONS: {
                     var chart = (self.chart instanceof grasppe.canvas.Chart) ? self.chart : new grasppe.canvas.Chart(options.plotCanvas),
                         halftonePixelBox = (this.options.shading === 'fills' || this.options.shading === 'pixels') ? new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneSeriesFillStyle) : [],
-                        supercellPixelBox = (this.options.shading === 'fills' || this.options.shading === 'pixels') ? new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle) : [],
+                        supercellPixelBox = (this.options.shading === 'fills' || this.options.shading === 'pixels' || this.options.shading === 'supercells') ? new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle) : [],
                         paths = [];
 
                     if (this.options.shading === 'fills' || this.options.shading === 'pixels') paths.push(supercellPixelBox, halftonePixelBox);
                     if (this.options.shading === 'supercells') paths = paths.concat(supercellPixelBoxes); // .push(supercellPixelBoxes); // ;
-                    if (this.options.shading === 'supercells') paths = paths.concat(supercellBoxes); // .push(supercellPixelBoxes); // ;
-                    // if (this.options.shading === 'supercells') paths.push(supercellPixelBoxes);
                     paths.push(gridVerticals, gridHorizontals);
-                    if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires') paths.push(supercellVerticals, supercellHorizontals);
+                    if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'supercells') paths.push(supercellVerticals, supercellHorizontals);
                     if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'pixels' || this.options.shading === 'supercells') paths.push(intendedBox);
-                    if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires') paths.push(supercellBox, halftoneBox);
+                    if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'supercells') paths.push(supercellBox, halftoneBox);
 
                     self.chart = chart;
                     if (timeStamp !== self.timeStamp) return;
@@ -457,6 +458,53 @@ $(function () {
             }, this.options, this.options.plotOptions, this.options.seriesOptions, this.options.legendOptions);
             return this;
         },
+        
+        getSuperCellsPixels: function getSuperCellsPixels(path, cells) {
+
+            var pixels = [],
+                $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: none;">').appendTo('body'),
+                offset = 10,
+                width = path.width + offset * 2,
+                height = path.height + offset * 2,
+                xMin = path.xMin,
+                yMin = path.yMin,
+                style1 = 'fillStyle: "rgba(255, 255, 0, 0.5)"'.toLiteral(),
+                style2 = 'fillStyle: "rgba(0, 0, 255, 0.5)"'.toLiteral(),
+                context = $canvas[0].getContext("2d"),
+                imageData, rawData;
+
+            try {
+                $canvas[0].width = width, $canvas[0].height = height;
+                with(context) clearRect(0, 0, width, height), translate(offset + path.width - path.xMax, offset), rect(0 - offset + xMin, -offset, width, height), fillStyle = '#000'; // , fill();
+
+                for (var i = 0; i < cells; i++) for (var j = 0; j < cells; j++) { // if (((i % 2) + (j % 2) !== 1)) {
+                    var origin = [(path[3][0] / cells * i) + (path[1][0] / cells * j), (path[3][1] / cells * i) + (path[1][1] / cells * j)],
+                        box = path.map(function (point) {
+                            return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
+                        });
+                        
+                    with(context) moveTo(box[0][0], box[0][1]), beginPath(), lineTo(box[1][0], box[1][1]), lineTo(box[2][0], box[2][1]), lineTo(box[3][0], box[3][1]), lineTo(box[0][0], box[0][1]), closePath(), context.fillStyle = ((((i % 2) + (j % 2) !== 1)) ? '#FFF' : '#000'), context.fill();
+                }
+
+                imageData = context.getImageData(offset, offset, width - offset * 2, height - offset * 2);
+                rawData = imageData.data;
+
+                // for (var j = 0; j < imageData.height; j++) for (var i = 0; i < imageData.width; i++) if (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 0] > 110) pixels.push(new grasppe.canvas.Path([
+                for (var j = 0; j < imageData.height; j++) for (var i = 0; i < imageData.width; i++) if (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 3] > 110) pixels.push(new grasppe.canvas.Path([
+                    [xMin + i + 0, yMin + j + 0],
+                    [xMin + i + 1, yMin + j + 0],
+                    [xMin + i + 1, yMin + j + 1],
+                    [xMin + i + 0, yMin + j + 1],
+                    [xMin + i + 0, yMin + j + 0]
+                ], (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 0] > 127) ? style1 : style2));
+            } catch (err) {
+                console.error('Supercell.getSuperCellsPixels() failed...\n', err);
+            }
+            $canvas.remove();
+
+            return pixels;
+        },
+
         adjustPlotSize: function () {
             // if (typeof this.elements !== 'object') return;
             try {
