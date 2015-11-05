@@ -2,9 +2,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
 if (!grasppe.canvas) grasppe.canvas = function () {};
 grasppe.canvas.Point = function (values, parameters) {
+    var prototype = Object.getPrototypeOf(this);
     Array.call(this);
-    if (!Object.getPrototypeOf(this).instances) Object.getPrototypeOf(this).instances = 0;
-    this.instanceID = Object.getPrototypeOf(this).instances++; // || 0) + 1;
+    if (!prototype.instances) prototype.instances = 0;
+    this.instanceID = prototype.instances++; // || 0) + 1;
     // Object.assign(this, Object.getPrototypeOf(this));
     if (Array.isArray(values) && values.length === 2 && typeof values[0] === 'number' && typeof values[1] === 'number') Array.prototype.push.apply(this, values);
     else if (arguments.length > 1 && typeof arguments[0] === 'number' && typeof arguments[1] === 'number') Array.prototype.push.apply(this, [arguments[0], arguments[1]]);
@@ -28,10 +29,7 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
     style: {
         get: function () {
             return {
-                fillStyle: this.fillStyle,
-                strokeStyle: this.strokeStyle,
-                lineWidth: this.lineWidth,
-                lineDash: this.lineDash,
+                fillStyle: this.fillStyle, strokeStyle: this.strokeStyle, lineWidth: this.lineWidth, lineDash: this.lineDash,
             }
         },
         set: function (values) {
@@ -46,8 +44,7 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
     },
 }), Array.prototype, {
     // Prototype
-    constructor: grasppe.canvas.Point,
-    getPoint: function () {
+    constructor: grasppe.canvas.Point, getPoint: function () {
         if (arguments.length > 0 && typeof arguments[0] === 'function' && typeof arguments[1] === 'function') return this.getTransformedPoint.apply(this, arguments);
         if (arguments.length > 0 && typeof arguments[0] === 'number' && typeof arguments[1] === 'number') return this.getTranslatedPoint.apply(this, arguments);
         if (this.length === 2) return [this[0], this[1]];
@@ -68,7 +65,7 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
             return y;
         };
         var rounding = 1; //xTransform.bufferScale ? xTransform.bufferScale : 1;
-        if (this.length === 2) return [Math.round(xTransform(this[0], xTransform)/rounding)*rounding, Math.round(yTransform(this[1], yTransform)/rounding)*rounding];
+        if (this.length === 2) return [Math.round(xTransform(this[0], xTransform) / rounding) * rounding, Math.round(yTransform(this[1], yTransform) / rounding) * rounding];
         else return [NaN, NaN];
     },
     getX: function () {
@@ -176,8 +173,7 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
     },
 }), Array.prototype, {
     // Prototype
-    constructor: grasppe.canvas.Path,
-    getPoint: function (index) {
+    constructor: grasppe.canvas.Path, getPoint: function (index) {
         if (arguments.length > 2 && typeof arguments[1] === 'function' && typeof arguments[2] === 'function') return this.getTransformedPoint.apply(this, arguments);
         if (arguments.length > 2 && typeof arguments[1] === 'number' && typeof arguments[2] === 'number') return this.getTranslatedPoint.apply(this, arguments);
         //if (this.length > index && Array.isArray(this[index]) && this[index].length === 2) return new grasppe.canvas.Point(this[index]);
@@ -289,14 +285,6 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         }).join('; ') + ']';
     },
 });
-/*var points1 = new grasppe.canvas.Path([
-    [0, 0],
-    [10, 10]
-], {
-    lineWidth: 3,
-    strokeStyle: 'red'
-});*/
-// console.log(points1);
 grasppe.canvas.Line = function (x1, y1, x2, y2, parameters) {
     parameters = (arguments.length > 0 && grasppe.Utility.isLiteralObject(arguments[arguments.length - 1])) ? arguments[arguments.length - 1] : undefined;
     if (arguments.length > 3) grasppe.canvas.Path.call(this, [
@@ -343,8 +331,7 @@ grasppe.canvas.Lines = function (lines, parameters) {
     grasppe.canvas.Path.call(this, args, parameters);
 }
 grasppe.canvas.Lines.prototype = Object.assign(Object.create(grasppe.canvas.Path.prototype, {}), grasppe.canvas.Path.prototype, {
-    constructor: grasppe.canvas.Lines,
-    draw: function (context, xModifier, yModifier, scale) {
+    constructor: grasppe.canvas.Lines, draw: function (context, xModifier, yModifier, scale) {
         var bufferScale = (context.bufferScale ? context.bufferScale : 1);
         // if (context.save) context.save();
         if ('lineWidth' in this) context.lineWidth = this.lineWidth * bufferScale;
@@ -475,7 +462,7 @@ grasppe.canvas.BoundingBox = function (paths, parameters) {
     else grasppe.canvas.Path.call(this, parameters);
 };
 grasppe.canvas.BoundingBox.prototype = Object.assign(Object.create(grasppe.canvas.Rectangle.prototype), grasppe.canvas.Rectangle.prototype, {});
-grasppe.canvas.PointFilter = function(path, filter, parameters) {
+grasppe.canvas.PointFilter = function (path, filter, parameters) {
     var args = [...arguments];
     parameters = (args.length > 0 && grasppe.Utility.isLiteralObject(args[args.length - 1])) ? args.pop() : undefined;
     this._path = path;
@@ -486,46 +473,46 @@ grasppe.canvas.PointFilter = function(path, filter, parameters) {
 grasppe.canvas.PointFilter.prototype = Object.assign(Object.create(grasppe.canvas.Path.prototype, {
     // Property Descriptions
     path: {
-        set: function(path) {
+        set: function (path) {
             this._path = path;
             this.apply();
         },
-        get: function() {
+        get: function () {
             return this._path;
         },
     },
-    filter:  {
-        set: function(filter) {
+    filter: {
+        set: function (filter) {
             this._filter = filter;
             this.apply();
         },
-        get: function() {
+        get: function () {
             return this._filter;
         },
     },
 }), grasppe.canvas.Path.prototype, {
     // Prototype
-    apply: function() {
+    apply: function () {
         // clearTimeout(this.timeOut);
         // this.timeOut = setTimeout(function () {
         var points = this._path.getPoints();
         try {
             points = this._filter(points);
         } catch (err) {
-            console.error('grasppe.canvas.Path.apply',  err);
+            console.error('grasppe.canvas.Path.apply', err);
         }
         console.table(points);
         this.set(points);
         // console.log(this);
         // }.bind(this), 100);
     },
-    draw: function() {
+    draw: function () {
         grasppe.canvas.Path.prototype.draw.apply(this, arguments);
         console.log(this);
     },
 });
 
-grasppe.canvas.ImageFilter = function(path, parameters) {
+grasppe.canvas.ImageFilter = function (path, parameters) {
     var args = [...arguments];
     parameters = (args.length > 0 && grasppe.Utility.isLiteralObject(args[args.length - 1])) ? args.pop() : undefined;
     this._path = path;
@@ -535,44 +522,44 @@ grasppe.canvas.ImageFilter = function(path, parameters) {
 grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canvas.Path.prototype, {
     // Property Descriptions
     path: {
-        set: function(path) {
+        set: function (path) {
             this._path = path;
             delete this._bounds;
             this._bounds = null;
             this._image = null;
             this.apply();
         },
-        get: function() {
+        get: function () {
             return this._path;
         },
     },
-    filter:  {
-        set: function(filter) {
+    filter: {
+        set: function (filter) {
             this._filter = filter;
             this._image = null;
             this.apply();
         },
-        get: function() {
+        get: function () {
             return this._filter;
         },
     },
     bounds: {
-        get: function() {
+        get: function () {
             if (!this._bounds) this._bounds = new grasppe.canvas.BoundingBox([this.path]);
             return this._bounds;
         },
     },
     image: {
-        get: function() {
+        get: function () {
             if (!this._image) this.apply();
             return this._image;
         },
     },
 }), grasppe.canvas.Path.prototype, {
     // Prototype
-    apply: function() {
+    apply: function () {
         var // points = this._path.getPoints(),
-            $canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none;">').appendTo('body'),
+        $canvas = $('<canvas style="position: fixed; top: 0; left: 0; display: none;">').appendTo('body'),
             canvas = $canvas[0],
             context = canvas.getContext("2d"),
             bounds = this.bounds || {},
@@ -580,16 +567,12 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
             scale = 10,
             xMin = this.path.xMin,
             yMin = this.path.yMin;
-                        
+
         try {
             this.clipping = {
-                xMin: Math.floor(this.bounds.xMin) - offset || 0,
-                xMax: Math.ceil(this.bounds.xMax -xMin) + offset || 0,
-                yMin: Math.floor(this.bounds.yMin) - offset || 0,
-                yMax: Math.ceil(this.bounds.yMax -yMin) + offset || 0,
-                scale: scale,
+                xMin: Math.floor(this.bounds.xMin) - offset || 0, xMax: Math.ceil(this.bounds.xMax - xMin) + offset || 0, yMin: Math.floor(this.bounds.yMin) - offset || 0, yMax: Math.ceil(this.bounds.yMax - yMin) + offset || 0, scale: scale,
             }
-            
+
             canvas.width = (this.clipping.xMax - this.clipping.xMin) * scale;
             canvas.height = (this.clipping.yMax - this.clipping.yMin) * scale;
 
@@ -600,18 +583,18 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
             this.path.strokeStyle = 'transparent';
             this.path.lineWidth = 2;
             context.rect(0, 0, canvas.width, canvas.height), context.fillStyle = "#000", context.fill();
-            grasppe.canvas.Path.prototype.draw.call(this.path, context, offset-xMin*scale, offset-yMin*scale, scale);
+            grasppe.canvas.Path.prototype.draw.call(this.path, context, offset - xMin * scale, offset - yMin * scale, scale);
             this.path.fillStyle = fillStyle;
-            this.path.strokeStyle = strokeStyle;   
-            this.path.lineWidth = lineWidth;         
+            this.path.strokeStyle = strokeStyle;
+            this.path.lineWidth = lineWidth;
             var img = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height),
                 imageData = img.data,
                 i, j, v, r, g, b, a, data = [];
-            for(j =  scale/2; j < canvas.height; j+=scale) { 
+            for (j = scale / 2; j < canvas.height; j += scale) {
                 var row = [];
-                for(i =  scale/2; i < canvas.width; i+=scale) {
+                for (i = scale / 2; i < canvas.width; i += scale) {
                     v = imageData[(Math.round(canvas.width * j) + Math.round(i)) * 4 + 0];
-                    row.push(v>127 ? 1 : 0); // Math.max(r,g,b));
+                    row.push(v > 127 ? 1 : 0); // Math.max(r,g,b));
                 }
                 data.push(row);
             }
@@ -642,14 +625,20 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         var height = y2 - y;
         var data = this._data;
         var rect = new grasppe.canvas.Path([], this.parameters);
-            
-        context.canvas.drawing +=1;
-        
-        for(j = 0; j < data.length; j++) { 
-            for(i = 0; i < data[0].length; i++) {
+
+        context.canvas.drawing += 1;
+
+        for (j = 0; j < data.length; j++) {
+            for (i = 0; i < data[0].length; i++) {
                 v = data[j][i];
-                if (v===1) {
-                    rect.set([[xMin+i, yMin+j], [xMin+i+1, yMin+j], [xMin+i+1, yMin+j+1], [xMin+i, yMin+j+1], [xMin+i, yMin+j]]);
+                if (v === 1) {
+                    rect.set([
+                        [xMin + i, yMin + j],
+                        [xMin + i + 1, yMin + j],
+                        [xMin + i + 1, yMin + j + 1],
+                        [xMin + i, yMin + j + 1],
+                        [xMin + i, yMin + j]
+                    ]);
                     grasppe.canvas.Path.prototype.draw.call(rect, context, xModifier, yModifier, scale);
                     if (this.fillStyle && this.fillStyle !== 'none') context.fillStyle = this.fillStyle;
                     else if (this.path.strokeStyle) context.fillStyle = this.path.strokeStyle;
@@ -658,11 +647,9 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
             }
         }
 
-        context.canvas.drawing -=1;
-        
+        context.canvas.drawing -= 1;
+
         delete rect;
         return this;
     },
 });
-
-

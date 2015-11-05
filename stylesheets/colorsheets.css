@@ -238,6 +238,14 @@ md-icon {
     	flex:1;
     }
     
+	.panel-heading.with-toolbar md-toolbar .grasppe-icon {
+    	width: 1.25em;
+    	height: 1.25em;
+    	margin-bottom: -0.25em;
+    	margin-left: 0.25em;
+    	margin-right: 0.25em;
+    }
+    
 	.panel-heading:not(.color-sheet-heading).with-toolbar {
 		padding:0;
 	}
@@ -258,6 +266,20 @@ md-icon {
 		height:100%;
 	}
 	
+	/* ! - Sheet Panel Extras Menus - */
+    .grasppe-menu-element {
+        font-size: 125%;
+    }
+    .grasppe-menu-element .grasppe-icon {
+    	width: 2em;
+    	height: 2em;
+    	margin-left: 0.75em;
+    	margin-right: 1em;
+    	vertical-align: middle;
+    }
+    
+
+	
 	/* ! - Sheet Panel Extras Buttons - */
 	
 	.color-sheet-heading a,
@@ -274,7 +296,7 @@ md-icon {
  		margin-left: 0.25em;
 	}
 		
-	.button-icon-size {
+    .grasppe-icon.button-icon-size {
     	padding: 0;
     	margin: 0 0.25em;
     	height: auto;
@@ -283,6 +305,7 @@ md-icon {
     	line-height: 100%;
     	vertical-align: baseline;
     }
+   
 
 }
 

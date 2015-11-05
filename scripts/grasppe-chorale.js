@@ -210,12 +210,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 creatorArguments = (arguments.length > 1) ? Array.prototype.slice.call(arguments, 1) : [];
             // console.log('createElement', creatorFunction.name, creatorArguments, creatorArguments.length);
             switch (('' + type).toLowerCase()) {
-            case 'list':
-            case 'toolbar':
-            case 'menu':
-                return creatorFunction.call(this, argument1, argument2, type);
-            default:
-                if (typeof creatorFunction === 'function') creatorFunction.apply(this, creatorArguments.push(type ? type : undefined));
+            case 'list': case 'toolbar': case 'menu': return creatorFunction.call(this, argument1, argument2, type);
+            default :if (typeof creatorFunction === 'function') creatorFunction.apply(this, creatorArguments.push(type ? type : undefined));
                 else return this.createContainer(type, creatorArguments.slice(0, 2));
             }
         }
@@ -241,7 +237,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         createToggle(type, classes, title) {
 
         }
-        
+
         // !Chorale Controls createSlider
         createSlider() {
 
@@ -276,84 +272,41 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             icon: 'grasppe-icon',
 
             // !Default Panels Types
-            panelContainer: 'grasppe-panel',
-            panelContent: 'grasppe-panel-content',
-            panelHeader: 'grasppe-panel-heading',
-            panelTitle: 'grasppe-header-text',
-            panelFooter: 'grasppe-panel-footer',
+            panelContainer: 'grasppe-panel', panelContent: 'grasppe-panel-content', panelHeader: 'grasppe-panel-heading', panelTitle: 'grasppe-header-text', panelFooter: 'grasppe-panel-footer',
 
             // !Default Modals Types
-            modalContainer: 'grasppe-modal',
-            modalContent: 'grasppe-modal-content',
-            modalHeader: 'grasppe-modal-heading',
-            modalTitle: 'grasppe-header-text',
-            modalFooter: 'grasppe-modal-footer',
+            modalContainer: 'grasppe-modal', modalContent: 'grasppe-modal-content', modalHeader: 'grasppe-modal-heading', modalTitle: 'grasppe-header-text', modalFooter: 'grasppe-modal-footer',
 
             // !Default Lists Types
-            listContainer: 'grasppe-list collection-wrapper',
-            listElementsContainer: 'grasppe-list-elements-container collection',
-            listElementWrapper: 'grasppe-list-element-wrapper item-wrapper',
-            listElement: 'grasppe-list-element item',
+            listContainer: 'grasppe-list collection-wrapper', listElementsContainer: 'grasppe-list-elements-container collection', listElementWrapper: 'grasppe-list-element-wrapper item-wrapper', listElement: 'grasppe-list-element item',
 
             // !Default Toolbars Types
-            toolbarContainer: 'grasppe-toolbar collection-wrapper',
-            toolbarElementsContainer: 'grasppe-toolbar-elements-container collection',
-            toolbarElementWrapper: 'grasppe-toolbar-element-wrapper item-wrapper',
-            toolbarElement: 'grasppe-toolbar-element item',
+            toolbarContainer: 'grasppe-toolbar collection-wrapper', toolbarElementsContainer: 'grasppe-toolbar-elements-container collection', toolbarElementWrapper: 'grasppe-toolbar-element-wrapper item-wrapper', toolbarElement: 'grasppe-toolbar-element item',
 
             // !Default Menus Types
-            menuContainer: 'grasppe-menu collection-wrapper',
-            menuElementsContainer: 'grasppe-menu-elements-container collection',
-            menuElementWrapper: 'grasppe-menu-element-wrapper item-wrapper',
-            menuElement: 'grasppe-menu-element item',
+            menuContainer: 'grasppe-menu collection-wrapper', menuElementsContainer: 'grasppe-menu-elements-container collection', menuElementWrapper: 'grasppe-menu-element-wrapper item-wrapper', menuElement: 'grasppe-menu-element item',
         },
         elementTypes: {
             // !Default Generic Styles
-            text: 'span',
-            button: 'a',
-            icon: 'span',
-            header: 'h1',
-            container: 'div',
+            text: 'span', button: 'a', icon: 'span', header: 'h1', container: 'div',
 
             // !Default Panels Styles
-            panelContainer: 'div',
-            panelContent: 'div',
-            panelHeader: 'h3',
-            panelFooter: 'div',
+            panelContainer: 'div', panelContent: 'div', panelHeader: 'h3', panelFooter: 'div',
 
             // !Default Modals Styles
-            modalContainer: 'div',
-            modalContent: 'div',
-            modalHeader: 'h3',
-            modalFooter: 'div',
+            modalContainer: 'div', modalContent: 'div', modalHeader: 'h3', modalFooter: 'div',
 
             // !Default Lists Styles
-            listContainer: 'div',
-            listElementsContainer: 'ul',
-            listElementWrapper: 'li',
-            listElement: 'span',
+            listContainer: 'div', listElementsContainer: 'ul', listElementWrapper: 'li', listElement: 'span',
 
             // !Default Toolbars Styles
-            toolbarContainer: 'div',
-            toolbarElementsContainer: 'ul',
-            toolbarElementWrapper: 'li',
-            toolbarElement: 'div',
-            toolbarMenuElement: 'ul',
-            toolbarToggleElement: 'a',
-            toolbarButtonElement: 'a',
+            toolbarContainer: 'div', toolbarElementsContainer: 'ul', toolbarElementWrapper: 'li', toolbarElement: 'div', toolbarMenuElement: 'ul', toolbarToggleElement: 'a', toolbarButtonElement: 'a',
 
             // !Default Menus Styles
-            menuContainer: 'div',
-            menuElementsContainer: 'ul',
-            menuElementWrapper: 'li',
-            menuElement: 'div',
-            menuMenuElement: 'ul',
-            menuToggleElement: 'a',
-            menuButtonElement: 'a',
+            menuContainer: 'div', menuElementsContainer: 'ul', menuElementWrapper: 'li', menuElement: 'div', menuMenuElement: 'ul', menuToggleElement: 'a', menuButtonElement: 'a',
 
         }
     });
-
 
     //grasppe.Chorale.Test();
     //console.log(grasppe.Chorale.prototype.createPanel);
@@ -380,11 +333,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     }), Object.assign(grasppe.Chorale.Bootstrap.prototype.elementClasses, grasppe.Chorale.prototype.elementClasses, // soft inheritance
     {
         // !Bootstrap Panels Classes
-        panelContainer: grasppe.Chorale.prototype.elementClasses.panelContainer + ' panel',
-        panelContent: grasppe.Chorale.prototype.elementClasses.panelContent + ' panel-contents',
-        panelHeader: grasppe.Chorale.prototype.elementClasses.panelHeader + ' panel-heading',
-        panelTitle: grasppe.Chorale.prototype.elementClasses.panelTitle + ' panel-title',
-        panelFooter: grasppe.Chorale.prototype.elementClasses.panelFooter + ' panel-footer',
+        panelContainer: grasppe.Chorale.prototype.elementClasses.panelContainer + ' panel', panelContent: grasppe.Chorale.prototype.elementClasses.panelContent + ' panel-contents', panelHeader: grasppe.Chorale.prototype.elementClasses.panelHeader + ' panel-heading', panelTitle: grasppe.Chorale.prototype.elementClasses.panelTitle + ' panel-title', panelFooter: grasppe.Chorale.prototype.elementClasses.panelFooter + ' panel-footer',
     }), Object.defineProperties(grasppe.Chorale.Bootstrap.prototype, {
         // Prototype: Visible properties with Getters/Setters
     });
@@ -399,13 +348,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         // !Angular Icons createIcon
         createIcon(icon, classes, type) {
             switch (type) {
-            case 'font-icon':
-                var fontSet = icon && icon.match(/^[a-z]*/i).length > 0 && icon.match(/^[a-z]*/i)[0],
-                    fontIcon = icon && icon.match(/(-)(.*?)$/i).length > 1 && icon.match(/(-)(.*?)$/i)[2];
-                // console.log('Font Icon', fontSet, fontIcon, arguments);
-                return this.createContainer(this.elementTypes.icon, '', this.elementClasses.icon + ' ' + classes).attr('md-font-icon', icon).attr('md-font-set', fontSet);
-            default:
-                console.log('Default Icon', arguments);
+            case 'named-icon': var fontSet = (icon && icon.match(/^[a-z]*/i).length > 0) ? icon.match(/^[a-z]*/i)[0] : '',
+                    fontIcon = (icon && icon.match(/[\S]*$/i).length > 0) ? icon.match(/[\S]*$/i)[0] : '';
+                console.log('Named Icon: "%s" "%s" %O', fontSet, fontIcon, arguments);
+                switch (fontSet) {
+                case 'svg': return this.createContainer(this.elementTypes.icon, '', this.elementClasses.icon + ' svgIcon ' + classes).attr('md-svg-icon', fontIcon);
+                case 'svgsrc': return this.createContainer(this.elementTypes.icon, '', this.elementClasses.icon + ' svgIcon ' + classes).attr('md-svg-src', fontIcon);
+                case 'fa': case 'glyphicon': default :return this.createContainer(this.elementTypes.icon, '', this.elementClasses.icon + ' ' + classes).attr({
+                        'md-font-icon': icon, 'md-font-set': fontSet
+                    });
+                }
+            default :console.log('Default Icon', arguments);
                 return super.createIcon.apply(this, arguments);
             }
         }
@@ -426,7 +379,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 modal = super.createModal.apply(this, args),
                 title = modal.find('.grasppe-header-text').first(),
                 toolbar = $('<md-toolbar>').addClass(classes.modalHeader); // this.createToolbar(); //.prepend(title);
-            
             modal.find('.grasppe-modal-header').first().remove();
             modal.prepend(toolbar.prepend(title));
             return modal;
@@ -456,7 +408,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             var mdMenu = $('<md-menu>'),
                 listElement = this.createList($('<md-menu>'), contents, type || 'menu');
 
-
             $(container).children('md-button').first().appendTo(mdMenu);
             $(listElement).find('md-menu-content').appendTo(mdMenu);
             return mdMenu;
@@ -474,29 +425,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     }), Object.assign(grasppe.Chorale.Angular.prototype.elementTypes, grasppe.Chorale.Bootstrap.prototype.elementTypes, // soft inheritance
     {
         // !Angual Generic Types
-        button: 'md-button',
-        icon: 'md-icon',
-        'font-icon': 'md-icon',
+        button: 'md-button', icon: 'md-icon', 'font-icon': 'md-icon',
 
         // !Angual Modals Types
-        modalContainer: 'md-dialog',
-        modalContent: 'md-dialog-content',
-        modalHeader: 'md-toolbar',
-        modalFooter: 'div',
+        modalContainer: 'md-dialog', modalContent: 'md-dialog-content', modalHeader: 'md-toolbar', modalFooter: 'div',
 
         // !Angual Toolbars Types
-        toolbarContainer: 'md-toolbar',
-        toolbarElementsContainer: 'div',
-        toolbarElementWrapper: 'li',
-        toolbarElement: 'md-button',
+        toolbarContainer: 'md-toolbar', toolbarElementsContainer: 'div', toolbarElementWrapper: 'li', toolbarElement: 'md-button',
 
         // !Angual Menus Types
-        menuContainer: 'md-menu',
-        menuElementsContainer: 'md-menu-content',
-        menuElementWrapper: 'md-menu-item',
-        menuElement: 'md-button',
-
-
+        menuContainer: 'md-menu', menuElementsContainer: 'md-menu-content', menuElementWrapper: 'md-menu-item', menuElement: 'md-button',
 
     }), Object.assign(grasppe.Chorale.Angular.prototype.elementClasses, grasppe.Chorale.Bootstrap.prototype.elementClasses, // soft inheritance
     {
@@ -504,17 +442,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         panelContainer: grasppe.Chorale.prototype.elementClasses.panelContainer + ' card panel',
 
         // !Angual Modals Classes
-        modalContainer: 'grasppe-modal-container',
-        modalContent: 'grasppe-modal-content',
-        modalHeader: 'grasppe-modal-header',
-        modalFooter: 'grasppe-modal-footer md-actions',
+        modalContainer: 'grasppe-modal-container', modalContent: 'grasppe-modal-content', modalHeader: 'grasppe-modal-header', modalFooter: 'grasppe-modal-footer md-actions',
 
         // !Angual Toolbars Classes
         toolbarElementsContainer: grasppe.Chorale.prototype.elementClasses.toolbarElementsContainer + ' md-toolbar-tools',
     }), Object.defineProperties(grasppe.Chorale.Angular.prototype, {
         // Prototype: Visible properties with Getters/Setters
     });
-
 
 /*
     Object.defineProperties(grasppe.Chorale.prototype, {

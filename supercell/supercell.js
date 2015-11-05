@@ -20,13 +20,20 @@ $(function () {
                 clearTimeout(this.updatePlot.timeOut);
             }).on('changed.calculations', function (event) {
                 this.updatePlot();
+                setTimeout(function () {
+                    this.updatePlot();
+                }.bind(this), 3000);
             }).on('refresh.option', function (event, data) {
-                // console.log(event, data);
                 try {
-                    if (data.id === 'shading' || data.id === 'panning') this.updatePlot();
+                    if (data.id === 'shading' || data.id === 'panning' || 'refresh') return this.updatePlot();
+                    console.log(event, data);
                 } catch (err) {}
             }).on('resized.window', function (event, data) {
-                this.adjustPlotSize();
+                // this.adjustPlotSize();
+                clearTimeout(this.adjustPlotSize.timeOut);
+                this.adjustPlotSize.timeOut = setTimeout(function () {
+                    this.adjustPlotSize();
+                }.bind(this), 100);
             });
 
         };
@@ -35,63 +42,80 @@ $(function () {
     grasppe.colorSheets.SupercellSheet.prototype = Object.assign(Object.create(grasppe.colorSheets.Sheet.prototype, {
         // Property Descriptions
         title: {
-            value: 'Supercell Demo',
-            enumerable: false,
+            value: 'Supercell Demo', enumerable: false,
         },
         description: {
-            value: 'Amplitude-Modulation halftone vs. supercell visualization.',
-            enumerable: false,
+            value: 'Amplitude-Modulation halftone vs. supercell visualization.', enumerable: false,
         },
         version: {
-            value: 'a01',
-            enumerable: false,
+            value: 'a01', enumerable: false,
         },
         definitions: {
             value: {
                 parameters: {
                     _order: ['spi', 'lpi', 'theta', 'cells'],
                     spi: {
-                        id: 'spi',
-                        name: 'Addressability',
-                        description: 'The number of individual imagable spots addressable by the system across one inch in each direction.',
-                        unit: 'short: "spi", long: "spot/inch", name: "Spots per Inch", description: "Number of image spots per inch."'.toLiteral(),
-                        range: 'minimum: 2, maximum: 3600, rounding: 2, step: 100'.toLiteral(),
-                        control: 'type: "slider", minimum: 0, maximum: 3600, step: 2, ticks: [2, 600, 1200, 2400, 3600]'.toLiteral(),
+                        id: 'spi', name: 'Addressability', description: 'The number of individual imagable spots addressable by the system across one inch in each direction.', unit: {
+                            short: "spi", long: "spot/inch", name: "Spots per Inch", description: "Number of image spots per inch."
+                        },
+                        range: {
+                            minimum: 2, maximum: 3600, rounding: 2, step: 20
+                        },
+                        control: {
+                            type: "slider", minimum: 0, maximum: 3600, step: 2, ticks: [2, 600, 1200, 2400, 3600]
+                        },
                         type: 'number',
                     },
                     lpi: {
-                        id: 'lpi',
-                        name: 'Line Ruling',
-                        description: 'The number of individual halftone cells imaged by the system across one inch in each direction.',
-                        unit: 'short: "lpi", long: "line/inch", name: "Lines per Inch", description: "Number of halftone cells per inch."'.toLiteral(),
-                        range: 'minimum: 1, maximum: 300, rounding: 1, step: 5'.toLiteral(),
-                        control: 'type: "slider", minimum: 1, maximum: 300, step:1, ticks: [1, 100, 200, 300]'.toLiteral(),
+                        id: 'lpi', name: 'Line Ruling', description: 'The number of individual halftone cells imaged by the system across one inch in each direction.', unit: {
+                            short: "lpi", long: "line/inch", name: "Lines per Inch", description: "Number of halftone cells per inch."
+                        },
+                        range: {
+                            minimum: 1, maximum: 300, rounding: 1, step: 5
+                        },
+                        control: {
+                            type: "slider", minimum: 1, maximum: 300, step: 1, ticks: [1, 100, 200, 300]
+                        },
                         type: 'number',
                     },
                     theta: {
-                        id: 'theta',
-                        name: 'Line Angle',
-                        description: 'The angle of rotation of the halftone cells imaged by the system.',
-                        unit: 'short: "º", long: "º degrees", name: "Degrees", description: "Angle of halftone cells."'.toLiteral(),
-                        range: 'minimum: 0, maximum: 360, rounding: 0.125, step: 2.5'.toLiteral(),
-                        control: 'type: "slider", minimum: 0, maximum: 90, step: 0.125, ticks: [0, 45, 90]'.toLiteral(),
+                        id: 'theta', name: 'Line Angle', description: 'The angle of rotation of the halftone cells imaged by the system.', unit: {
+                            short: "º", long: "º degrees", name: "Degrees", description: "Angle of halftone cells."
+                        },
+                        range: {
+                            minimum: 0, maximum: 360, rounding: 0.125, step: 0.5
+                        },
+                        control: {
+                            type: "slider", minimum: 0, maximum: 90, step: 0.125, ticks: [0, 45, 90]
+                        },
                         type: 'number',
                     },
                     cells: {
-                        id: 'cells',
-                        name: 'Cells',
-                        description: 'The number of cells in a Supercell block.',
-                        unit: 'short: "cell", long: "cells/block", name: "Cells per Block", description: "Number of cells."'.toLiteral(),
-                        range: 'minimum: 1, maximum: 20, rounding: 1, step: 1'.toLiteral(),
-                        control: 'type: "slider", minimum: 1, maximum: 10, step: 1, ticks: [1, 4, 8, 10]'.toLiteral(),
+                        id: 'cells', name: 'Cells ', description: 'The number of cells in a Supercell block.', unit: {
+                            short: "cell", long: "cells/block", name: "Cells per Block", description: "Number of cells."
+                        },
+                        range: {
+                            minimum: 1, maximum: 20, rounding: 1, step: 1
+                        },
+                        control: {
+                            type: "slider", minimum: 1, maximum: 10, step: 1, ticks: [1, 4, 8, 10]
+                        },
                         type: 'number',
                     },
                 },
                 formatters: {
-                    spi: 'formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: " spi"'.toLiteral(),
-                    lpi: 'formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: " lpi"'.toLiteral(),
-                    theta: 'formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: "º deg"'.toLiteral(),
-                    cells: 'formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: "cells"'.toLiteral(),
+                    spi: {
+                        formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: " spi"
+                    },
+                    lpi: {
+                        formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: " lpi"
+                    },
+                    theta: {
+                        formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: "º deg"
+                    },
+                    cells: {
+                        formatter: "google.visualization.NumberFormat", pattern: "0.##", suffix: "cells"
+                    },
                 },
                 elements: {
                     _template: '\
@@ -99,77 +123,123 @@ $(function () {
                     <div class="supercell-sheet-parameters"><div class="supercell-sheet-controls"></div></div>\
                     <div class="supercell-sheet-results"></div><div class="supercell-sheet-overview"></div>\
                     <div class="supercell-sheet-documentation"></div>\
-                    ',
-                    sheet: 'prefix: "sheet-wrapper", type: "div"'.toLiteral(),
-                    stage: 'prefix: "stage", type: "div"'.toLiteral(),
-                    results: 'prefix: "results", type: "div"'.toLiteral(),
-                    overview: 'prefix: "overview", type: "div"'.toLiteral(),
-                    parameters: 'prefix: "parameters", type: "div"'.toLiteral(),
-                    documentation: 'prefix: "documentation", type: "div"'.toLiteral(),
-                    contents: 'prefix: "contents", type: "div"'.toLiteral(),
-                    canvas: 'prefix: "canvas", type: "div"'.toLiteral(),
-                    controls: 'prefix: "controls", type: "div"'.toLiteral(),
+                    ', sheet: {
+                        prefix: "sheet-wrapper", type: "div"
+                    },
+                    stage: {
+                        prefix: "stage", type: "div"
+                    },
+                    results: {
+                        prefix: "results", type: "div"
+                    },
+                    overview: {
+                        prefix: "overview", type: "div"
+                    },
+                    parameters: {
+                        prefix: "parameters", type: "div"
+                    },
+                    documentation: {
+                        prefix: "documentation", type: "div"
+                    },
+                    contents: {
+                        prefix: "contents", type: "div"
+                    },
+                    canvas: {
+                        prefix: "canvas", type: "div"
+                    },
+                    controls: {
+                        prefix: "controls", type: "div"
+                    },
                 },
                 scenarios: {
                     _order: ['Base_Calculations', 'Halftone_Calculations', 'Halftone_Results', 'Supercell_Calculations', 'Supercell_Results'],
-                    Base_Calculations: Object.assign([], {
-                        0: 'id: "spi", hidden: true, type: "p", fn: "SPI", name: "", description: ""'.toLiteral(),
-                        1: 'id: "lpi", hidden: true, type: "p", fn: "LPI", name: "", description: ""'.toLiteral(),
-                        2: 'id: "theta", hidden: true, type: "p", fn: "THETA", name: "", description: ""'.toLiteral(),
-                        3: 'id: "thetaRadians", hidden: true, type: "c", fn: "theta * (PI/180)", unit: "º rad", name: "Line Angle (Radians)", description: ""'.toLiteral(),
-                        4: 'id: "cells", hidden: true, type: "p", fn: "CELLS", name: "", description: ""'.toLiteral(),
-                    }),
-                    Halftone_Calculations: Object.assign([], {
-                        0: 'id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: ""'.toLiteral(),
-                        1: 'id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: ""'.toLiteral(),
-                        2: 'id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(thetaRadians)", unit: "spots", name: "halftone spots in x direction", description: ""'.toLiteral(),
-                        3: 'id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "halftone spots in y direction", description: ""'.toLiteral(),
-                        4: 'id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots))", unit: "spots", name: "halftone spots in x direction", description: ""'.toLiteral(),
-                        5: 'id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots))", unit: "spots", name: "halftone spots in x direction", description: ""'.toLiteral(),
-                        6: 'id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "Round halftone spots at supercell angle", description: ""'.toLiteral(),
-                    }),
-                    Halftone_Results: Object.assign([], {
-                        0: 'id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "Single-cell Line Ruling (Round)", description: ""'.toLiteral(),
-                        1: 'id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "Single-cell Line Angle (Round)", description: ""'.toLiteral(),
-                        2: 'id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "Single-cell Gray Levels (1-bit)", description: ""'.toLiteral(),
-                        3: 'id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "Single-cell Screen ruling error", description: ""'.toLiteral(),
-                        4: 'id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "Single-cell Screen angle error", description: ""'.toLiteral(),
-                    }),
-                    Supercell_Calculations: Object.assign([], {
-                        0: 'id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots*cells))", unit: "spots", name: "super-cell spots in x direction", description: ""'.toLiteral(),
-                        1: 'id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots*cells))", unit: "spots", name: "super-cell spots in y direction", description: ""'.toLiteral(),
-                        2: 'id: "cellSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2))/cells", unit: "spots", name: "Round super-cell spots at supercell angle", description: ""'.toLiteral(),
-                    }),
-                    Supercell_Results: Object.assign([], {
-                        0: 'id: "cellRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*cellSpots)", unit: "lpi", name: "Super-cell Line Ruling (Round)", description: ""'.toLiteral(),
-                        1: 'id: "cellRoundTheta", group: "roundTheta", type: "r", fn: "(atan2(cellRoundYSpots, cellRoundXSpots) * (180/PI))", unit: "º", name: "Super-cell Line Angle (Round)", description: ""'.toLiteral(),
-                        2: 'id: "cellGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/(cellRoundLPI/cells), 2))+1", unit: "levels", name: "Super-cell Gray Levels (1-bit)", description: ""'.toLiteral(),
-                        3: 'id: "cellErrorLPI", group: "errorLPI", type: "r", fn: "(cellRoundLPI-lpi)/lpi*100", unit: "%", name: "Super-cell Screen ruling error", description: ""'.toLiteral(),
-                        4: 'id: "cellErrorTheta", group: "errorTheta", type: "r", fn: "cellRoundTheta-theta", unit: "º", name: "Super-cell Screen angle error", description: ""'.toLiteral(),
-                    }),
+                    Base_Calculations: [{
+                        id: "spi", hidden: true, type: "p", fn: "SPI", name: "", description: ""
+                    }, {
+                        id: "lpi", hidden: true, type: "p", fn: "LPI", name: "", description: ""
+                    }, {
+                        id: "theta", hidden: true, type: "p", fn: "THETA", name: "", description: ""
+                    }, {
+                        id: "thetaRadians", hidden: true, type: "c", fn: "theta * (PI/180)", unit: "º rad", name: "Line Angle (Radians)", description: ""
+                    }, {
+                        id: "cells", hidden: true, type: "p", fn: "CELLS", name: "", description: ""
+                    }, ],
+                    Halftone_Calculations: [{
+                        id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: ""
+                    }, {
+                        id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: ""
+                    }, {
+                        id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(thetaRadians)", unit: "spots", name: "halftone spots in x direction", description: ""
+                    }, {
+                        id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "halftone spots in y direction", description: ""
+                    }, {
+                        id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots))", unit: "spots", name: "halftone spots in x direction", description: ""
+                    }, {
+                        id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots))", unit: "spots", name: "halftone spots in x direction", description: ""
+                    }, {
+                        id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "Round halftone spots at supercell angle", description: ""
+                    }],
+                    Halftone_Results: [{
+                        id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "Single-cell Line Ruling (Round)", description: ""
+                    }, {
+                        id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "Single-cell Line Angle (Round)", description: ""
+                    }, {
+                        id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "Single-cell Gray Levels (1-bit)", description: ""
+                    }, {
+                        id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "Single-cell Screen ruling error", description: ""
+                    }, {
+                        id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "Single-cell Screen angle error", description: ""
+                    }],
+                    Supercell_Calculations: [{
+                        id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots*cells))", unit: "spots", name: "super-cell spots in x direction", description: ""
+                    }, {
+                        id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots*cells))", unit: "spots", name: "super-cell spots in y direction", description: ""
+                    }, {
+                        id: "cellSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2))/cells", unit: "spots", name: "Round super-cell spots at supercell angle", description: ""
+                    }],
+                    Supercell_Results: [{
+                        id: "cellRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*cellSpots)", unit: "lpi", name: "Super-cell Line Ruling (Round)", description: ""
+                    }, {
+                        id: "cellRoundTheta", group: "roundTheta", type: "r", fn: "(atan2(cellRoundYSpots, cellRoundXSpots) * (180/PI))", unit: "º", name: "Super-cell Line Angle (Round)", description: ""
+                    }, {
+                        id: "cellGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/(cellRoundLPI/cells), 2))+1", unit: "levels", name: "Super-cell Gray Levels (1-bit)", description: ""
+                    }, {
+                        id: "cellErrorLPI", group: "errorLPI", type: "r", fn: "(cellRoundLPI-lpi)/lpi*100", unit: "%", name: "Super-cell Screen ruling error", description: ""
+                    }, {
+                        id: "cellErrorTheta", group: "errorTheta", type: "r", fn: "cellRoundTheta-theta", unit: "º", name: "Super-cell Screen angle error", description: ""
+                    }],
                 },
                 options: {
+                    refresh: {
+                        element: 'stage', type: 'action', icon: 'svgsrc images/magic-wand.svg', title: 'Redraw', layout: 'icon-only',
+                    },
                     panning: {
-                        element: 'stage',
-                        type: 'list',
-                        icon: 'glyphicon glyphicon-search',
-                        title: 'Zoom',
-                        list: {
-                            cell: 'value: "cell-panning", icon: "glyphicon glyphicon-stop", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."'.toLiteral(),
-                            supercell: 'value: "supercell-panning", icon: "glyphicon glyphicon-th", title: "Super-cell panning", description: "Zoom plot to show the super-cell."'.toLiteral(),
+                        element: 'stage', type: 'list', icon: 'svgsrc images/search.svg', title: 'Zoom', layout: 'icon-only', list: {
+                            cell: {
+                                value: "cell-panning", icon: "svgsrc images/zoom-in.svg", title: "Single-cell panning", description: "Zoom plot to show show the intended cell."
+                            },
+                            supercell: {
+                                value: "supercell-panning", icon: "svgsrc images/zoom-out.svg", title: "Super-cell panning", description: "Zoom plot to show the super-cell."
+                            },
                         },
                     },
                     shading: {
-                        element: 'stage',
-                        type: 'list',
-                        icon: 'glyphicon glyphicon-tint',
-                        title: 'Style',
-                        list: {
-                            wires: 'icon: "glyphicon glyphicon-unchecked", title: "Thin lines", description: "Only draw the theoretical lines with thin strokes."'.toLiteral(),
-                            lines: 'icon: "glyphicon glyphicon-modal-window", title: "Normal lines", description: "Only draw the theoretical lines with different stroke widths."'.toLiteral(),
-                            fills: 'icon: "glyphicon glyphicon-equalizer", title: "Thin with pixel-fill", description: "Draw the theoretical lines and filled pixels."'.toLiteral(),
-                            pixels: 'icon: "glyphicon glyphicon-equalizer", title: "Pixel-fill only", description: "Only draw the filled pixels."'.toLiteral(),
-                            supercells: 'icon: "glyphicon glyphicon-equalizer", title: "Supercell pixels only", description: "Only draw the filled pixels for supercells in different colors."'.toLiteral(),
+                        element: 'stage', type: 'list', icon: 'svgsrc images/quill.svg', title: 'Style', layout: 'icon-only', list: {
+                            wires: {
+                                icon: "svgsrc images/line-thin.svg", title: "Thin lines", description: "Only draw the theoretical lines with thin strokes."
+                            },
+                            lines: {
+                                icon: "svgsrc images/line-normal.svg", title: "Normal lines", description: "Only draw the theoretical lines with different stroke widths."
+                            },
+                            fills: {
+                                icon: "svgsrc images/fill-normal.svg", title: "Thin with pixel-fill", description: "Draw the theoretical lines and filled pixels."
+                            },
+                            pixels: {
+                                icon: "svgsrc images/fill-only.svg", title: "Pixel-fill only", description: "Only draw the filled pixels."
+                            },
+                            supercells: {
+                                icon: "svgsrc images/fill-cells.svg", title: "Supercell pixels only", description: "Only draw the filled pixels for supercells in different colors."
+                            },
                         },
                     },
                     // results: {
@@ -178,8 +248,8 @@ $(function () {
                     //     icon: 'fa fa-edit',
                     //     title: 'Shading',
                     //     list: {
-                    //         lines: 'icon: "glyphicon glyphicon-modal-window", title: "Lines only", description: "Only draw the theoretical lines."'.toLiteral(),
-                    //         fills: 'icon: "glyphicon glyphicon-equalizer", title: "Lines with pixel-fill", description: "Draw the theoretical lines and filled pixels."'.toLiteral(),
+                    //         lines: {icon: "glyphicon glyphicon-modal-window", title: "Lines only", description: "Only draw the theoretical lines."},
+                    //         fills: {icon: "glyphicon glyphicon-equalizer", title: "Lines with pixel-fill", description: "Draw the theoretical lines and filled pixels."},
                     //     },
                     // }
                 },
@@ -188,48 +258,66 @@ $(function () {
         },
         parameters: {
             value: {
-                spi: 2540,
-                lpi: 150,
-                theta: 35,
-                cells: 4,
+                spi: 2540, lpi: 150, theta: 35, cells: 4,
             },
         },
         options: {
             value: {
-                panning: 'cell',
-                shading: 'fills',
+                panning: 'cell', shading: 'fills',
                 // results: 'fills',
-                plotWidth: 700,
-                plotHeight: 700,
-                plotBufferScale: 2,
-                plotOptions: {
-                    plotTypeFactor: 1 / 72,
-                    plotLineFactor: 1 / 72 / 12,
-                    plotFrameStyle: 'strokeStyle: "blue"; lineWidth: 1'.toLiteral(),
-                    plotBoxStyle: 'fillStyle: "white"; lineWidth: 1; strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
-                    plotGridStyle: 'lineWidth: 1; strokeStyle: "RGBA(127,127,127,0.25)"'.toLiteral(),
+                plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
+                    plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
+                        strokeStyle: "blue", lineWidth: 1
+                    },
+                    plotBoxStyle: {
+                        fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
+                    },
+                    plotGridStyle: {
+                        lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
+                    },
                 },
                 seriesOptions: {
-                    intendedSeriesDefaultStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                    halftoneSeriesDefaultStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
-                    supercellSeriesDefaultStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
-                    intendedSeriesStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                    halftoneSeriesStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
-                    halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.5)"'.toLiteral(),
-                    supercellSeriesStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
-                    supercellSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.25)"'.toLiteral(),
-                    supercellSeriesLineStyle: 'lineWidth: 0, strokeStyle: "#0000FF", lineDash: [6, 12]'.toLiteral(),
+                    intendedSeriesDefaultStyle: {
+                        lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                        fillStyle: "RGBA(255, 64, 64, 0.1)"
+                    },
+                    halftoneSeriesDefaultStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    supercellSeriesDefaultStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    intendedSeriesStyle: {
+                        lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                        fillStyle: "RGBA(255, 64, 64, 0.1)"
+                    },
+                    halftoneSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    halftoneSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 255, 64, 0.5)"
+                    },
+                    supercellSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    supercellSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 64, 255, 0.25)"
+                    },
+                    supercellSeriesLineStyle: {
+                        lineWidth: 0, strokeStyle: "#0000FF", lineDash: [1, 3]
+                    },
                 },
                 legendOptions: {
                     seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
-                    legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2'.toLiteral(),
+                    legendBoxStyle: {
+                        fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2
+                    },
                 }
             },
         },
     }), {
         // Prototype
-        constructor: grasppe.colorSheets.SupercellSheet,
-        properties: {
+        constructor: grasppe.colorSheets.SupercellSheet, properties: {
             calculations: {
                 value: {},
             },
@@ -275,11 +363,15 @@ $(function () {
                 this.setLoadingState(true);
                 var options = self.options;
                 STROKE_OPTIONS: {
-                    if (this.options.shading === 'lines') {
-                        console.log
+                    if (this.options.shading === 'lines' || this.options.panning==='cell') {
                         options.intendedSeriesStyle.lineWidth = options.intendedSeriesDefaultStyle.lineWidth;
                         options.halftoneSeriesStyle.lineWidth = options.halftoneSeriesDefaultStyle.lineWidth;
                         options.supercellSeriesStyle.lineWidth = options.supercellSeriesDefaultStyle.lineWidth;
+                        options.supercellSeriesLineStyle.lineWidth = 1;
+                    } else if (this.options.panning==='supercell') {
+                        options.intendedSeriesStyle.lineWidth = 2;
+                        options.halftoneSeriesStyle.lineWidth = 2;
+                        options.supercellSeriesStyle.lineWidth = 0.75;
                         options.supercellSeriesLineStyle.lineWidth = 1;
                     } else if (this.options.shading === 'pixels') {
                         options.intendedSeriesStyle.lineWidth = 0;
@@ -311,34 +403,6 @@ $(function () {
                     }
                     if (timeStamp !== self.timeStamp) return;
                 }
-                // CELL_CALCULATIONS: {
-                //     var supercellPixelBoxes = [],
-                //         supercellBoxes = [],
-                //         supercellXOffset = supercellBox[3][0] / f.cells,
-                //         supercellYOffset = supercellBox[3][1] / f.cells;
-                //     if (this.options.shading === 'supercells') {
-                //         for (var i = 0; i < f.cells; i++) {
-                //             for (var j = 0; j < f.cells; j++) {
-                //                 var fillStyle = ('fillStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
-                //                     strokeStyle = ('strokeStyle: "rgb(64, 64, ' + (((i % 2) + (j % 2) === 1) * 255) + ')"').toLiteral(),
-                //                     supercellsBoxOrigin = [(supercellBox[3][0] / f.cells * i) + (supercellBox[1][0] / f.cells * j), (supercellBox[3][1] / f.cells * i) + (supercellBox[1][1] / f.cells * j)],
-                //                     supercellsBoxMatrix = [
-                //                         [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
-                //                         [(supercellBox[1][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[1][1] / f.cells) + (supercellsBoxOrigin[1])],
-                //                         [(supercellBox[2][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[2][1] / f.cells) + (supercellsBoxOrigin[1])],
-                //                         [(supercellBox[3][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[3][1] / f.cells) + (supercellsBoxOrigin[1])],
-                //                         [(supercellBox[0][0] / f.cells) + (supercellsBoxOrigin[0]), (supercellBox[0][1] / f.cells) + (supercellsBoxOrigin[1])],
-                //                     ],
-                //                     supercellsBox = new grasppe.canvas.Path(supercellsBoxMatrix, strokeStyle);
-                //                 supercellBoxes.push(supercellsBox); // new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
-                //                 if(((i % 2) + (j % 2) !== 1)) supercellPixelBoxes.push(new grasppe.canvas.ImageFilter(supercellsBox, fillStyle));
-                //             }
-                //         }
-                //         //this.options.panning = 'supercell';
-                //         //supercellPixelBoxes = new grasppe.canvas.ImageFilter(supercellBoxes, options.halftoneSeriesFillStyle);
-                //     }
-                // 
-                // }
                 BOUNDING_CALCULATIONS: {
                     var paths = [intendedBox, halftoneBox, supercellBox],
                         lines = [supercellVerticals, supercellHorizontals],
@@ -372,15 +436,12 @@ $(function () {
                         scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
                         offset = [-clippingBox.xMin, -clippingBox.yMin],
                         width = (offset[0] + clippingBox.xMax) * scale,
-                        // * (frameRatio > 1 ? frameRatio : 1),
                         height = width,
-                        // / frameRatio,
                         xTransform = Object.assign(function (x, self) {
                             if (!self) self = xTransform;
                             return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
                         }, {
-                            scale: scale,
-                            offset: offset[0],
+                            scale: scale, offset: offset[0],
                         }),
                         yTransform = Object.assign(function (y, self) {
                             if (!self) self = yTransform;
@@ -388,13 +449,12 @@ $(function () {
                             if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
                             else return fY;
                         }, {
-                            scale: scale,
-                            offset: offset[1],
+                            scale: scale, offset: offset[1],
                         });
                     if (timeStamp !== self.timeStamp) return;
                 }
 
-                var supercellPixelBoxes = this.getSuperCellsPixels(supercellBox, f.cells);
+                var supercellPixelBoxes = (this.options.shading === 'supercells') ? this.getSuperCellsPixels(supercellBox, f.cells) : [];
 
                 DRAWING_OPERATIONS: {
                     var chart = (self.chart instanceof grasppe.canvas.Chart) ? self.chart : new grasppe.canvas.Chart(options.plotCanvas),
@@ -412,16 +472,8 @@ $(function () {
                     self.chart = chart;
                     if (timeStamp !== self.timeStamp) return;
                     chart.draw(paths, {
-                        xModifier: xTransform,
-                        yModifier: yTransform,
-                        width: width,
-                        height: height,
-                        bufferScale: options.plotBufferScale,
-                        typeScale: options.plotBufferScale * options.plotTypeFactor,
-                        lineScale: options.plotBufferScale * options.plotLineFactor,
-                        legend: {
-                            labels: options.seriesLabels,
-                            styles: [options.intendedSeriesStyle, options.halftoneSeriesStyle, options.supercellSeriesLineStyle],
+                        xModifier: xTransform, yModifier: yTransform, width: width, height: height, bufferScale: options.plotBufferScale, typeScale: options.plotBufferScale * options.plotTypeFactor, lineScale: options.plotBufferScale * options.plotLineFactor, legend: {
+                            labels: options.seriesLabels, styles: [options.intendedSeriesStyle, options.halftoneSeriesStyle, options.supercellSeriesLineStyle],
                             boxStyle: options.legendBoxStyle
                         },
                         transform: function (context, canvas) {
@@ -437,28 +489,43 @@ $(function () {
 
             }.bind(this), 10, f, self);
             if (!self.options) self.options = Object.assign({
-                plotWidth: 600,
-                plotHeight: 600,
-                plotBufferScale: 2,
-                //$('body').is('.iPad,.iPhone') ? 1 : 1.5,
-                plotTypeFactor: 1 / 72,
-                plotLineFactor: 1 / 72 / 12,
-                intendedSeriesStyle: 'lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 3], fillStyle: "RGBA(255, 64, 64, 0.1)"'.toLiteral(),
-                halftoneSeriesStyle: 'lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]'.toLiteral(),
-                halftoneSeriesFillStyle: 'fillStyle: "RGBA(64, 255, 64, 0.75)"'.toLiteral(),
-                supercellSeriesStyle: 'lineWidth: 2, strokeStyle: "#0000FF"'.toLiteral(),
-                supercellSeriesFillStyle: 'fillStyle: "RGBA(64, 64, 255, 0.125)"'.toLiteral(),
-                supercellSeriesLineStyle: 'lineWidth: 0.5, strokeStyle: "#0000FF", lineDash: [6, 12]'.toLiteral(),
-                plotGridStyle: 'lineWidth: 0.75, strokeStyle: "RGBA(0,0,0,0.15)"'.toLiteral(),
-                plotBoxStyle: 'fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"'.toLiteral(),
-                plotFrameStyle: 'strokeStyle: "blue", lineWidth: 1'.toLiteral(),
-                legendBoxStyle: 'fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2'.toLiteral(),
+                plotWidth: 600, plotHeight: 600, plotBufferScale: 2, plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, intendedSeriesStyle: {
+                    lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 3],
+                    fillStyle: "RGBA(255, 64, 64, 0.1)"
+                },
+                halftoneSeriesStyle: {
+                    lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                },
+                halftoneSeriesFillStyle: {
+                    fillStyle: "RGBA(64, 255, 64, 0.75)"
+                },
+                supercellSeriesStyle: {
+                    lineWidth: 2, strokeStyle: "#0000FF"
+                },
+                supercellSeriesFillStyle: {
+                    fillStyle: "RGBA(64, 64, 255, 0.125)"
+                },
+                supercellSeriesLineStyle: {
+                    lineWidth: 0.5, strokeStyle: "#0000FF", lineDash: [6, 12]
+                },
+                plotGridStyle: {
+                    lineWidth: 0.75, strokeStyle: "RGBA(0,0,0,0.15)"
+                },
+                plotBoxStyle: {
+                    fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
+                },
+                plotFrameStyle: {
+                    strokeStyle: "blue", lineWidth: 1
+                },
+                legendBoxStyle: {
+                    fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2
+                },
                 seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
                 plotCanvas: $(this.elements.contents).find('div').first(),
             }, this.options, this.options.plotOptions, this.options.seriesOptions, this.options.legendOptions);
             return this;
         },
-        
+
         getSuperCellsPixels: function getSuperCellsPixels(path, cells) {
 
             var pixels = [],
@@ -468,28 +535,30 @@ $(function () {
                 height = path.height + offset * 2,
                 xMin = path.xMin,
                 yMin = path.yMin,
-                style1 = 'fillStyle: "rgba(255, 255, 0, 0.5)"'.toLiteral(),
-                style2 = 'fillStyle: "rgba(0, 0, 255, 0.5)"'.toLiteral(),
+                style1 = {
+                    fillStyle: "rgba(255, 196, 0, 0.75)"
+                },
+                style2 = {
+                    fillStyle: "rgba(127, 127, 255, 0.75)"
+                },
                 context = $canvas[0].getContext("2d"),
                 imageData, rawData;
 
             try {
                 $canvas[0].width = width, $canvas[0].height = height;
                 with(context) clearRect(0, 0, width, height), translate(offset + path.width - path.xMax, offset), rect(0 - offset + xMin, -offset, width, height), fillStyle = '#000'; // , fill();
-
                 for (var i = 0; i < cells; i++) for (var j = 0; j < cells; j++) { // if (((i % 2) + (j % 2) !== 1)) {
                     var origin = [(path[3][0] / cells * i) + (path[1][0] / cells * j), (path[3][1] / cells * i) + (path[1][1] / cells * j)],
                         box = path.map(function (point) {
                             return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
                         });
-                        
-                    with(context) moveTo(box[0][0], box[0][1]), beginPath(), lineTo(box[1][0], box[1][1]), lineTo(box[2][0], box[2][1]), lineTo(box[3][0], box[3][1]), lineTo(box[0][0], box[0][1]), closePath(), context.fillStyle = ((((i % 2) + (j % 2) !== 1)) ? '#FFF' : '#000'), context.fill();
+
+                    with(context) moveTo(box[0][0], box[0][1]), beginPath(), lineTo(box[1][0], box[1][1]), lineTo(box[2][0], box[2][1]), lineTo(box[3][0], box[3][1]), lineTo(box[0][0], box[0][1]), closePath(), context.fillStyle = ((((i % 2) + (j % 2) === 1)) ? '#FFF' : '#000'), context.fill();
                 }
 
                 imageData = context.getImageData(offset, offset, width - offset * 2, height - offset * 2);
                 rawData = imageData.data;
 
-                // for (var j = 0; j < imageData.height; j++) for (var i = 0; i < imageData.width; i++) if (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 0] > 110) pixels.push(new grasppe.canvas.Path([
                 for (var j = 0; j < imageData.height; j++) for (var i = 0; i < imageData.width; i++) if (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 3] > 110) pixels.push(new grasppe.canvas.Path([
                     [xMin + i + 0, yMin + j + 0],
                     [xMin + i + 1, yMin + j + 0],
@@ -506,7 +575,6 @@ $(function () {
         },
 
         adjustPlotSize: function () {
-            // if (typeof this.elements !== 'object') return;
             try {
                 var plotCanvas = $(this.elements.contents).find('.plot-canvas').first(),
                     plotWrapper = $(this.elements.contents),
@@ -514,7 +582,6 @@ $(function () {
                     wrapHeight = plotWrapper.innerHeight(),
                     wrapRatio = wrapWidth / wrapHeight,
                     plotSize = Math.ceil(Math.min(wrapWidth, wrapHeight) / 10) * 10;
-                //console.log(plotCanvas, plotWrapper);
                 if (plotCanvas.length > 0 && (plotCanvas[0].width !== plotSize || plotCanvas[0].height !== plotSize)) {
                     plotCanvas[0].width = plotSize;
                     plotCanvas[0].height = plotSize;
@@ -554,8 +621,6 @@ $(function () {
                 text += "line angle error of " + t.lineErrorTheta + "º vs. " + t.cellErrorTheta + "º degrees, ";
                 text += "and, resolution error of " + t.lineErrorLPI + "% vs. " + t.cellErrorLPI + "%.</p>";
                 text += "</div>";
-                // $('#results-explaination').html(text);
-                //$(this.elements.overview).find('.panel-body').first().html(text);
                 this.template['overview-contents'].html(text);
                 return text;
             }.bind(this), 10);
@@ -659,13 +724,18 @@ $(function () {
                 window.setTimeout(function (scenario, stack, timeStamp) {
                     if (timeStamp !== self.timeStamp) return;
                     processStack({
-                        scenario: scenario,
-                        stack: stack,
+                        scenario: scenario, stack: stack,
                     }, runScenario(scenario, stack));
                 }.bind(this), 10, nextScenario, stack, self.timeStamp);
             } else {
-                var spanned = 'p: {className: "spanned"}'.toLiteral(),
-                    types = 'c: " ⚙ ", p: "⇢⚙ ", r: " ⚙⇢"'.toLiteral(),
+                var spanned = {
+                    p: {
+                        className: "spanned"
+                    }
+                },
+                    types = {
+                        c: " ⚙ ", p: "⇢⚙ ", r: " ⚙⇢"
+                    },
                     groupings = {};
 
                 Object.assign(this.calculations, 'complete: false, values: {}, text: {}, info: {}'.toLiteral({

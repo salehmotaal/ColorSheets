@@ -161,6 +161,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 if (!prefix) prefix = loaderElement.src.replace(/^.*?#/g, '');
                 if (loaderElement.getAttribute('data-css-prefix')) grasppe.load.stylePrefix = loaderElement.getAttribute('data-css-prefix');
                 if (loaderElement.getAttribute('data-js-prefix')) grasppe.load.scriptPrefix = loaderElement.getAttribute('data-js-prefix');
+                var loadRef = document.createElement('link');
+                loadRef.href = loaderElement.getAttribute('src');
+                grasppe.load.url = {};
+                grasppe.load.url.link = loadRef;
+                grasppe.load.url.scripts = grasppe.load.url.link.href.replace(/[^\/]*$/, '');
+                grasppe.load.url.styles = grasppe.load.url.scripts.replace(/\/scripts\/$/, '/stylesheets/');
+                grasppe.load.url.images = grasppe.load.url.scripts.replace(/\/scripts\/$/, '/images/');
+                console.log(grasppe.load.url);
             }
 
             if (!prefix) prefix = '';
