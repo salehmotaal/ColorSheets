@@ -350,7 +350,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             switch (type) {
             case 'named-icon': var fontSet = (icon && icon.match(/^[a-z]*/i).length > 0) ? icon.match(/^[a-z]*/i)[0] : '',
                     fontIcon = (icon && icon.match(/[\S]*$/i).length > 0) ? icon.match(/[\S]*$/i)[0] : '';
-                console.log('Named Icon: "%s" "%s" %O', fontSet, fontIcon, arguments);
+                // console.log('Named Icon: "%s" "%s" %O', fontSet, fontIcon, arguments);
                 switch (fontSet) {
                 case 'svg': return this.createContainer(this.elementTypes.icon, '', this.elementClasses.icon + ' svgIcon ' + classes).attr('md-svg-icon', fontIcon);
                 case 'svgsrc': return this.createContainer(this.elementTypes.icon, '', this.elementClasses.icon + ' svgIcon ' + classes).attr('md-svg-src', fontIcon);
@@ -450,20 +450,4 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         // Prototype: Visible properties with Getters/Setters
     });
 
-/*
-    Object.defineProperties(grasppe.Chorale.prototype, {
-        // Prototype: Visible properties with Getters/Setters
-        Chorale: {
-            value: new grasppe.Chorale(),
-        },
-        Bootstrap: {
-            value: new grasppe.Chorale.Bootstrap(),
-        },
-        Angular: {
-            value: new grasppe.Chorale.Angular(),
-        },
-    });
-*/
-    // console.log(new grasppe.Chorale.Bootstrap().parseElement('abc.test0#test.test1'), typeof grasppe.Chorale.Bootstrap, grasppe.Chorale.Bootstrap.prototype);
-    // console.log(grasppe.Chorale.Angular.TestListFactory());
 }(this, this.grasppe));

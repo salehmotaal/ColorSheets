@@ -766,6 +766,6 @@ $(function () {
 
     Object.assign(grasppe.colorSheets.SupercellSheet, grasppe.colorSheets.Sheet);
 
-    (function (app) {}(new grasppe.colorSheets.SupercellSheet('#colorSheets-container')))
+    //(function (app) {}(new grasppe.colorSheets.SupercellSheet('#colorSheets-container')))
 
 });

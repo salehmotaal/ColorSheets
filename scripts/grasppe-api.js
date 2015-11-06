@@ -43,6 +43,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             else console.warn('TEST FAIL:\n\t%s\t%s\n\tActual:%oExpected:%o', typeof actual, actual, actual, expected);
         }
         
+        // ![grasppe.require]
         static require(requirements, callback, fallback) {
             if (grasppe.checkRequirement(requirements, callback)) SUCCESS: {
                 delete callback.attempts;
@@ -64,6 +65,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, 500, requirements, callback);
         }
         
+        // ![grasppe.checkRequirement]
         static checkRequirement(requirement) {
             if (!grasppe.load || !grasppe.load.status) return false;
             if (typeof requirement === 'string') {
@@ -78,6 +80,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             } else return requirement === true; //  || !requirement;
         }
 
+        // ![grasppe.load]
         static load(id, uri, type, target, prefix, callback) {
             if (typeof id !== 'string') throw ('Module ID must be an assignable string name.');
             if (typeof uri !== 'string' && typeof type === 'string') uri = id + '.' + type;
@@ -141,6 +144,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
         }
 
+        // ![grasppe.initialize]
         static initialize(prefix) {
             this.load.stack = [];
             this.load.status = {};
@@ -168,7 +172,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 grasppe.load.url.scripts = grasppe.load.url.link.href.replace(/[^\/]*$/, '');
                 grasppe.load.url.styles = grasppe.load.url.scripts.replace(/\/scripts\/$/, '/stylesheets/');
                 grasppe.load.url.images = grasppe.load.url.scripts.replace(/\/scripts\/$/, '/images/');
-                console.log(grasppe.load.url);
+                // console.log(grasppe.load.url);
             }
 
             if (!prefix) prefix = '';
@@ -217,10 +221,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                                  "add-ons1.css", \
                                                  "bootply-google-plus-bootstrap.css"]'.toLiteral(),
                 grasppeCore: '      scripts:    ["grasppe-prototypes.js", \
+                                                 "grasppe-libre.js",\
                                                  "grasppe-function.js", \
                                                  "grasppe-ui.js", \
-                                                 "grasppe-chorale.js", \
-                                                 "grasppe-gapi.js"]'.toLiteral(),
+                                                 "grasppe-chorale.js"]'.toLiteral(),
                 colorSheets: '      scripts:    ["grasppe-canvas.js", \
                                                  "grasppe-geometry.js", \
                                                  "colorsheets-jiver.js"]'.toLiteral(),
@@ -251,6 +255,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             grasppe.load.next();
         }
     };
+    
+    grasppe.immutables = function (object) {
+        if (!grasppe.immutables.map) grasppe.immutables.map = new WeakMap();
+        if (!grasppe.immutables.map.has(object))
+            grasppe.immutables.map.set(object, {});
+        return grasppe.immutables.map.get(object);
+    }
     
     window.grasppe.initialize();
 }(this));
