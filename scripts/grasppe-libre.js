@@ -5,18 +5,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     grasppe.Libre = class Libre {
         // !Libre [Static] define
         static define(subclass, prototypeProperties, staticProperties, prototypeDefinitions, staticDefinitions) {
-            // Object.keys(grasppe.Libre.prototype._immutables).forEach(function (property) { if (!(property in subclass)) subclass[property] = grasppe.Libre.prototype._immutables[property].value; })
-            
-            // subclass = Object.assign(subclass, Object.defineProperties({}, grasppe.Libre.prototype._immutables));
-
-            if (staticProperties) Object.assignProperties(subclass, staticProperties);
-            if (prototypeProperties) Object.assignProperties(subclass.prototype, prototypeProperties);
-            if (staticDefinitions) Object.defineProperties(subclass, staticDefinitions);
-            if (prototypeDefinitions) Object.defineProperties(subclass.prototype, prototypeDefinitions);
-
-            // var prototype = subclass.prototype; subclass.title = '' + prototype.constructor.name;
-
-            return subclass;
+            return grasppe.Libre.Component.define(...arguments);
         }
 
         // !Libre [Static] hash
@@ -27,7 +16,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         // !Libre [Component]
         static get Component() {
             return class {
-                // !Libre [Component] [Constructor]
+                // !Libre Component [Constructor]
                 constructor(options) {
                     // console.log('Component::constructor', this, arguments);
                     var args = [...arguments],
@@ -36,7 +25,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined, this.setOptions(options);
                 }
 
-                // !Libre [Component] setOptions
+                // !Libre Component setOptions
                 setOptions(options) {
                     if (typeof options !== 'object') return this;
                     Object.keys(options).forEach(function (property) {
@@ -45,151 +34,441 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     return this;
                 }
 
-                // !Libre [Component] [Static] componentID get
-                static get componentID() {
-                    return this.getPrototype().componentID || this.getPrototype().constructor.name || this.getPrototype().constructor.name;
+                // !Libre Component [Static] define
+                static define(subclass, prototypeAssignents, prototypeProperties, staticProperties, prototypeDefinitions, staticDefinitions) {
+                    if (prototypeAssignents) Object.assign(subclass.prototype, prototypeAssignents);
+                    if (prototypeProperties) Object.assignProperties(subclass.prototype, prototypeProperties);
+                    if (staticProperties) Object.assignProperties(subclass, staticProperties);
+                    if (staticDefinitions) Object.defineProperties(subclass, staticDefinitions);
+                    if (prototypeDefinitions) Object.defineProperties(subclass.prototype, prototypeDefinitions);
+                    return subclass;
                 }
 
-                // !Libre [Component] [Static] componentID set
+                // !Libre Component [Static] componentID get
+                static get componentID() {
+                    return this.getPrototype().componentID || this.getPrototype().constructor.name || this.getPrototype().constructor.name || this.id;
+                }
+
+                // !Libre Component [Static] componentID set
                 static set componentID(componentID) {
                     this.getPrototype().componentID = componentID;
                 }
-                
-                // !Libre [Component] [Static] getPrototype
+
+                // !Libre Component [Static] getPrototype
                 static getPrototype() {
                     return this.prototype;
                 }
 
-                // !Libre [Component] getPrototype
+                // !Libre Component getPrototype
                 getPrototype() {
                     return Object.getPrototypeOf(this);
                 }
 
-                // !Libre [Component] id get
+                // !Libre Component id get
                 get id() {
                     return this.getPrototype().componentID || Object.getPrototypeOf(this).constructor.name || this.componentID;
                 }
 
-                // !Libre [Component] hash get
+                // !Libre Component hash get
                 get hash() {
                     return grasppe.hash(this);
                 }
 
-                // !Libre [Component] [Static] hash get
+                // !Libre Component [Static] hash get
                 static get hash() {
                     return grasppe.hash(this);
                 }
 
-                // !Libre [Component] toString
+                // !Libre Component toString
                 toString() {
                     return 'LibreComponent';
                 }
 
-                // !Libre [Component] controller get
+                // !Libre Component controller get
                 get controller() {
-                    return this.hash.controller;
+                    return this.hash.module.controller || (this.getPrototype().hash && this.getPrototype().hash.module.controller);
                 }
-                
-                // !Libre [Component] $controller get
+
+                // !Libre Component $controller get
                 get $controller() {
                     return this.hash.$controller;
                 }
-                
-                // !Libre [Component] module get
+
+                // !Libre Component module get
                 get module() {
                     return this.hash.module;
                 }
-                
-                // !Libre [Component] $module get
+
+                // !Libre Component $module get
                 get $module() {
                     return this.hash.$module;
                 }
-                
-                // !Libre [Component] view get
+
+                // !Libre Component view get
                 get view() {
-                    return this.hash.view;
+                    return this.hash.module.view;
                 }
-                
-                // !Libre [Component] $view get
+
+                // !Libre Component $view get
                 get $view() {
-                    return this.hash.$view;
-                }                
+                    return this.hash.module.$view;
+                }
+
+                // !Libre Component $rootScope get
+                get $rootScope() {
+                    return this.$scope.$root;
+                }
+
+                // !Libre Component $scope get
+                get $scope() {
+                    return this.$view.scope();
+                }
+
             }
         }
 
-        static get Controller() {
-            if (!grasppe.Libre.hash.Controller) grasppe.Libre.hash.Controller = class extends grasppe.Libre.Component {
-                constructor() {
-                    super(...arguments);
-                    // console.log('Controller::constructor', this, arguments);
-                    if (!this.id) throw 'A controller needs to have an ID!';
-                    Object.defineProperties(this.$controller, {
-                        component: {
-                            value: this,
-                        },
-                        componentID: {
-                            get: function () {
-                                return this.component.componentID;
-                            }
+        // !Libre [Directive]
+        static get Directive() {
+            if (!grasppe.Libre.hash.Directive) grasppe.Libre.hash.Directive = class extends grasppe.Libre.Component {
+                // !Libre Directive [Constructor]
+                constructor(module) {
+                    var args = [...arguments].slice(1);
+                    super(...args);
+                    if (!this.id) throw 'A directive needs to have an ID!';
+                    if (!('component' in this.$directive)) Object.defineProperty(this.$directive, 'component', {
+                        value: this,
+                    });
+                    if (!('componentID' in this.$directive)) Object.defineProperty(this.$directive, 'componentID', {
+                        get: function () {
+                            return this.component.id;
                         }
                     });
-                    this.hash.controller = this;
-                    this.hash.$controller = this.$controller;
+                    this.hash.directive = this;
+                    this.hash.$directive = this.$directive;
+                    this.module = module;
                 }
 
-                $controller($scope, $rootScope) {
+                // !Libre Component id get
+                get id() {
+                    return ('' + (this.getPrototype().componentID || Object.getPrototypeOf(this).constructor.name || this.componentID)).replace(/Directive$/, '');
+                }
+
+                // !Libre Directive module get
+                get module() {
+                    return this.hash.module;
+                }
+
+                // !Libre Directive module set
+                set module(module) {
+                    if (!this.hash.module && module instanceof grasppe.Libre.Module) {
+                        module.$module.directive(this.id, [].concat(this.$providers || []).concat([this.hash.$directive]));
+                        this.hash.module = module;
+                    }
+                }
+
+                // !Libre Directive $module get
+                get $module() {
+                    return this.hash.module.$module;
+                }
+
+                // !Libre Directive $directive
+                $directive($scope, $rootScope) {
                     if (!this.$scope) Object.defineProperty(this, '$scope', $scope);
-                    if (!this.$scope) Object.defineProperty(this, '$rootScope', $rootScope);
-                    // console.log('Controller::$controller', this, arguments);
+                    if (!this.$rootScope) Object.defineProperty(this, '$rootScope', $rootScope);
                 }
 
+                // !Libre Directive directive get
+                get directive() {
+                    return this;
+                }
+
+                // !Libre Directive $providers get
                 get $providers() {
                     return (Array.isArray(this.hash.$providers)) ? this.hash.$providers : [];
                 }
 
+                // !Libre Directive $providers set
                 set $providers($providers) {
                     if (!Array.isArray($providers)) $providers = [];
                     this.hash.$providers = $providers;
                 }
 
+                // !Libre Directive toString
+                toString() {
+                    return 'LibreDirective';
+                }
+
+                static define(id, $directive, properties) {
+                    var directive = eval('class ' + id + ' extends grasppe.Libre.Directive{};' + id + ';');
+                    if (properties) Object.assign(directive, properties);
+                    if (typeof $directive === 'function')  directive.prototype.$directive = $directive;
+                    else if (typeof $directive === 'object') {
+                        Object.assign(directive.prototype, $directive);
+                        directive.prototype.$directive = function () {
+                            return $directive;
+                        };
+                    }
+                    return directive;
+                }
+
+            }
+
+            return grasppe.Libre.hash.Directive;
+        }
+
+        // !Libre [Controller]
+        static get Controller() {
+            if (!grasppe.Libre.hash.Controller) grasppe.Libre.hash.Controller = class extends grasppe.Libre.Component {
+                // !Libre Controller [Constructor]
+                constructor(module) {
+                    var args = [...arguments].slice(1);
+                    super(...args);
+                    if (!this.id) throw 'A controller needs to have an ID!';
+                    if (!('component' in this.$controller)) Object.defineProperty(this.$controller, 'component', {
+                        value: this,
+                    });
+                    if (!('componentID' in this.$controller)) Object.defineProperty(this.$controller, 'componentID', {
+                        get: function () {
+                            return this.component.id;
+                        }
+                    });
+                    this.hash.controller = this;
+                    this.hash.$controller = this.$controller;
+                    this.module = module;
+                }
+
+                // !Libre Controller module get
+                get module() {
+                    return this.hash.module;
+                }
+
+                // !Libre Controller module set
+                set module(module) {
+                    if (!this.hash.module && module instanceof grasppe.Libre.Module) {
+                        module.$module.controller(this.id, ['$scope', '$rootScope'].concat(this.$providers || []).concat([this.hash.$controller]));
+                        this.hash.module = module;
+                    }
+                }
+
+                // !Libre Controller $module get
+                get $module() {
+                    return this.hash.module.$module;
+                }
+
+                // !Libre Controller $controller
+                $controller($scope, $rootScope) {
+                    if (!this.$scope) Object.defineProperty(this, '$scope', $scope);
+                    if (!this.$rootScope) Object.defineProperty(this, '$rootScope', $rootScope);
+                }
+
+                // !Libre Controller controller get
+                get controller() {
+                    return this;
+                }
+
+                // !Libre Controller $providers get
+                get $providers() {
+                    return (Array.isArray(this.hash.$providers)) ? this.hash.$providers : [];
+                }
+
+                // !Libre Controller $providers set
+                set $providers($providers) {
+                    if (!Array.isArray($providers)) $providers = [];
+                    this.hash.$providers = $providers;
+                }
+
+                // !Libre Controller toString
                 toString() {
                     return 'LibreController';
+                }
+                
+                static define(id, $controller, properties) {
+                    var controller = eval('class ' + id + ' extends grasppe.Libre.Controller{};' + id + ';');
+                    if (properties) Object.assign(controller, properties);
+                    if (typeof $controller === 'function')  controller.prototype.$controller = $controller;
+                    // else if (typeof $controller === 'object') controller.prototype.$directive = function () {
+                    //     return $controller;
+                    // };
+                    return controller;
                 }
             }
 
             return grasppe.Libre.hash.Controller;
         }
 
+        // !Libre [Module]
         static get Module() {
             if (!grasppe.Libre.hash.Module) grasppe.Libre.hash.Module = class extends grasppe.Libre.Component {
+                // !Libre Module [Constructor]
                 constructor() {
                     super(...arguments);
                     if (!this.id) throw 'A module needs to have an ID!';
                     if (!this.requirements) this.requirements = [];
-                    this.$module = angular.module(this.id, this.requirements);
-                    Object.defineProperties(this.$module, {
-                        component: {
-                            value: this,
-                        },
-                        componentID: {
-                            get: function () {
-                                return this.component.componentID;
-                            }
+                    this.hash.$module = angular.module(this.id, this.requirements).value('$libreModule', this);
+                    if (!('component' in this.$module)) Object.defineProperty(this.$module, 'component', {
+                        value: this,
+                    });
+                    if (!('componentID' in this.$module)) Object.defineProperty(this.$module, 'componentID', {
+                        get: function () {
+                            return this.component.id;
                         }
                     });
                     this.componentID = this.id;
                     this.hash.module = this;
                     this.hash.$module = this.$module;
+                    this.initializeDirectives().initializeController().initializeControllers().initializeView();
                 }
 
+                // !Libre Module $view initializeView
+                initializeView() {
+                    if (!this.hash.$view || $(this.hash.$view).length === 0) {
+                        // console.log(this.template);
+                        this.hash.$view = $(this.template).appendTo(this.container); // .appendTo('body');
+                        if (this.$controller && this.$controller.componentID) this.hash.$view.attr('ng-controller', this.$controller.componentID);
+                        //if (this.$controller && this.$controller.componentID) this.hash.$view.attr('ng-controller', this.$controller.componentID);
+                        // if (this.directives.CopyrightsDirective) this.hash.$view.append('<div copyrights>');
+                        
+                        this.configuration.forEach(function(configuration) {
+                            this.$module.config(configuration);
+                        }.bind(this));
+                        
+                        angular.bootstrap(this.hash.$view, [this.$module.name]);
+                    }
+                    return this;
+                }
+
+                // !Libre Module $controller initializeController
+                initializeController() {
+                    if (!this.hash.controller && this.getPrototype().controller) this.hash.controller = new(this.getPrototype().controller)(this);
+                    return this;
+                }
+
+                // !Libre Module controllers initializeControllers
+                initializeControllers() {
+                    if (!this.hash.controllers && this.getPrototype().controllers) { // grasppe.Libre.isLibreComponent(this) && 
+                        this.hash.controllers = {};
+                        Object.keys(this.getPrototype().controllers).forEach(function (controllerID) {
+                            this.hash.controllers[controllerID] = new(this.getPrototype().controllers[controllerID])(this);
+                        }.bind(this));
+                    }
+                    return this;
+                }
+
+                // !Libre Module directives initializeDirectives
+                initializeDirectives() {
+                    if (!this.hash.directives && this.getPrototype().directives) { // grasppe.Libre.isLibreComponent(this) && 
+                        this.hash.directives = {};
+                        Object.keys(this.getPrototype().directives).forEach(function (directiveID) {
+                            this.hash.directives[directiveID] = new(this.getPrototype().directives[directiveID])(this);
+                        }.bind(this));
+                    }
+                    return this;
+                }
+
+                // !Libre Module module get
+                get module() {
+                    return this;
+                }
+
+                // !Libre Module $module get
                 get $module() {
                     return this.hash.$module;
                 }
 
-                set $module($module) {
-                    this.hash.$module = $module;
+                // !Libre Module controller get
+                get controller() {
+                    return this.hash.controller;
                 }
 
+                // !Libre Module [Static-Like] controller set
+                set controller(controller) {
+                    if (grasppe.Libre.isLibreComponent(this)) return;
+                    this.hash.controller = controller;
+                }
+
+                // !Libre Module $controller get
+                get $controller() {
+                    return this.hash.controller.$controller;
+                }
+
+                // !Libre Module controllers get
+                get controllers() {
+                    return this.hash.controllers; //  || (this.getPrototype().hash && this.getPrototype().hash.controllers) || {};
+                }
+
+                // !Libre Module [Static-Like] controllers set
+                set controllers(controllers) {
+                    if (grasppe.Libre.isLibreComponent(this)) return;
+                    if (typeof controllers !== 'object') controllers = {};
+                    this.hash.controllers = controllers;
+                }
+
+                // !Libre Module directives get
+                get directives() {
+                    return this.hash.directives; //  || (this.getPrototype().hash && this.getPrototype().hash.directives) || {};
+                }
+
+                // !Libre Module [Static-Like] directives set
+                set directives(directives) {
+                    if (grasppe.Libre.isLibreComponent(this)) return;
+                    if (typeof directives !== 'object') directives = {};
+                    this.hash.directives = directives;
+                }
+                
+                // !Libre Module configuration get
+                get configuration() {
+                    return (this.getPrototype().hash && this.getPrototype().hash.configuration) || [];
+                }
+                
+                // !Libre Module [Static-Like] configuration set
+                set configuration(configuration) {
+                    if (grasppe.Libre.isLibreComponent(this)) return;
+                    this.hash.configuration = configuration;
+                }
+
+
+
+                // !Libre Module $view get
+                get $view() {
+                    return angular.element(this.hash.$view); // .appendTo('body');
+                }
+
+                // !Libre Module $rootScope get
+                get $rootScope() {
+                    return this.$scope.$root;
+                }
+
+                // !Libre Module $scope get
+                get $scope() {
+                    return this.$view.scope();
+                }
+
+                // !Libre Module container get
+                get container() {
+                    return ($(this.hash.container).length === 1) ? this.hash.container : document.body;
+                }
+
+                // !Libre Module container set
+                set container(container) {
+                    if ($(container).length === 1) container = [];
+                    this.hash.container = $(container)[0];
+                }
+                
+                // !Libre Module template get
+                get template() {
+                    // console.log(this.getPrototype().hash.template)
+                    return (typeof this.getPrototype().hash.template === 'string') ? this.getPrototype().hash.template : '<div>';
+                }
+
+                // !Libre Module template set
+                set template(template) {
+                    //console.log('Libre Module template set', template)
+                    // if (!Array.isArray()) $providers = [];
+                    this.hash.template = template;
+                }
+
+
+                // !Libre Module toString
                 toString() {
                     return 'LibreModule';
                 }
@@ -198,6 +477,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return grasppe.Libre.hash.Module;
         }
 
+        // !Libre [LibreModule]
         static get LibreModule() {
             if (!grasppe.Libre.hash.LibreModule) grasppe.Libre.hash.LibreModule = class grasppeLibre extends grasppe.Libre.Module {
                 // constructor() {super(...arguments);} // Implied
@@ -208,12 +488,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return grasppe.Libre.hash.LibreModule;
         }
 
+        // !Libre [Static] $module get
         static get $module() {
             if (!grasppe.Libre.hash.libreModule) grasppe.Libre.hash.libreModule = new grasppe.Libre.LibreModule();
             if (!grasppe.Libre.hash.$module) grasppe.Libre.hash.$module = grasppe.Libre.hash.libreModule.$module;
             return grasppe.Libre.hash.$module;
         }
 
+        // !Libre [LibreController]
         static get LibreController() {
             if (!grasppe.Libre.hash.LibreController) {
                 grasppe.Libre.hash.LibreController = class grasppeLibreController extends grasppe.Libre.Controller {};
@@ -222,6 +504,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return grasppe.Libre.hash.LibreController;
         }
 
+        // !Libre [Static] $controller get
         static get $controller() {
             if (!grasppe.Libre.hash.libreController) grasppe.Libre.hash.libreController = new grasppe.Libre.LibreController;
             if (!grasppe.Libre.hash.$controller) {
@@ -233,6 +516,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return grasppe.Libre.hash.$controller;
         }
 
+        // !Libre [Static] $view get
         static get $view() {
             if (!grasppe.Libre.hash.libreView || $(grasppe.Libre.hash.libreView).length === 0) {
                 // console.log(grasppe.Libre.$module, grasppe.Libre.$controller);
@@ -243,382 +527,47 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return angular.element(grasppe.Libre.hash.libreView).appendTo('body');
         }
 
+        // !Libre [Static] $rootScope get
         static get $rootScope() {
             return this.$scope.$root;
         }
 
+        // !Libre [Static] $scope get
         static get $scope() {
             return this.$view.scope();
         }
 
+        // !Libre [Static] isLibreModule
+        static isLibreComponent(reference) {
+            return reference instanceof grasppe.Libre.Component;
+        }
+
+        // !Libre [Static] isLibreModule
         static isLibreModule(reference) {
             return reference instanceof grasppe.Libre.Module;
         }
+
+        // !Libre [Static] isLibreController
         static isLibreController(reference) {
             return reference instanceof grasppe.Libre.Controller;
         }
 
+        // !Libre [Static] isAngularModuleLike
         static isAngularModuleLike(reference) {
             return typeof reference === 'object' && reference.hasOwnProperty('name') && reference.hasOwnProperty('controller');
         }
+
+        // !Libre [Static] isAngularControllerLike
         static isAngularControllerLike(reference) {
             return typeof reference === 'function';
         }
 
+        // !Libre [Static] isAngularScopeLike
         static isAngularScopeLike(reference) {
-            return typeof reference === 'object'; // typeof reference === 'object' && reference.hasOwnProperty('name') && reference.hasOwnProperty('controller');
+            return typeof reference === 'object' && reference.hasOwnProperty('$root'); // typeof reference === 'object' && reference.hasOwnProperty('name') && reference.hasOwnProperty('controller');
         }
     };
 
-    // console.log(grasppe.Libre.$controller);
-    // console.log(grasppe.Libre.$scope, grasppe.Libre.$view);
+    window.libre = grasppe.Libre;
 
-    // var testClass = class LibreApplication extends grasppe.Libre.Controller {},
-    //     testObject = new testClass();
-    // console.log(testObject, Object.getPrototypeOf(testObject), testClass);
-    // console.log(grasppe.Libre.$module);
-    // testObject = grasppe.Libre.$controller;
-    // console.log(testObject, Object.getPrototypeOf(testObject), testClass);
-    //     $('<div ng-app="' + grasppe.Libre.$module.name + '" ng-controller="' + grasppe.Libre.$controller.componentID  + '">').prependTo('body');
-    // angular.bootstrap(document, [grasppe.Libre.$module.name]);
-/*, grasppe.Libre.prototype = Object.assign(Object.create(grasppe.Libre.Component.prototype), {
-        constructor: grasppe.Libre.prototype.constructor,
-    });*/
-
-    // grasppe.Libre.Component = class LibreComponent {
-    //     // ! Libre Component [Constructor]
-    //     constructor(options) {
-    //         var args = [...arguments],
-    //             prototype = Object.getPrototypeOf(this),
-    //             constructor = prototype.constructor;
-    //         options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined, this.setOptions(options);
-    //     }
-    // 
-    //     // ! Libre Component [setOptions]
-    //     setOptions(options) {
-    //         if (typeof options !== 'object') return this;
-    //         Object.keys(options).forEach(function (property) {
-    //             if (this.hasOwnProperty(property)) this[property] = options[property];
-    //         }.bind(this));
-    //         return this;
-    //     }
-    // };
-    // 
-    // grasppe.Libre.Controller = class LibreController extends grasppe.Libre.Component {};
-    // ! [Libre Component]
-    //     // ![Libre]
-    //     Object.assign(grasppe.Libre, class Libre extends grasppe.Libre.Component { // hard inheritance
-    //         // !Libre [Constructor]
-    //         constructor() {
-    //             var prototype = Object.getPrototypeOf(this),
-    //                 args = [...arguments],
-    //                 scope = (args.length > 0 && typeof args.slice(-1)[0] === 'object' && '$$ChildScope' in args.slice(-1)[0]) ? args.pop() : undefined,
-    //                 properties = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined,
-    //                 instance = this,
-    //                 immutables = {
-    //                     id: null, title: null, description: null, version: null, $module: null, $dependencies: null, $controller: null, $controllers: null, $directives: null, $filters: null, $services: null, $values: null, $config: [],
-    //                     $ng: null, helpers: null, $model: null, $view: null,
-    //                 };
-    // 
-    //             // Object.assign(this, properties);
-    // 
-    //             // if (scope) this.$scope = scope;
-    // 
-    //             // grasppe.Libre.initializeImmutableProperties(this, immutables, scope);
-    //         }
-    // 
-    // 
-    //         // !Libre [Static] initializeImmutableProperties
-    //         // static initializeImmutableProperties(instance, immutables, $scope) {
-    //         //     var prototype = Object.getPrototypeOf(instance),
-    //         //         constructor = prototype.constructor,
-    //         //         properties = {},
-    //         //         title = '' + prototype.constructor.name,
-    //         //         id = '' + title.toCamelCase(),
-    //         //         prefix = '' + title.toIndexCase();
-    //         // 
-    //         //     grasppe.Libre.guids[id] = (grasppe.Libre.guids[id] > 0) ? grasppe.Libre.guids[id] + 1 : 1;
-    //         // 
-    //         //     immutables.title = title;
-    //         //     immutables.id = id;
-    //         //     immutables.prefix = prefix;
-    //         //     immutables.guid = grasppe.Libre.guids[id];
-    //         // 
-    //         //     Object.keys(immutables).forEach(function (property) {
-    //         //         immutables[property] = instance[property] || constructor[property] || prototype[property] || immutables[property];
-    //         //     });
-    //         // 
-    //         //     constructor.initializeAngularComponents(instance, immutables, $scope);
-    //         // 
-    //         //     Object.keys(immutables).forEach(function (property) {
-    //         //         immutables[property] = {
-    //         //             value: immutables[property]
-    //         //         };
-    //         //     });
-    //         // 
-    //         //     Object.defineProperties(instance, immutables);
-    //         // 
-    //         //     return this;
-    //         // }
-    // 
-    //         // !Libre [Static] intializeAngularComponents
-    //         // static initializeAngularComponents(instance, immutables, $scope) {
-    //         //     var prototype = Object.getPrototypeOf(instance),
-    //         //         supertype = prototype,
-    //         //         moduleID = immutables.id + 'Module',
-    //         //         controllerID = immutables.id + 'Controller',
-    //         //         dependencies = [].concat(immutables.$dependencies),
-    //         //         controller = immutables.$controller,
-    //         //         model = Object.assign({}, prototype.constructor.$model, prototype.$model, immutables.$model ? immutables.$model : {}, instance.$model),
-    //         //         module;
-    //         // 
-    //         //     Object.defineProperties(instance, {
-    //         //         $model: {
-    //         //             value: model, writable: true,
-    //         //         },
-    //         //         $scope: {
-    //         //             value: $scope, writable: true,
-    //         //         }
-    //         //     });
-    //         //     delete immutables.$model;
-    //         // 
-    //         //     while (supertype !== Object.prototype) {
-    //         //         if (supertype.constructor) try {
-    //         //             if (Array.isArray(supertype.constructor.$dependencies)) supertype.constructor.$dependencies.forEach(function (dependency) {
-    //         //                 if (dependencies.lastIndexOf(dependency) === -1) dependencies.push(dependency);
-    //         //             });
-    //         //         } catch (err) {
-    //         //             console.error('initializeAngularComponents', 'dependencies', err);
-    //         //             break;
-    //         //         }
-    //         //         supertype = supertype.__proto__;
-    //         //     }
-    //         // 
-    //         //     module = angular.module(moduleID, dependencies);
-    //         //     supertype = prototype;
-    //         // 
-    //         //     var registrars = {
-    //         //         'directive': module.directive, 'filter': module.filter, 'service': module.factory, 'value': module.value
-    //         //     };
-    //         // 
-    //         //     while (supertype !== Object.prototype) {
-    //         //         if (supertype.constructor) try {
-    //         //             var superConstructor = supertype.constructor,
-    //         //                 superName = superConstructor.name || (superConstructor.$controller && superConstructor.$controller.name.replace(/Controller$/, ''));
-    //         // 
-    //         //             if (superConstructor.hasOwnProperty('$controller')) this.registerAngularController(immutables, module, superName + 'Controller', superConstructor, superConstructor.$controller);
-    //         // 
-    //         //             Object.keys(registrars).forEach(function (type) {
-    //         //                 if (superConstructor.hasOwnProperty('$' + type + 's')) this.registerAngularComponent(immutables, module, '$' + type + 's', superConstructor, registrars[type], type.toTitleCase(), superName);
-    //         //             }.bind(this))
-    //         // 
-    //         //         } catch (err) {
-    //         //             console.error('initializeAngularComponents', 'components', err);
-    //         //             break;
-    //         //         }
-    //         //         supertype = supertype.__proto__;
-    //         //     }
-    //         // 
-    //         //     module.value('$instance', instance).value('$constructor', prototype.constructor).controller(controllerID, ['$scope', '$instance', '$constructor', immutables.$controller]);
-    //         // 
-    //         //     if (typeof immutables.$config === 'function') module.config($config);
-    //         //     else if (Array.isArray(immutables.$config)) immutables.$config.forEach(function ($config) {
-    //         //         module.config($config);
-    //         //     });
-    //         // 
-    //         //     // if (Array.isArray(immutables.helpers)) {
-    //         //     (function registerHelpers(helpers, recusrive) {
-    //         //         if (Array.isArray(helpers))(helpers).forEach(function (helper) {
-    //         //             var helperID = ('' + helper.title).toIndexCase();
-    //         //             if (helper.$controller) grasppe.Libre.registerAngularController(immutables, module, helper.$controller.name || (helperID + 'Controller'), helper, helper.$controller);
-    //         //             Object.keys(registrars).forEach(function (type) {
-    //         //                 if (helper.hasOwnProperty('$' + type + 's')) grasppe.Libre.registerAngularComponent(immutables, module, '$' + type + 's', helper, registrars[type], type.toTitleCase(), helperID);
-    //         //             }.bind(this));
-    //         //             if (recusrive) registerHelpers(helper.helpers);
-    //         //         }.bind(this));
-    //         //     }.bind(this)(immutables.helpers, true));
-    //         //     //}
-    //         //     immutables.$dependencies = dependencies;
-    //         //     immutables.$module = angular.module(moduleID);
-    //         //     return this;
-    //         // }
-    // 
-    //         // !Libre [Static] registerAngularComponent
-    //         // static registerAngularComponent(immutables, module, type, $constructor, registrar, suffix, owner) {
-    //         //     Object.keys($constructor[type]).forEach(function (id) {
-    //         //         if (!immutables.$ng[id + suffix]) {
-    //         //             immutables[type][id] = $constructor[type][id];
-    //         //             immutables.$ng[id + suffix] = $constructor[type][id];
-    //         //             registrar(id, $constructor[type][id]);
-    //         //         }
-    //         //     })
-    //         // }
-    // 
-    //         // !Libre [Static] registerAngularController
-    //         // static registerAngularController(immutables, module, controllerID, $constructor, $controller) {
-    //         //     var self = this;
-    //         //     if (!immutables.$ng[controllerID]) {
-    //         //         immutables.$ng[controllerID] = $controller;
-    //         //         module.controller(controllerID, ['$scope', '$instance', '$constructor', function ($scope, $instance, $constructor) {
-    //         //             var modelKeys;
-    //         //             if (!($scope.instance instanceof this)) {
-    //         //                 $scope.instance = new this($scope);
-    //         //                 // $instance = $scope.instance;
-    //         //                 modelKeys = Object.keys(this.$model);
-    //         //             } else {
-    //         //                 Object.assign($scope, $instance.$model, {
-    //         //                     instance: $instance,
-    //         //                 }, $scope);
-    //         //                 $instance.$scope = $scope;
-    //         //                 modelKeys = Object.keys(this.$model);
-    //         //             }
-    //         //             $scope.$model = $scope.instance.$model;
-    //         //             grasppe.Libre.registerAngularScope($scope.instance, $scope);
-    //         //             $($scope.instance).on('changed.scope', function (event, data) {
-    //         //                 if ($scope.instance.$change === 'function') $scope.instance.$change(event, data.property, data.value, data.last);
-    //         //             });
-    //         //             return this.$controller($scope, $instance);
-    //         //         }.bind($constructor)]);
-    //         //     }
-    //         // }
-    // 
-    //         // !Libre [Static] registerAngularController
-    //         // static registerAngularScope(instance, $scope) {
-    //         //     Object.keys(instance.$model).forEach(function (key) {
-    //         //         $scope[key] = $scope[key] || instance.$model[key];
-    //         //         Object.defineProperty(instance.$model, key, {
-    //         //             get: function () {
-    //         //                 return instance.$scope[this];
-    //         //             }.bind(key),
-    //         //             set: function (value) {
-    //         //                 instance.$scope[this] = value;
-    //         //                 setTimeout(function (instance) {
-    //         //                     instance.$scope.$apply();
-    //         //                 }, 0, instance);
-    //         //             }.bind(key),
-    //         //         })
-    //         //         $scope.$watch(key, function (value, last) {
-    //         //             if (value !== last) $(instance).trigger('changed.scope', {
-    //         //                 property: key, value: value, last: last,
-    //         //             });
-    //         //         });
-    //         //     });
-    //         //     console.log('%s $scope: %O $model: %O', Object.getPrototypeOf(instance).constructor.name, $scope, instance.$model);
-    //         // }
-    //         
-    //     }, {
-    //         // !Libre [Static Properties]
-    //         // guids: ValueObject
-    //     }), Object.defineProperties(Object.assign(grasppe.Libre.prototype, Object.create(grasppe.Libre.Component.prototype), {
-    //         // !Libre [Prototype Assigned Functions]
-    //         // !Libre [Prototype] Angular Module Getter
-    //         get $module() {
-    //             if (!grasppe.hash(this).$module) grasppe.hash(this).$module = angular.module('grasppeLibre', ['ngMaterial', 'ngAnimate']);
-    //             return grasppe.hash(this).$module;
-    //         },
-    // 
-    //         // !Libre [Prototype] Angular Controller Getter
-    //         get $controller() {
-    //             if (!grasppe.hash(this).$controller) grasppe.hash(this).$controller = class LibreController extends grasppe.Libre.Controller {
-    //                 constructor($scope) {
-    //                 }
-    //             }
-    //             
-    //             this.$module.controller('grasppeLibreController', ['$scope', grasppe.hash(this).$controller]);
-    //             
-    //         },
-    // 
-    //         // !Libre [Prototype] Angular Model Getter
-    //         get model() {},
-    // 
-    //         // !Libre [Prototype] Angular View Getter
-    //         get view() {},
-    // 
-    //     }), {
-    //         // !Libre [Prototype Defined Properties]
-    //         _immutables: {
-    //             value: {
-    //                 $module: ValueObject.empty, $dependencies: ValueObject(),
-    //                 $controller: ValueObject.empty, $controllers: ValueObject(),
-    //                 $directives: ValueObject.empty, $filters: ValueObject(),
-    //                 $services: ValueObject.empty, $values: ValueObject.empty, $config: ([]),
-    //                 $ng: ValueObject.empty, helpers: ValueObject([]),
-    //                 $model: ValueObject(),
-    //                 // $view: ValueObject(),
-    //             }
-    //         },
-    //     });
-    // 
-    // // ! [Libre Model]
-    // grasppe.Libre.Model = class Model extends grasppe.Libre.Component {
-    //     // ! Libre Model [Constructor]
-    //     constructor(scope, options) {
-    //         if (typeof options !== 'object') options = {};
-    //         if (typeof scope === 'object') options.scope = scope;
-    //         super(options);
-    //     }
-    // 
-    //     // ! Libre Model Scope
-    //     set scope(scope) {
-    //         var currentScope = this.scope;
-    //         if (currentScope) throw 'Scope cannot be changed!'
-    //         
-    //         grasppe.hash(this).scope = scope;
-    //         
-    //         Object.keys(instance.$model).forEach(function (key) {
-    //         
-    //             $scope[key] = $scope[key] || instance.$model[key];
-    //             Object.defineProperty(instance.$model, key, {
-    //                 get: function () {
-    //                     return instance.$scope[this];
-    //                 }.bind(key),
-    //                 set: function (value) {
-    //                     instance.$scope[this] = value;
-    //                     setTimeout(function (instance) {
-    //                         instance.$scope.$apply();
-    //                     }, 0, instance);
-    //                 }.bind(key),
-    //             })
-    //             $scope.$watch(key, function (value, last) {
-    //                 if (value !== last) $(instance).trigger('changed.scope', {
-    //                     property: key, value: value, last: last,
-    //                 });
-    //             });
-    //         
-    //         }
-    // 
-    //     }
-    // 
-    //     get scope() {
-    //         return grasppe.hash(this).scope;
-    //     }
-    // };
-}(this, this.grasppe));
-
-eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function') w.grasppe = class grasppe{constructor(){}};}(this)); grasppe");
-
-(function (window, grasppe, undefined) {
-    'use strict';
-
-    // ![LibreApp]
-    grasppe.LibreApp = Object.defineProperties(class LibreApp extends grasppe.Libre { // hard inheritance
-        // !LibreApp [Constructor]
-        constructor() {
-            super();
-        }
-    }, {
-        // !LibreApp [Static Properties]
-        description: ValueObject('Concrete libre angular-wrapping application!'),
-        version: ValueObject(1.0),
-        $dependencies: ValueObject(['ngMaterial']),
-        $controller: ValueObject(
-
-        function LibreAppController() {}),
-    }), Object.defineProperties(Object.assign(grasppe.LibreApp.prototype, Object.create(grasppe.LibreApp.prototype), {
-        // !LibreApp [Prototype Assigned Functions]
-    }), {
-        // !LibreApp [Prototype Defined Properties]
-    });
-
-    // var limbrApp = new grasppe.LibreApp();
 }(this, this.grasppe));

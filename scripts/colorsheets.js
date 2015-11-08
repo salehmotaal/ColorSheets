@@ -3,178 +3,133 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 (function (window, grasppe, undefined) {
     'use strict';
     grasppe.require(grasppe.load.status.initialize, function () {
-        
 
         // !- [ColorSheetsApp]
-        grasppe.ColorSheetsApp = grasppe.Libre.define(class ColorSheetsApp extends grasppe.Libre.Module {
-            // !- ColorSheetsApp [Constructor]
-            constructor() {
-                super(...arguments);
-            }
-            
-        }, { /* !- ColorSheetsApp [Prototype Assigned Properties] */
-            requirements: ['ngMaterial', 'ngAnimate'],
-        }, { /* !- ColorSheetsApp [Static Assigned Properties] */
+        grasppe.ColorSheetsApp = grasppe.Libre.Module.define(class ColorSheetsApp extends grasppe.Libre.Module {
+            // !- ColorSheetsApp [Constructor]                                  // constructor() {super(...arguments);} // implied
+        }, {
+            // !- ColorSheetsApp [Prototype]
             description: 'Graphic arts theory demos!', version: (1.0),
-            // $controller: function ColorSheetsAppController($scope, $instance) {},
-            // $directives: {
-            //     colorSheetspage: function colorSheetsPage() {
-            //         return {
-            //             template: '<div class="color-sheets-app-container">',
-            //         }
-            //     },
-            //     colorSheetsCopyright: function colorSheetsCopyright() {
-            //         // console.log('color-sheets-copyright', arguments, this);
-            //         return {
-            //             template: 'Copyright &copy; 2015, Saleh Abdel Motaal, Franz Sigg and Grasppe, Inc.'
-            //         };
-            //     }
-            // },
-            helpers: [],
-        }, { /* !- ColorSheetsApp [Prototype Defined Properties] */
-        }, { /* !- ColorSheetsApp [Static Defined Properties] */
+            requirements: ['ngMaterial', 'ngAnimate'],
+            controller: grasppe.Libre.Controller.define('ColorSheetsAppController', function ($scope) {
+                // !- ColorSheetsApp [Controllers] ColorSheetsAppController
+                console.log('ColorSheetsAppController', this, arguments);
+            }, {}),
+            controllers: {
+                ColorSheetsPanelController: grasppe.Libre.Controller.define('ColorSheetsPanelController', function ($scope) {
+                    // !- ColorSheetsApp [Controllers] ColorSheetsPanelController
+                }),
+            },
+            template: '<div color-Sheets-Sheet></div>',
+            configuration: [function ($mdIconProvider) {
+                console.log('Config...');
+                $mdIconProvider.defaultFontSet('glyphicon');
+                $mdIconProvider.defaultIconSet('icon-set.svg', 24); // Register a default set of SVG icons
+            }],
+            directives: {
+                // !- ColorSheetsApp [Directives] CopyrightsDirective
+                CopyrightsDirective: grasppe.Libre.Directive.define('copyrights', {
+                    link: function ($scope, element, attributes) {},
+                    template: 'Copyrights &copy; 2015, Saleh Abdel Motaal, Franz Sigg, and Grasppe, Inc.',
+                }, {}),
+                // !- ColorSheetsApp [Directives] colorSheetsPanelTools
+                colorSheetsPanelTools: grasppe.Libre.Directive.define('colorSheetsPanelTools', {
+                    link: function ($scope, element, attributes) {
+                        console.log('colorSheetsPanelTools:link', $scope, element, attributes);
+                        // if ($scope.$parent.panel) $scope.panel = $scope.$parent.panel;
+                        // else $scope.panel = {};
+                        element.on('$destroy', function () {});
+                    },
+                    template: '\
+                    <md-toolbar class="{{panel.toolbarClasses}}"> \
+                        <div class="md-toolbar-tools" color="{{toolsColor || \'white\'}}"> \
+                            <md-button class="md-icon-button" aria-label="{{panel.header}} Menu"> \
+                                <md-icon md-font-icon="{{panel.icon || \'glyphicon-menu-hamburger\'}}" \
+                                 ng-style="{color: panel.toolsColor || \'white\', \'font-size\': \'24px\', height: \'24px\'}"></md-icon> \
+                            </md-button> \
+                            <header ng-if="panel.header" class="{{panel.headerClasses}}" color="{{panel.headerColor || panel.toolsColor || \'white\'}}"><span>{{panel.header}}</span></header> \
+                            <span flex></span> \
+                            <md-button ng-repeat="tool in panel.tools" class="{{tool.classes}}" aria-label="{{tool.label}}"> \
+                                <md-icon icon="{{tool.icon}}" color="{{tool.iconColor}}" class="{{tool.iconClasses}}"></md-icon> \
+                            </md-button> \
+                        </div> \
+                    </md-toolbar>',
+                }),
+                // !- ColorSheetsApp [Directives] colorSheetsPanel
+                colorSheetsPanel: grasppe.Libre.Directive.define('colorSheetsPanel', {
+                    template: '\
+                    <div class="color-sheets-panel {{panelClasses}}" >\
+                        <div class="color-sheets-panel-header {{panel.headerClasses}}" color-sheets-panel-tools>{{panel.header}}</div>\
+                        <div class="color-sheets-panel-contents {{contentClasses}}">{{contents}}</div>\
+                        <div class="color-sheets-panel-footer {{footerClasses}}">{{contents}}</div>\
+                    </div>', // <!--ng-controller="ColorSheetsPanelToolsController"-->
+                }),
+                // !- ColorSheetsApp [Directives] colorSheetsSheet
+                colorSheetsSheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
+                    template: '\
+                        <div class="color-sheets-sheet">\
+                            <div ng-controller="colorSheetsStageController" color-sheets-stage-panel></div> \
+                            <div ng-controller="colorSheetsParametersController" color-sheets-parameters-panel></div> \
+                            <div ng-controller="colorSheetsResultsController" color-sheets-results-panel></div> \
+                            <div ng-controller="colorSheetsOverviewController" color-sheets-overview-panel></div> \
+                        </div>',
+                }),
+            },
         });
         
-        console.log(new grasppe.ColorSheetsApp().$module);
-// 
-//         // !- [ColorSheetsPanelTools]
-//         grasppe.ColorSheetsApp.PanelTools = Object.assignProperties(grasppe.Libre.define(class ColorSheetsPanelTools extends grasppe.Libre {}), {
-//             // !- ColorSheetsPanelTools [Static Assigned Properties]
-//             $controller: function ColorSheetsPanelToolsController($scope, $instance) {
-//                 console.log(this.$controller.name, $scope.instance, this);
-//                 $scope.panelTools = $scope.$model;
-//             },
-//             $directives: Object.assign({
-//                 colorSheetsPanelTools: function colorSheetsPanelTools() {
-//                     return {
-//                         link: function ($scope, element, attributes) {
-//                             console.log('colorSheetsPanelTools:link', $scope, element, attributes);
-//                             if ($scope.$parent.panel) $scope.panel = $scope.$parent.panel;
-//                             else $scope.panel = {};
-//                             element.on('$destroy', function () {});
-//                         },
-//                         template: '\
-//                         <md-toolbar class="{{toolbarColor}} {{toolbarClasses}}"> \
-//                             <div class="md-toolbar-tools" color="{{toolsColor || \'white\'}}"> \
-//                                 <md-button class="md-icon-button" aria-label="{{panel.header}} Menu"> \
-//                                     <md-icon md-font-icon="{{panel.icon || \'glyphicon-menu-hamburger\'}}" \
-//                                      ng-style="{color: toolsColor || \'white\', \'font-size\': \'24px\', height: \'24px\'}"></md-icon> \
-//                                 </md-button> \
-//                                 <header ng-if="header" class="{{headerClasses}}" color="{{headerColor || toolsColor || \'white\'}}"><span>{{panel.header || header}}</span></header> \
-//                                 <span flex></span> \
-//                                 <md-button ng-repeat="tool in $model.tools" class="{{tool.classes}}" aria-label="{{tool.label}}"> \
-//                                     <md-icon icon="{{tool.icon}}" color="{{tool.iconColor}}" class="{{tool.iconClasses}}"></md-icon> \
-//                                 </md-button> \
-//                             </div> \
-//                         </md-toolbar>',
-//                     }
-//                 },
-//             }, grasppe.ColorSheetsApp.$directives),
-//             $model: {
-//                 tools: [{
-//                     label: 'Help', icon: 'icon-book', iconColor: 'orange', classes: 'md-icon-button',
-//                 }, ],
-//                 header: '', toolbarClasses: '', headerClasses: '', contentClasses: '', footerClasses: '', showPanelMenu: true, headerColor: null, toolbarColor: 'orange', toolsColor: 'white'
-//             },
-//             helpers: [grasppe.ColorSheetsApp],
-//         }), grasppe.ColorSheetsApp.helpers.push(grasppe.ColorSheetsApp.PanelTools);
-// 
-//         // !- [ColorSheetsPanel]
-//         grasppe.ColorSheetsApp.Panel = Object.assignProperties(grasppe.Libre.define(class ColorSheetsPanel extends grasppe.Libre {}), {
-//             // !- ColorSheetsPanel [Static Assigned Properties]
-//             $controller: function ColorSheetsPanelController($scope, $instance) {
-//                 console.log(this.$controller.name, $scope.instance);
-//                 $scope.panel = $scope.$model;
-//             },
-//             $directives: Object.assign({
-//                 colorSheetsPanel: function colorSheetsPanel() {
-//                     return {
-//                         template: '\
-//                         <div class="color-sheets-panel {{panelClasses}}" ng-init="' + arguments[0] + '" >\
-//                             <div ng-controller="ColorSheetsPanelToolsController" class="color-sheets-panel-header {{headerClasses}}" color-sheets-panel-tools=""></div>\
-//                             <div class="color-sheets-panel-contents {{contentClasses}}">{{contents}}</div>\
-//                             <div class="color-sheets-panel-footer {{footerClasses}}">{{contents}}</div>\
-//                         </div>',
-//                     }
-//                 },
-//             }, grasppe.ColorSheetsApp.$directives),
-//             $model: {
-//                 header: '', contents: '', footer: '', panelClasses: '', headerClasses: '', contentClasses: '', footerClasses: '', icon: 'glyphicon-menu-hamburger'
-//             },
-//             helpers: [grasppe.ColorSheetsApp],
-//         }), grasppe.ColorSheetsApp.helpers.push(grasppe.ColorSheetsApp.Panel);
-// 
-//         grasppe.loadThen('colorsheets-panels-script', grasppe.load.url.scripts + 'colorsheets-panels.js', function () {
-// 
-//             // !- [ColorSheet]
-//             grasppe.ColorSheetsApp.Sheet = grasppe.Libre.define(class ColorSheet extends grasppe.Libre {
-//                 // !- ColorSheet [Constructor]
-//             }, { /* !- ColorSheet [Prototype Assigned Properties] */
-//             }, { /* !- ColorSheet [Static Assigned Properties] */
-//                 description: 'Graphic arts theory demo sheet!', version: (1.0),
-//                 $controller: function ColorSheetController($scope, $instance) {
-//                     $scope.sheet = $scope.$model;
-//                 },
-//                 $dependencies: ['ngMaterial'],
-//                 $directives: Object.assign({
-//                     sheet: function sheet() {
-//                         // console.log('ColorSheetController>sheet', this, arguments);
-//                         return {
-//                             template: '\
-//                                 <div class="color-sheets-sheet">\
-//                                     <div ng-controller="ColorSheetsStagePanelController" color-sheets-stage-panel></div> \
-//                                     <div ng-controller="ColorSheetsParametersPanelController" color-sheets-parameters-panel></div> \
-//                                     <div ng-controller="ColorSheetsResultsPanelController" color-sheets-results-panel></div> \
-//                                     <div ng-controller="ColorSheetsOverviewPanelController" color-sheets-overview-panel></div> \
-//                                 </div>',
-//                         }
-//                     },
-//                 }, grasppe.ColorSheetsApp.$directives),
-//                 helpers: [grasppe.ColorSheetsApp],
-//             }, { /* !- ColorSheet [Prototype Defined Properties] */
-//             }, { /* !- ColorSheet [Static Defined Properties] */
-//             }), grasppe.ColorSheetsApp.helpers.push(grasppe.ColorSheetsApp.Sheet);
-// 
-//             // !- [ScreeningColorSheet]
-//             grasppe.ColorSheetsApp.ScreeningColorSheet = grasppe.Libre.define(class ScreeningColorSheet extends grasppe.ColorSheetsApp.Sheet {
-//                 // !- ScreeningColorSheet [Constructor]
-//                 constructor() {
-//                     super(...arguments);
-//                 }
-//             }, { /* !- ScreeningColorSheet [Prototype Assigned Properties] */
-//             }, { /* !- ScreeningColorSheet [Static Assigned Properties] */
-//                 description: 'Graphic arts theory demo sheet!', version: (1.0),
-//                 $controller: function ScreeningColorSheetController($scope, $instance) {
-//                     // console.log('ScreeningColorSheetController', arguments, this);
-//                     $scope.sheet = $scope.$model;
-//                     setTimeout(function ($scope, $instance) {
-//                         $scope.$model.headerStatus = "by Saleh Abdel Motaal";
-//                     }, 3000, $scope, $instance);
-//                 },
-//                 $dependencies: ['ngAnimate'],
-//                 $directives: {
-//                 },
-//                 $model: {
-//                     header: 'Screening Demo', headerStatus: '',
-//                 },
-//                 $config: [function ($mdIconProvider) {
-//                     console.log('Config...');
-//                     $mdIconProvider.defaultFontSet('glyphicon');
-//                     $mdIconProvider.defaultIconSet('icon-set.svg', 24); // Register a default set of SVG icons
-//                 }],
-//                 view: {},
-//                 helpers: [grasppe.ColorSheetsApp],
-//             }, { /* !- ScreeningColorSheet [Prototype Defined Properties] */
-//             }, { /* !- ScreeningColorSheet [Static Defined Properties] */
-//             });
-//             
-//             window.colorSheet = new grasppe.ColorSheetsApp.ScreeningColorSheet();
-// 
-//             console.log(colorSheet.$module.name, window.colorSheet);
-//             $('<div ng-app="' + window.colorSheet.$module.name + '" ng-controller="ScreeningColorSheetController"><h4>{{ sheet.header }} <small>{{sheet.headerStatus}}</small></h4><div ng-controller="ColorSheetController" sheet></div><div color-sheets-copyright></div></div>').prependTo('body');
-//             angular.bootstrap(document, [colorSheet.$module.name]);
-// 
-//         });
+        //console.log(grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template);
+        
+        Object.assign(grasppe.ColorSheetsApp.prototype.controllers, {
+            // !- ColorSheetsApp [Controllers] colorSheetsStageController
+            colorSheetsStageController: grasppe.Libre.Controller.define('colorSheetsStageController', function($scope){
+                console.log('ColorSheetsApp [Controllers] colorSheetsStageController', this, arguments);
+                $scope.panel = {
+                    header: 'Stage', icon: 'glyphicon-stats', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'grey darken-1'
+                }
+            }),
+            // !- ColorSheetsApp [Controllers] colorSheetsParametersController
+            colorSheetsParametersController: grasppe.Libre.Controller.define('colorSheetsParametersController', function($scope){
+                console.log('ColorSheetsApp [Controllers] colorSheetsParametersController', this, arguments);
+                $scope.panel = {
+                    header: 'Parameters', icon: 'glyphicon-cog', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'green lighten-1'
+                }
+            }),
+            // !- ColorSheetsApp [Controllers] colorSheetsResultsController
+            colorSheetsResultsController: grasppe.Libre.Controller.define('colorSheetsResultsController', function($scope){
+                console.log('ColorSheetsApp [Controllers] colorSheetsResultsController', this, arguments);
+                $scope.panel = {
+                    header: 'Results', icon: 'glyphicon-dashboard', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'red lighten-1'
+                }
+            }),
+            // !- ColorSheetsApp [Controllers] colorSheetsOverviewController
+            colorSheetsOverviewController: grasppe.Libre.Controller.define('colorSheetsOverviewController', function($scope){
+                console.log('ColorSheetsApp [Controllers] colorSheetsOverviewController', this, arguments);
+                $scope.panel = {
+                    header: 'Overview', icon: 'glyphicon-edit', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'light-blue lighten-1'
+                }
+            }),
+        });
+        
+        Object.assign(grasppe.ColorSheetsApp.prototype.directives, {
+            // !- ColorSheetsApp [Directives] colorSheetsStagePanel
+            colorSheetsStagePanel: grasppe.Libre.Directive.define('colorSheetsStagePanel', {
+                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+            }),
+            // !- ColorSheetsApp [Directives] colorSheetsParametersPanel
+            colorSheetsParametersPanel: grasppe.Libre.Directive.define('colorSheetsParametersPanel', {
+                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+            }),
+            // !- ColorSheetsApp [Directives] colorSheetsResultsPanel
+            colorSheetsResultsPanel: grasppe.Libre.Directive.define('colorSheetsResultsPanel', {
+                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+            }),
+            // !- ColorSheetsApp [Directives] colorSheetsOverviewPanel
+            colorSheetsOverviewPanel: grasppe.Libre.Directive.define('colorSheetsOverviewPanel', {
+                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+            }),
+        });
+        
+        window.colorSheetsApp = new grasppe.ColorSheetsApp();
 
     });
 }(this, this.grasppe));
