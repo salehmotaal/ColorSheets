@@ -47,7 +47,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         static require(requirements, callback, fallback) {
             if (grasppe.checkRequirement(requirements, callback)) SUCCESS: {
                 delete callback.attempts;
-                return callback();
+                callback();
+                return grasppe;
             } else if (callback.attempts > 20) FAILURE: {
                 var fails = requirements.map(function (requirement) {
                     if (grasppe.checkRequirement(requirement)) return null;
@@ -62,7 +63,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             } else RETRY: return setTimeout(function (requirements, callback, fallback) {
                 callback.attempts++;
                 return grasppe.require(requirements, callback);
-            }, 500, requirements, callback);
+            }, 100, requirements, callback);
+            
+            return grasppe;
         }
         
         // ![grasppe.checkRequirement]
@@ -79,9 +82,19 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 } else return false;
             } else return requirement === true; //  || !requirement;
         }
+        
+        static loadThen(id, parameters, callback) {
+            var args = [... arguments];
+            callback = (typeof args[args.length-1]==='function') ? args.pop() : null;
+            
+            grasppe.load.apply(this, args);
+            if (callback) grasppe.require(id, callback);
+            
+            return grasppe;
+        }
 
         // ![grasppe.load]
-        static load(id, uri, type, target, prefix, callback) {
+        static load(id, uri, type, target, prefix) { //, callback) {
             if (typeof id !== 'string') throw ('Module ID must be an assignable string name.');
             if (typeof uri !== 'string' && typeof type === 'string') uri = id + '.' + type;
             if (typeof uri !== 'string') throw ('URI must be a valid string or else supply a module ID and type that evaluate to the location of an existing resource.')
@@ -140,8 +153,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 grasppe.load.stack.push([scriptLoader, uri, id, target]);
                 return; // grasppe.load.next();
             }
-            return grasppe.load.next;
-
+                                    
+            grasppe.load.next();
+            
+            return grasppe;
         }
 
         // ![grasppe.initialize]
@@ -180,6 +195,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
                 _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial', 'materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'colorSheets'],
+                objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
                 // jQuery: '           scripts:    ["//code.jquery.com/jquery.min.js"]'.toLiteral(),
@@ -193,11 +209,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // angularAria: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-aria.min.js"]'.toLiteral(),
                 // angularMaterial: '  scripts:    ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.js"], \
                 //                     styles:     ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.min.css"]'.toLiteral(),
-                angularJS: '        scripts:    ["angular.min.js"]'.toLiteral(),
-                angularRoute: '     scripts:    ["angular-route.min.js"]'.toLiteral(),
-                angularMessages: '  scripts:    ["angular-messages.min.js"]'.toLiteral(),
-                angularAnimate: '   scripts:    ["angular-animate.min.js"]'.toLiteral(),
-                angularAria: '      scripts:    ["angular-aria.min.js"]'.toLiteral(),
+                angularJS: '        scripts:    ["angular.js"]'.toLiteral(),
+                angularRoute: '     scripts:    ["angular-route.js"]'.toLiteral(),
+                angularMessages: '  scripts:    ["angular-messages.js"]'.toLiteral(),
+                angularAnimate: '   scripts:    ["angular-animate.js"]'.toLiteral(),
+                angularAria: '      scripts:    ["angular-aria.js"]'.toLiteral(),
+                angularTouch: '     scripts:    ["angular-touch.js"]'.toLiteral(),
                 angularMaterial: '  scripts:    ["angular-material.js"], \
                                     styles:     ["angular-material.min.css"]'.toLiteral(),
                 materializeColors: 'styles:     ["materialize-colors.min.css"]'.toLiteral(),
@@ -253,14 +270,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             });
             //console.log(libraries);
             grasppe.load.next();
+            
+            return grasppe;
         }
     };
     
-    grasppe.immutables = function (object) {
-        if (!grasppe.immutables.map) grasppe.immutables.map = new WeakMap();
-        if (!grasppe.immutables.map.has(object))
-            grasppe.immutables.map.set(object, {});
-        return grasppe.immutables.map.get(object);
+    grasppe.hash = function (object) {
+        if (!grasppe.hash.map) grasppe.hash.map = new WeakMap();
+        if (!grasppe.hash.map.has(object))
+            grasppe.hash.map.set(object, {});
+        return grasppe.hash.map.get(object);
     }
     
     window.grasppe.initialize();
