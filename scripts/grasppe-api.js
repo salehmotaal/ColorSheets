@@ -194,7 +194,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial', 'materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'colorSheets'],
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'colorSheets'],
                 objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
@@ -217,6 +217,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 angularTouch: '     scripts:    ["angular-touch.js"]'.toLiteral(),
                 angularMaterial: '  scripts:    ["angular-material.js"], \
                                     styles:     ["angular-material.min.css"]'.toLiteral(),
+                // angularDroplet: '   scripts:    ["ng-droplet.min.js"]'.toLiteral(),
                 materializeColors: 'styles:     ["materialize-colors.min.css"]'.toLiteral(),
                 materializeCSS: '   styles:     ["materialize.min.css"]'.toLiteral(),
                 materialize: '      scripts:    ["materialize.min.js"], \

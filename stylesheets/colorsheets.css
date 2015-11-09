@@ -44,7 +44,7 @@ md-icon {
 
 /* ! - GLOBALS - */
 @media screen {
-	body :not(input):not(.selectable) {
+	:not(input):not(.selectable) {
 		-webkit-user-select:none;
 		-moz-user-select:none;
 		-ms-user-select:none;
@@ -54,6 +54,12 @@ md-icon {
 		outline-color:-webkit-focus-ring-color;
 		cursor:default;
 	}
+	input, textarea, textarea:focus, input:focus {
+    	outline: 0;
+		outline-style:none;
+		outline-width:0;
+		outline-color: transparent;
+    }
 }
 
 @media all {

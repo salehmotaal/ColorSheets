@@ -246,7 +246,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !Libre Controller module set
                 set module(module) {
                     if (!this.hash.module && module instanceof grasppe.Libre.Module) {
-                        module.$module.controller(this.id, ['$scope', 'model'].concat(this.$providers || []).concat([this.hash.$controller]));
+                        module.$module.controller(this.id, ['$scope', 'model', '$libreModule'].concat(this.$providers || []).concat([this.hash.$controller]));
                         this.hash.module = module;
                     }
                 }
@@ -269,7 +269,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Controller $providers get
                 get $providers() {
-                    return (Array.isArray(this.hash.$providers)) ? this.hash.$providers : [];
+                    return (Array.isArray(this.hash.$providers)) ? this.hash.$providers : (Array.isArray(this.getPrototype().hash.$providers)) ? this.getPrototype().hash.$providers : [];
                 }
 
                 // !Libre Controller $providers set
@@ -316,7 +316,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     this.componentID = this.id;
                     this.hash.module = this;
                     this.hash.$module = this.$module;
-                    this.initializeDirectives().initializeController().initializeControllers().initializeView();
+                    this.initializeDirectives().initializeController().initializeControllers()
+                    if (this.initializeComponents) this.initializeComponents();
+                    this.initializeView();
                 }
 
                 // !Libre Module $view initializeView
