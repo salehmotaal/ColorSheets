@@ -201,7 +201,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 static define(id, $directive, properties) {
                     var directive = eval('class ' + id + ' extends grasppe.Libre.Directive{};' + id + ';');
                     if (properties) Object.assign(directive, properties);
-                    if (typeof $directive === 'function')  directive.prototype.$directive = $directive;
+                    if (typeof $directive === 'function') directive.prototype.$directive = $directive;
                     else if (typeof $directive === 'object') {
                         Object.assign(directive.prototype, $directive);
                         directive.prototype.$directive = function () {
@@ -245,7 +245,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !Libre Controller module set
                 set module(module) {
                     if (!this.hash.module && module instanceof grasppe.Libre.Module) {
-                        module.$module.controller(this.id, ['$scope', '$rootScope'].concat(this.$providers || []).concat([this.hash.$controller]));
+                        module.$module.controller(this.id, ['$scope', 'defaults'].concat(this.$providers || []).concat([this.hash.$controller]));
                         this.hash.module = module;
                     }
                 }
@@ -281,11 +281,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 toString() {
                     return 'LibreController';
                 }
-                
+
                 static define(id, $controller, properties) {
                     var controller = eval('class ' + id + ' extends grasppe.Libre.Controller{};' + id + ';');
                     if (properties) Object.assign(controller, properties);
-                    if (typeof $controller === 'function')  controller.prototype.$controller = $controller;
+                    if (typeof $controller === 'function') controller.prototype.$controller = $controller;
                     // else if (typeof $controller === 'object') controller.prototype.$directive = function () {
                     //     return $controller;
                     // };
@@ -322,16 +322,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !Libre Module $view initializeView
                 initializeView() {
                     if (!this.hash.$view || $(this.hash.$view).length === 0) {
-                        // console.log(this.template);
                         this.hash.$view = $(this.template).appendTo(this.container); // .appendTo('body');
                         if (this.$controller && this.$controller.componentID) this.hash.$view.attr('ng-controller', this.$controller.componentID);
-                        //if (this.$controller && this.$controller.componentID) this.hash.$view.attr('ng-controller', this.$controller.componentID);
-                        // if (this.directives.CopyrightsDirective) this.hash.$view.append('<div copyrights>');
-                        
-                        this.configuration.forEach(function(configuration) {
+                        this.configuration.forEach(function (configuration) {
                             this.$module.config(configuration);
                         }.bind(this));
-                        
+                        Object.keys(this.values).forEach(function (valueID) {
+                            console.log(valueID, this.values[valueID]);
+                            this.$module.value(valueID, this.values[valueID]);
+                        }.bind(this));
+
                         angular.bootstrap(this.hash.$view, [this.$module.name]);
                     }
                     return this;
@@ -364,7 +364,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     }
                     return this;
                 }
-
+                
                 // !Libre Module module get
                 get module() {
                     return this;
@@ -414,19 +414,29 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if (typeof directives !== 'object') directives = {};
                     this.hash.directives = directives;
                 }
-                
+
+                // !Libre Module values get
+                get values() {
+                    return this.getPrototype().hash.values || {}; //  || (this.getPrototype().hash && this.getPrototype().hash.values) || {};
+                }
+
+                // !Libre Module [Static-Like] values set
+                set values(values) {
+                    if (grasppe.Libre.isLibreComponent(this)) return;
+                    if (typeof values !== 'object') values = {};
+                    this.hash.values = values;
+                }
+
                 // !Libre Module configuration get
                 get configuration() {
                     return (this.getPrototype().hash && this.getPrototype().hash.configuration) || [];
                 }
-                
+
                 // !Libre Module [Static-Like] configuration set
                 set configuration(configuration) {
                     if (grasppe.Libre.isLibreComponent(this)) return;
                     this.hash.configuration = configuration;
                 }
-
-
 
                 // !Libre Module $view get
                 get $view() {
@@ -453,7 +463,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if ($(container).length === 1) container = [];
                     this.hash.container = $(container)[0];
                 }
-                
+
                 // !Libre Module template get
                 get template() {
                     // console.log(this.getPrototype().hash.template)
@@ -466,7 +476,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // if (!Array.isArray()) $providers = [];
                     this.hash.template = template;
                 }
-
 
                 // !Libre Module toString
                 toString() {

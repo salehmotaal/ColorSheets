@@ -82,7 +82,7 @@ $(function () {
 
             grasppe.columns.windowWidth = windowWidth;
 
-            $('body').removeClass('window-xs window-sm window-md window-lg').addClass(width < 544 ? 'window-xs' : width < 768 ? 'window-sm' : width < 992 ? 'window-md' : width < 1200 ? 'window-lg' : 'window-xl');
+            $('body').removeClass('window-xs window-sm window-md window-lg window-xl').addClass(width < 544 ? 'window-xs' : width < 768 ? 'window-sm' : width < 992 ? 'window-md' : width < 1200 ? 'window-lg' : 'window-xl');
 
             if (!grasppe.agent.is('iPhone') && !grasppe.agent.is('iPad')) return;
             $('body').removeClass('landscape portrait').addClass(grasppe.agent.getOrientation());

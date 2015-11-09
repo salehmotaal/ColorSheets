@@ -11,128 +11,255 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- ColorSheetsApp [Prototype]
             description: 'Graphic arts theory demos!', version: (1.0),
             requirements: ['ngMaterial', 'ngAnimate'],
-            controller: grasppe.Libre.Controller.define('ColorSheetsAppController', function ($scope) {
+            controller: grasppe.Libre.Controller.define('ColorSheetsAppController', function ($scope, defaults) {
                 // !- ColorSheetsApp [Controllers] ColorSheetsAppController
-                console.log('ColorSheetsAppController', this, arguments);
+                $scope.defaults = defaults;
+                $scope.layout = defaults.layout;
+                $scope.panels = defaults.panels;
+                // console.log('ColorSheetsAppController', this, arguments);
             }, {}),
-            controllers: {
-                ColorSheetsPanelController: grasppe.Libre.Controller.define('ColorSheetsPanelController', function ($scope) {
-                    // !- ColorSheetsApp [Controllers] ColorSheetsPanelController
-                }),
-            },
-            template: '<div color-Sheets-Sheet></div>',
-            configuration: [function ($mdIconProvider) {
+            controllers: {},
+            template: '<div color-Sheets-Sheet layout="column"></div>', configuration: [function ($mdIconProvider) {
                 console.log('Config...');
                 $mdIconProvider.defaultFontSet('glyphicon');
-                $mdIconProvider.defaultIconSet('icon-set.svg', 24); // Register a default set of SVG icons
+                $mdIconProvider.defaultIconSet('icon-set.svg', 20); // Register a default set of SVG icons
             }],
+            values: {
+                defaults: {
+                    toolsIconSize: '20px', toolsColor: 'white', menuIcon: 'glyphicon-menu-hamburger', toolsIconClasses: 'tools-icon', layout: {
+                        id: 'default', attributes: {
+                            'layout': 'column', 'layout-gt-lg': 'row',
+                        },
+                        classes: 'container-fluid', style: {
+                            padding: 0, margin: 0, flex: 1
+                        },
+                        contents: {
+                            simulation: {
+                                id: 'simulation', attributes: {
+                                    'layout': 'row', 'layout-sm': 'column', 'layout-gt-lg': 'row',
+                                },
+                                classes: 'row col-xs-12', style: {
+                                    padding: 0, margin: 0, flex: 1
+                                },
+                                contents: {
+                                    stage: {
+                                        id: 'stage', classes: 'col-xs-12 col-sm-6 col-md-7 col-lg-8', style: {
+                                            padding: 0, margin: 0
+                                        },
+                                    },
+                                    parameters: {
+                                        id: 'parameters', classes: 'col-xs-12 col-sm-6 col-md-5 col-lg-4', style: {
+                                            padding: 0, margin: 0
+                                        },
+                                    },
+                                },
+                            },
+                            information: {
+                                id: 'information', attributes: {
+                                    'layout-sm': 'column', 'layout-md': 'row',
+                                },
+                                classes: 'row col-xs-12', style: {
+                                    padding: 0, margin: 0, flex: 1
+                                },
+                                contents: {
+                                    results: {
+                                        id: 'results', attributes: {
+                                            'flex-order-sm': -1,
+                                        },
+                                        classes: 'col-xs-12 col-sm-5', style: {
+                                            padding: 0, margin: 0
+                                        },
+                                    },
+                                    overview: {
+                                        id: 'overview', attributes: {
+                                            'flex-order-sm': 1,
+                                        },
+                                        classes: 'col-xs-12 col-sm-7', style: {
+                                            padding: 0, margin: 0
+                                        },
+                                    },
+                                },
+                            },
+                        }
+                    },
+                    panels: {
+                        stage: {
+                            prefix: 'stage', header: 'Stage', icon: 'glyphicon-stats', toolbarClasses: 'grey darken-1', tools: {
+                                zoom: {
+                                    icon: 'glyphicon-search', label: 'zoom'
+                                },
+                                style: {
+                                    icon: 'glyphicon-tint', label: 'style'
+                                },
+                            },
+                            contents: '', footer: '',
+                        },
+                        parameters: {
+                            prefix: 'parameters', header: 'Parameters', icon: 'glyphicon-cog', toolbarClasses: 'green lighten-1', contents: '', footer: '',
+                        },
+                        results: {
+                            prefix: 'results', header: 'Results', icon: 'glyphicon-th-list', toolbarClasses: 'red lighten-1', contents: '', footer: '',
+                        },
+                        overview: {
+                            prefix: 'overview', header: 'Overview', icon: 'glyphicon-edit', toolbarClasses: 'light-blue lighten-1', contents: '', footer: '',
+                        },
+                    },
+                }
+            },
             directives: {
                 // !- ColorSheetsApp [Directives] CopyrightsDirective
-                CopyrightsDirective: grasppe.Libre.Directive.define('copyrights', {
-                    link: function ($scope, element, attributes) {},
+                copyrightsDirective: grasppe.Libre.Directive.define('copyrights', {
+                    // link: function ($scope, element, attributes) {},
                     template: 'Copyrights &copy; 2015, Saleh Abdel Motaal, Franz Sigg, and Grasppe, Inc.',
                 }, {}),
                 // !- ColorSheetsApp [Directives] colorSheetsPanelTools
                 colorSheetsPanelTools: grasppe.Libre.Directive.define('colorSheetsPanelTools', {
                     link: function ($scope, element, attributes) {
-                        console.log('colorSheetsPanelTools:link', $scope, element, attributes);
-                        // if ($scope.$parent.panel) $scope.panel = $scope.$parent.panel;
-                        // else $scope.panel = {};
+                        Object.assign($scope, $scope.panel);
+                        // $scope.headerColor = ($scope.panel.headerColor || $scope.panel.toolsColor || $scope.defaults.toolsColor);
+                        $scope.toolsColor = ($scope.panel.toolsColor || $scope.defaults.toolsColor);
+                        $scope.toolsIconSize = ($scope.panel.toolsIconSize || $scope.defaults.toolsIconSize);
                         element.on('$destroy', function () {});
                     },
-                    template: '\
-                    <md-toolbar class="{{panel.toolbarClasses}}"> \
-                        <div class="md-toolbar-tools" color="{{toolsColor || \'white\'}}"> \
-                            <md-button class="md-icon-button" aria-label="{{panel.header}} Menu"> \
-                                <md-icon md-font-icon="{{panel.icon || \'glyphicon-menu-hamburger\'}}" \
-                                 ng-style="{color: panel.toolsColor || \'white\', \'font-size\': \'24px\', height: \'24px\'}"></md-icon> \
+                    template: ('\
+                    <md-toolbar class="{{toolbarClasses}}"> \
+                        <div class="md-toolbar-tools" color="{{toolsColor}}"> \
+                            <md-button class="md-icon-button" aria-label="{{header}} Menu" ng-init="menuIcon = panel.icon"> \
+                                <md-icon md-font-icon="{{menuIcon}}" class="toolsIconClasses" ng-style="{color: toolsColor, fontSize: toolsIconSize}"></md-icon> \
                             </md-button> \
-                            <header ng-if="panel.header" class="{{panel.headerClasses}}" color="{{panel.headerColor || panel.toolsColor || \'white\'}}"><span>{{panel.header}}</span></header> \
+                            <header class="{{headerClasses}}" color="{{headerColor}}"><span>{{header}}</span></header> \
                             <span flex></span> \
-                            <md-button ng-repeat="tool in panel.tools" class="{{tool.classes}}" aria-label="{{tool.label}}"> \
-                                <md-icon icon="{{tool.icon}}" color="{{tool.iconColor}}" class="{{tool.iconClasses}}"></md-icon> \
+                            <md-button class="md-icon-button" ng-repeat="tool in tools" class="{{tool.classes}}" aria-label="{{tool.label}}"> \
+                                <md-icon md-font-icon="{{tool.icon}}" class="toolsIconClasses {{tool.classes}} glyphicon {{tool.icon}}" ng-style="{color: {{tool.color || toolsColor}}, fontSize: toolsIconSize}"></md-icon> \
                             </md-button> \
                         </div> \
-                    </md-toolbar>',
+                    </md-toolbar>'),
+                    transclude: true,
                 }),
                 // !- ColorSheetsApp [Directives] colorSheetsPanel
                 colorSheetsPanel: grasppe.Libre.Directive.define('colorSheetsPanel', {
-                    template: '\
-                    <div class="color-sheets-panel {{panelClasses}}" >\
-                        <div class="color-sheets-panel-header {{panel.headerClasses}}" color-sheets-panel-tools>{{panel.header}}</div>\
-                        <div class="color-sheets-panel-contents {{contentClasses}}">{{contents}}</div>\
-                        <div class="color-sheets-panel-footer {{footerClasses}}">{{contents}}</div>\
-                    </div>', // <!--ng-controller="ColorSheetsPanelToolsController"-->
+                    link: function ($scope, element, attributes) {
+                        // $scope.panel.icon = ($scope.panel.icon || $scope.defaults.menuIcon);
+                        // $scope.panel.iconClasses = ($scope.panel.iconClasses || $scope.defaults.toolsIconClasses);
+                        // console.log($scope.segment.attributes);
+                        console.log($scope.segment.attributes);
+                        if ($scope.segment.attributes) $(element).attr($scope.segment.attributes);
+                        Object.assign($scope, $scope.panel);
+                    },
+                    template: ('\
+                    <div class="color-sheets-panel {{panelClasses}} {{prefix || \'sheet\'}}-panel" {{segment.attributes}} layout="column" >\
+                        <div class="color-sheets-panel-header {{headerClasses}} {{prefix || \'sheet\'}}-panel-header" color-sheets-panel-tools>{{panel.header}}</div>\
+                        <div class="color-sheets-panel-contents {{contentClasses}} {{prefix || \'sheet\'}}-panel-contents">Contents:{{contents}}</div>\
+                        <div class="color-sheets-panel-footer {{footerClasses}} {{prefix || \'sheet\'}}-panel-footer">Footer:{{footer}}</div>\
+                    </div>'),
+                    // <!--ng-controller="ColorSheetsPanelToolsController"-->
+                    transclude: true,
+                }),
+                // !- ColorSheetsApp [Directives] colorSheetsSheetSegment
+                colorSheetsSheetSegment: grasppe.Libre.Directive.define('colorSheetsSheetSegment', {
+                    link: function ($scope, element, attributes) {
+                        console.log($scope.segment.attributes);
+                        if ($scope.segment.attributes) $(element).attr($scope.segment.attributes);
+                    },
+                    template: ('<div ng-repeat="segment in segment.contents" {{segment.attributes}} class="ng-class: segment.classes;" ng-init="panel = panels[segment.id]" ng-style="segment.style;" color-sheets-panel></div>'),
+                    transclude: true,
                 }),
                 // !- ColorSheetsApp [Directives] colorSheetsSheet
                 colorSheetsSheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
-                    template: '\
-                        <div class="color-sheets-sheet">\
-                            <div ng-controller="colorSheetsStageController" color-sheets-stage-panel></div> \
-                            <div ng-controller="colorSheetsParametersController" color-sheets-parameters-panel></div> \
-                            <div ng-controller="colorSheetsResultsController" color-sheets-results-panel></div> \
-                            <div ng-controller="colorSheetsOverviewController" color-sheets-overview-panel></div> \
-                        </div>',
+                    link: function ($scope, element, attributes) {
+                        console.log($scope.layout.attributes);
+                        // if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
+                    },
+                    template: ('\
+                    <div class="color-sheets-sheet container-fluid {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;" ng-init="contents = layout.contents" layout-fill>\
+                        <div ng-repeat="segment in contents" {{segment.container}} class="ng-class: segment.classes;" ng-style="segment.style;" color-sheets-sheet-segment></div> \
+                    </div>'),
+                    transclude: true,
                 }),
             },
         });
-        
-        //console.log(grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template);
-        
-        Object.assign(grasppe.ColorSheetsApp.prototype.controllers, {
-            // !- ColorSheetsApp [Controllers] colorSheetsStageController
-            colorSheetsStageController: grasppe.Libre.Controller.define('colorSheetsStageController', function($scope){
-                console.log('ColorSheetsApp [Controllers] colorSheetsStageController', this, arguments);
-                $scope.panel = {
-                    header: 'Stage', icon: 'glyphicon-stats', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'grey darken-1'
-                }
+
+        grasppe.ColorSheetsScreeningApp = grasppe.Libre.Module.define(class ColorSheetsScreeningApp extends grasppe.ColorSheetsApp {
+            // !- ScreeningApp [Constructor]                                  // constructor() {super(...arguments);} // implied
+        }, {
+            // !- ScreeningApp [Prototype]
+            description: 'Graphic arts theory demos!', version: (1.0),
+            requirements: grasppe.ColorSheetsApp.prototype.requirements, controller: grasppe.Libre.Controller.define('ScreeningDemoController', function ($scope) {
+                // !- ColorSheetsApp [Controllers] ColorSheetsPanelController
             }),
-            // !- ColorSheetsApp [Controllers] colorSheetsParametersController
-            colorSheetsParametersController: grasppe.Libre.Controller.define('colorSheetsParametersController', function($scope){
-                console.log('ColorSheetsApp [Controllers] colorSheetsParametersController', this, arguments);
-                $scope.panel = {
-                    header: 'Parameters', icon: 'glyphicon-cog', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'green lighten-1'
-                }
+            controllers: Object.assign(grasppe.ColorSheetsApp.prototype.controllers, {
+                ColorSheetsAppController: grasppe.ColorSheetsApp.prototype.controller,
             }),
-            // !- ColorSheetsApp [Controllers] colorSheetsResultsController
-            colorSheetsResultsController: grasppe.Libre.Controller.define('colorSheetsResultsController', function($scope){
-                console.log('ColorSheetsApp [Controllers] colorSheetsResultsController', this, arguments);
-                $scope.panel = {
-                    header: 'Results', icon: 'glyphicon-dashboard', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'red lighten-1'
-                }
-            }),
-            // !- ColorSheetsApp [Controllers] colorSheetsOverviewController
-            colorSheetsOverviewController: grasppe.Libre.Controller.define('colorSheetsOverviewController', function($scope){
-                console.log('ColorSheetsApp [Controllers] colorSheetsOverviewController', this, arguments);
-                $scope.panel = {
-                    header: 'Overview', icon: 'glyphicon-edit', headerClasses: 'stage-header', contentClasses: 'stage-contents', footerClasses: 'stage-footer', toolbarClasses: 'light-blue lighten-1'
-                }
-            }),
+            values: Object.assign(grasppe.ColorSheetsApp.prototype.values, {}),
         });
-        
-        Object.assign(grasppe.ColorSheetsApp.prototype.directives, {
-            // !- ColorSheetsApp [Directives] colorSheetsStagePanel
-            colorSheetsStagePanel: grasppe.Libre.Directive.define('colorSheetsStagePanel', {
-                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
-            }),
-            // !- ColorSheetsApp [Directives] colorSheetsParametersPanel
-            colorSheetsParametersPanel: grasppe.Libre.Directive.define('colorSheetsParametersPanel', {
-                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
-            }),
-            // !- ColorSheetsApp [Directives] colorSheetsResultsPanel
-            colorSheetsResultsPanel: grasppe.Libre.Directive.define('colorSheetsResultsPanel', {
-                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
-            }),
-            // !- ColorSheetsApp [Directives] colorSheetsOverviewPanel
-            colorSheetsOverviewPanel: grasppe.Libre.Directive.define('colorSheetsOverviewPanel', {
-                    template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
-            }),
-        });
-        
+
         window.colorSheetsApp = new grasppe.ColorSheetsApp();
 
     });
 }(this, this.grasppe));
+
+//         //console.log(grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template);
+//         Object.assign(grasppe.ColorSheetsApp.prototype.controllers, {
+//             // X- ColorSheetsApp [Controllers] colorSheetsStageController
+//             colorSheetsStageController: grasppe.Libre.Controller.define('colorSheetsStageController', function ($scope) {
+//                 console.log('ColorSheetsApp [Controllers] colorSheetsStageController', this, arguments);
+//                 $scope.prefix = 'stage';
+//                 $scope.panel = {
+//                     header: 'Stage', icon: 'glyphicon-stats', toolbarClasses: 'grey darken-1', tools: {
+//                         zoom: {
+//                             icon: 'glyphicon-search', label: 'zoom'
+//                         },
+//                         style: {
+//                             icon: 'glyphicon-tint', label: 'style'
+//                         },
+//                     }
+//                 }
+//             }),
+//             // X- ColorSheetsApp [Controllers] colorSheetsParametersController
+//             colorSheetsParametersController: grasppe.Libre.Controller.define('colorSheetsParametersController', function ($scope) {
+//                 // console.log('ColorSheetsApp [Controllers] colorSheetsParametersController', this, arguments);
+//                 $scope.prefix = 'parameters';
+//                 $scope.panel = {
+//                     header: 'Parameters', icon: 'glyphicon-cog', toolbarClasses: 'green lighten-1',
+//                 }
+//             }),
+//             // X- ColorSheetsApp [Controllers] colorSheetsResultsController
+//             colorSheetsResultsController: grasppe.Libre.Controller.define('colorSheetsResultsController', function ($scope) {
+//                 // console.log('ColorSheetsApp [Controllers] colorSheetsResultsController', this, arguments);
+//                 $scope.prefix = 'results';
+//                 $scope.panel = {
+//                     header: 'Results', icon: 'glyphicon-th-list', toolbarClasses: 'red lighten-1',
+//                 }
+//             }),
+//             // X- ColorSheetsApp [Controllers] colorSheetsOverviewController
+//             colorSheetsOverviewController: grasppe.Libre.Controller.define('colorSheetsOverviewController', function ($scope) {
+//                 // console.log('ColorSheetsApp [Controllers] colorSheetsOverviewController', this, arguments);
+//                 $scope.prefix = 'overview';
+//                 $scope.panel = {
+//                     header: 'Overview', icon: 'glyphicon-edit', toolbarClasses: 'light-blue lighten-1',
+//                 }
+//             }),
+//         });
+// 
+//         Object.assign(grasppe.ColorSheetsApp.prototype.directives, {
+//             // X- ColorSheetsApp [Directives] colorSheetsStagePanel
+//             colorSheetsStagePanel: grasppe.Libre.Directive.define('colorSheetsStagePanel', {
+//                 template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+//             }),
+//             // X- ColorSheetsApp [Directives] colorSheetsParametersPanel
+//             colorSheetsParametersPanel: grasppe.Libre.Directive.define('colorSheetsParametersPanel', {
+//                 template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+//             }),
+//             // X- ColorSheetsApp [Directives] colorSheetsResultsPanel
+//             colorSheetsResultsPanel: grasppe.Libre.Directive.define('colorSheetsResultsPanel', {
+//                 template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+//             }),
+//             // X- ColorSheetsApp [Directives] colorSheetsOverviewPanel
+//             colorSheetsOverviewPanel: grasppe.Libre.Directive.define('colorSheetsOverviewPanel', {
+//                 template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
+//             }),
+//         });
+
 // 
 // // (function (window, grasppe, undefined) {
 // // 
