@@ -22,14 +22,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var args = [...arguments],
                         prototype = this.getPrototype(),
                         constructor = prototype.constructor;
-                    options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined, this.setOptions(options);
+                    this.options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined;
+                    this.setOptions(this.options);
                 }
 
                 // !Libre Component setOptions
                 setOptions(options) {
                     if (typeof options !== 'object') return this;
                     Object.keys(options).forEach(function (property) {
-                        if (this.hasOwnProperty(property)) this[property] = options[property];
+                        this[property] = options[property]; //if (this.hasOwnProperty(property)) 
                     }.bind(this));
                     return this;
                 }
@@ -245,7 +246,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !Libre Controller module set
                 set module(module) {
                     if (!this.hash.module && module instanceof grasppe.Libre.Module) {
-                        module.$module.controller(this.id, ['$scope', 'defaults'].concat(this.$providers || []).concat([this.hash.$controller]));
+                        module.$module.controller(this.id, ['$scope', 'model'].concat(this.$providers || []).concat([this.hash.$controller]));
                         this.hash.module = module;
                     }
                 }
@@ -286,9 +287,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var controller = eval('class ' + id + ' extends grasppe.Libre.Controller{};' + id + ';');
                     if (properties) Object.assign(controller, properties);
                     if (typeof $controller === 'function') controller.prototype.$controller = $controller;
-                    // else if (typeof $controller === 'object') controller.prototype.$directive = function () {
-                    //     return $controller;
-                    // };
                     return controller;
                 }
             }
@@ -302,6 +300,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !Libre Module [Constructor]
                 constructor() {
                     super(...arguments);
+                    // Object.assign(this, arguments[0]);
+                    // console.log(this.options);
                     if (!this.id) throw 'A module needs to have an ID!';
                     if (!this.requirements) this.requirements = [];
                     this.hash.$module = angular.module(this.id, this.requirements).value('$libreModule', this);
@@ -328,7 +328,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             this.$module.config(configuration);
                         }.bind(this));
                         Object.keys(this.values).forEach(function (valueID) {
-                            console.log(valueID, this.values[valueID]);
+                            // console.log(valueID, this.values[valueID]);
                             this.$module.value(valueID, this.values[valueID]);
                         }.bind(this));
 
@@ -344,27 +344,29 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }
 
                 // !Libre Module controllers initializeControllers
-                initializeControllers() {
-                    if (!this.hash.controllers && this.getPrototype().controllers) { // grasppe.Libre.isLibreComponent(this) && 
-                        this.hash.controllers = {};
-                        Object.keys(this.getPrototype().controllers).forEach(function (controllerID) {
-                            this.hash.controllers[controllerID] = new(this.getPrototype().controllers[controllerID])(this);
+                initializeControllers(controllers) {
+                    if (controllers || (!this.hash.controllers && this.getPrototype().controllers)) { // grasppe.Libre.isLibreComponent(this) && 
+                        if (!this.hash.controllers) this.hash.controllers = {};
+                        if (!controllers) controllers = this.getPrototype().controllers;
+                        Object.keys(controllers).forEach(function (controllerID) {
+                            if (!this.hash.controllers[controllerID]) this.hash.controllers[controllerID] = new(controllers[controllerID])(this);
                         }.bind(this));
                     }
                     return this;
                 }
 
                 // !Libre Module directives initializeDirectives
-                initializeDirectives() {
-                    if (!this.hash.directives && this.getPrototype().directives) { // grasppe.Libre.isLibreComponent(this) && 
-                        this.hash.directives = {};
-                        Object.keys(this.getPrototype().directives).forEach(function (directiveID) {
-                            this.hash.directives[directiveID] = new(this.getPrototype().directives[directiveID])(this);
+                initializeDirectives(directives) {
+                    if (directives || (!this.hash.directives && this.getPrototype().directives)) { // grasppe.Libre.isLibreComponent(this) && 
+                        if (!this.hash.directives) this.hash.directives = {};
+                        if (!directives) directives = this.getPrototype().directives;
+                        Object.keys(directives).forEach(function (directiveID) {
+                            if (!this.hash.directives[directiveID]) this.hash.directives[directiveID] = new(directives[directiveID])(this);
                         }.bind(this));
                     }
                     return this;
                 }
-                
+
                 // !Libre Module module get
                 get module() {
                     return this;
@@ -417,12 +419,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module values get
                 get values() {
-                    return this.getPrototype().hash.values || {}; //  || (this.getPrototype().hash && this.getPrototype().hash.values) || {};
+                    return this.hash.values || this.getPrototype().hash.values || {}; //  || (this.getPrototype().hash && this.getPrototype().hash.values) || {};
                 }
 
                 // !Libre Module [Static-Like] values set
                 set values(values) {
-                    if (grasppe.Libre.isLibreComponent(this)) return;
+                    // if (grasppe.Libre.isLibreComponent(this)) return;
                     if (typeof values !== 'object') values = {};
                     this.hash.values = values;
                 }
@@ -472,8 +474,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module template set
                 set template(template) {
-                    //console.log('Libre Module template set', template)
-                    // if (!Array.isArray()) $providers = [];
                     this.hash.template = template;
                 }
 
