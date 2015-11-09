@@ -139,10 +139,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !- ColorSheetsApp [Directives] colorSheetsPanel
                 colorSheetsPanel: grasppe.Libre.Directive.define('colorSheetsPanel', {
                     link: function ($scope, element, attributes) {
-                        // $scope.panel.icon = ($scope.panel.icon || $scope.defaults.menuIcon);
-                        // $scope.panel.iconClasses = ($scope.panel.iconClasses || $scope.defaults.toolsIconClasses);
-                        // console.log($scope.segment.attributes);
-                        console.log($scope.segment.attributes);
                         if ($scope.segment.attributes) $(element).attr($scope.segment.attributes);
                         Object.assign($scope, $scope.panel);
                     },
@@ -158,7 +154,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !- ColorSheetsApp [Directives] colorSheetsSheetSegment
                 colorSheetsSheetSegment: grasppe.Libre.Directive.define('colorSheetsSheetSegment', {
                     link: function ($scope, element, attributes) {
-                        console.log($scope.segment.attributes);
                         if ($scope.segment.attributes) $(element).attr($scope.segment.attributes);
                     },
                     template: ('<div ng-repeat="segment in segment.contents" {{segment.attributes}} class="ng-class: segment.classes;" ng-init="panel = panels[segment.id]" ng-style="segment.style;" color-sheets-panel></div>'),
@@ -167,8 +162,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !- ColorSheetsApp [Directives] colorSheetsSheet
                 colorSheetsSheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
                     link: function ($scope, element, attributes) {
-                        console.log($scope.layout.attributes);
-                        // if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
+                        if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
                     },
                     template: ('\
                     <div class="color-sheets-sheet container-fluid {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;" ng-init="contents = layout.contents" layout-fill>\
@@ -179,19 +173,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             },
         });
 
-        grasppe.ColorSheetsScreeningApp = grasppe.Libre.Module.define(class ColorSheetsScreeningApp extends grasppe.ColorSheetsApp {
-            // !- ScreeningApp [Constructor]                                  // constructor() {super(...arguments);} // implied
-        }, {
-            // !- ScreeningApp [Prototype]
-            description: 'Graphic arts theory demos!', version: (1.0),
-            requirements: grasppe.ColorSheetsApp.prototype.requirements, controller: grasppe.Libre.Controller.define('ScreeningDemoController', function ($scope) {
-                // !- ColorSheetsApp [Controllers] ColorSheetsPanelController
-            }),
-            controllers: Object.assign(grasppe.ColorSheetsApp.prototype.controllers, {
-                ColorSheetsAppController: grasppe.ColorSheetsApp.prototype.controller,
-            }),
-            values: Object.assign(grasppe.ColorSheetsApp.prototype.values, {}),
-        });
 
         window.colorSheetsApp = new grasppe.ColorSheetsApp();
 
@@ -259,7 +240,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 //                 template: grasppe.ColorSheetsApp.prototype.directives.colorSheetsPanel.prototype.template,
 //             }),
 //         });
-
 // 
 // // (function (window, grasppe, undefined) {
 // // 
