@@ -12,38 +12,65 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         static get hash() {
             return grasppe.hash(grasppe.Libre);
         }
-
-        // !Libre [Component]
-        static get Component() {
+        
+        static get Object() {
             return class {
-                // !Libre Component [Constructor]
+                
+                // !Libre Object [Constructor]
                 constructor(options) {
-                    // console.log('Component::constructor', this, arguments);
-                    var args = [...arguments],
-                        prototype = this.getPrototype(),
-                        constructor = prototype.constructor;
+                    var args = [...arguments];
                     this.options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined;
                     this.setOptions(this.options);
                 }
 
-                // !Libre Component setOptions
+                // !Libre Object setOptions
                 setOptions(options) {
                     if (typeof options !== 'object') return this;
-                    Object.keys(options).forEach(function (property) {
-                        this[property] = options[property]; //if (this.hasOwnProperty(property)) 
-                    }.bind(this));
+                    for (var property in options) this[property] = options[property];
                     return this;
                 }
 
-                // !Libre Component [Static] define
-                static define(subclass, prototypeAssignents, prototypeProperties, staticProperties, prototypeDefinitions, staticDefinitions) {
-                    if (prototypeAssignents) Object.assign(subclass.prototype, prototypeAssignents);
-                    if (prototypeProperties) Object.assignProperties(subclass.prototype, prototypeProperties);
-                    if (staticProperties) Object.assignProperties(subclass, staticProperties);
-                    if (staticDefinitions) Object.defineProperties(subclass, staticDefinitions);
-                    if (prototypeDefinitions) Object.defineProperties(subclass.prototype, prototypeDefinitions);
+                // !Libre Object [Static] define
+                static define(subclass, prototypeAssignents, staticProperties, prototypeProperties, prototypeDefinitions, staticDefinitions) {
+                    prototypeAssignents && Object.assign(subclass.prototype, prototypeAssignents);
+                    staticProperties && Object.assignProperties(subclass, staticProperties);
+                    prototypeProperties && Object.assignProperties(subclass.prototype, prototypeProperties);
+                    staticDefinitions && Object.defineProperties(subclass, staticDefinitions);
+                    prototypeDefinitions && Object.defineProperties(subclass.prototype, prototypeDefinitions);
                     return subclass;
                 }
+
+                // !Libre Object [Static] getPrototype
+                static getPrototype() {
+                    return this.prototype;
+                }
+
+                // !Libre Object getPrototype
+                getPrototype() {
+                    return Object.getPrototypeOf(this);
+                }
+
+                // !Libre Object hash get
+                get hash() {
+                    return grasppe.hash(this);
+                }
+
+                // !Libre Object [Static] hash get
+                static get hash() {
+                    return grasppe.hash(this);
+                }
+
+                // !Libre Object toString
+                toString() {
+                    return 'LibreObject';
+                }
+
+            }
+        }
+
+        // !Libre [Component]
+        static get Component() {
+            return class extends grasppe.Libre.Object {
 
                 // !Libre Component [Static] componentID get
                 static get componentID() {
@@ -55,34 +82,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     this.getPrototype().componentID = componentID;
                 }
 
-                // !Libre Component [Static] getPrototype
-                static getPrototype() {
-                    return this.prototype;
-                }
-
-                // !Libre Component getPrototype
-                getPrototype() {
-                    return Object.getPrototypeOf(this);
-                }
-
                 // !Libre Component id get
                 get id() {
                     return this.getPrototype().componentID || Object.getPrototypeOf(this).constructor.name || this.componentID;
-                }
-
-                // !Libre Component hash get
-                get hash() {
-                    return grasppe.hash(this);
-                }
-
-                // !Libre Component [Static] hash get
-                static get hash() {
-                    return grasppe.hash(this);
-                }
-
-                // !Libre Component toString
-                toString() {
-                    return 'LibreComponent';
                 }
 
                 // !Libre Component controller get
@@ -124,6 +126,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 get $scope() {
                     return this.$view.scope();
                 }
+                
+                // !Libre Component toString
+                toString() {
+                    return 'LibreComponent';
+                }
 
             }
         }
@@ -133,20 +140,20 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             if (!grasppe.Libre.hash.Directive) grasppe.Libre.hash.Directive = class extends grasppe.Libre.Component {
                 // !Libre Directive [Constructor]
                 constructor(module) {
-                    var args = [...arguments].slice(1);
+                    var args = [...arguments].slice(1),
+                        options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined;
+                    args.push(options);
                     super(...args);
                     if (!this.id) throw 'A directive needs to have an ID!';
                     if (!('component' in this.$directive)) Object.defineProperty(this.$directive, 'component', {
                         value: this,
                     });
                     if (!('componentID' in this.$directive)) Object.defineProperty(this.$directive, 'componentID', {
-                        get: function () {
+                        get: [function () {
                             return this.component.id;
-                        }
+                        }][0]
                     });
-                    this.hash.directive = this;
-                    this.hash.$directive = this.$directive;
-                    this.module = module;
+                    this.hash.directive = this, this.hash.$directive = this.$directive, this.module = module;
                 }
 
                 // !Libre Component id get
@@ -161,10 +168,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Directive module set
                 set module(module) {
-                    if (!this.hash.module && module instanceof grasppe.Libre.Module) {
-                        module.$module.directive(this.id, [].concat(this.$providers || []).concat([this.hash.$directive]));
-                        this.hash.module = module;
-                    }
+                    if (!this.hash.module && module instanceof grasppe.Libre.Module) module.$module.directive(this.id, [].concat(this.$providers || []).concat([this.hash.$directive])), this.hash.module = module;
                 }
 
                 // !Libre Directive $module get
@@ -203,12 +207,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var directive = eval('class ' + id + ' extends grasppe.Libre.Directive{};' + id + ';');
                     if (properties) Object.assign(directive, properties);
                     if (typeof $directive === 'function') directive.prototype.$directive = $directive;
-                    else if (typeof $directive === 'object') {
-                        Object.assign(directive.prototype, $directive);
-                        directive.prototype.$directive = function () {
-                            return $directive;
-                        };
-                    }
+                    else if (typeof $directive === 'object') Object.assign(directive.prototype, $directive), directive.prototype.$directive = [function () {
+                        return $directive;
+                    }][0];
                     return directive;
                 }
 
@@ -222,20 +223,20 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             if (!grasppe.Libre.hash.Controller) grasppe.Libre.hash.Controller = class extends grasppe.Libre.Component {
                 // !Libre Controller [Constructor]
                 constructor(module) {
-                    var args = [...arguments].slice(1);
+                    var args = [...arguments].slice(1),
+                        options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined;
+                    args.push(options);
                     super(...args);
                     if (!this.id) throw 'A controller needs to have an ID!';
                     if (!('component' in this.$controller)) Object.defineProperty(this.$controller, 'component', {
                         value: this,
                     });
                     if (!('componentID' in this.$controller)) Object.defineProperty(this.$controller, 'componentID', {
-                        get: function () {
+                        get: [function () {
                             return this.component.id;
-                        }
+                        }][0]
                     });
-                    this.hash.controller = this;
-                    this.hash.$controller = this.$controller;
-                    this.module = module;
+                    this.hash.controller = this, this.hash.$controller = this.$controller, this.module = module;
                 }
 
                 // !Libre Controller module get
@@ -245,10 +246,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Controller module set
                 set module(module) {
-                    if (!this.hash.module && module instanceof grasppe.Libre.Module) {
-                        module.$module.controller(this.id, ['$scope', 'model', '$libreModule'].concat(this.$providers || []).concat([this.hash.$controller]));
-                        this.hash.module = module;
-                    }
+                    if (!this.hash.module && module instanceof grasppe.Libre.Module) module.$module.controller(this.id, ['$scope', 'model', '$libreModule'].concat(this.$providers || []).concat([this.hash.$controller])), this.hash.module = module;
+
                 }
 
                 // !Libre Controller $module get
@@ -300,8 +299,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !Libre Module [Constructor]
                 constructor() {
                     super(...arguments);
-                    // Object.assign(this, arguments[0]);
-                    // console.log(this.options);
                     if (!this.id) throw 'A module needs to have an ID!';
                     if (!this.requirements) this.requirements = [];
                     this.hash.$module = angular.module(this.id, this.requirements).value('$libreModule', this);
@@ -309,13 +306,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         value: this,
                     });
                     if (!('componentID' in this.$module)) Object.defineProperty(this.$module, 'componentID', {
-                        get: function () {
+                        get: [function () {
                             return this.component.id;
-                        }
+                        }][0]
                     });
-                    this.componentID = this.id;
-                    this.hash.module = this;
-                    this.hash.$module = this.$module;
+                    this.componentID = this.id, this.hash.module = this, this.hash.$module = this.$module;
                     this.initializeDirectives().initializeController().initializeControllers()
                     if (this.initializeComponents) this.initializeComponents();
                     this.initializeView();
@@ -323,17 +318,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module $view initializeView
                 initializeView() {
+                    console.log('Libre Module $view initializeView');
                     if (!this.hash.$view || $(this.hash.$view).length === 0) {
-                        this.hash.$view = $(this.template).appendTo(this.container); // .appendTo('body');
+                        this.hash.$view = $(this.template).appendTo(this.container).first();
                         if (this.$controller && this.$controller.componentID) this.hash.$view.attr('ng-controller', this.$controller.componentID);
-                        this.configuration.forEach(function (configuration) {
-                            this.$module.config(configuration);
-                        }.bind(this));
-                        Object.keys(this.values).forEach(function (valueID) {
-                            // console.log(valueID, this.values[valueID]);
-                            this.$module.value(valueID, this.values[valueID]);
-                        }.bind(this));
-
+                        for (var configuration of this.configuration) this.$module.config(configuration);
+                        for (var valueID in this.values) this.$module.value(valueID, this.values[valueID]);
                         angular.bootstrap(this.hash.$view, [this.$module.name]);
                     }
                     return this;
@@ -347,24 +337,20 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module controllers initializeControllers
                 initializeControllers(controllers) {
-                    if (controllers || (!this.hash.controllers && this.getPrototype().controllers)) { // grasppe.Libre.isLibreComponent(this) && 
+                    if (controllers || (!this.hash.controllers && this.getPrototype().controllers)) {
                         if (!this.hash.controllers) this.hash.controllers = {};
                         if (!controllers) controllers = this.getPrototype().controllers;
-                        Object.keys(controllers).forEach(function (controllerID) {
-                            if (!this.hash.controllers[controllerID]) this.hash.controllers[controllerID] = new(controllers[controllerID])(this);
-                        }.bind(this));
+                        for (var controllerID in controllers) if (!this.hash.controllers[controllerID]) this.hash.controllers[controllerID] = new(controllers[controllerID])(this);
                     }
                     return this;
                 }
 
                 // !Libre Module directives initializeDirectives
                 initializeDirectives(directives) {
-                    if (directives || (!this.hash.directives && this.getPrototype().directives)) { // grasppe.Libre.isLibreComponent(this) && 
+                    if (directives || (!this.hash.directives && this.getPrototype().directives)) {
                         if (!this.hash.directives) this.hash.directives = {};
                         if (!directives) directives = this.getPrototype().directives;
-                        Object.keys(directives).forEach(function (directiveID) {
-                            if (!this.hash.directives[directiveID]) this.hash.directives[directiveID] = new(directives[directiveID])(this);
-                        }.bind(this));
+                        for (var directiveID in directives) if (!this.hash.directives[directiveID]) this.hash.directives[directiveID] = new(directives[directiveID])(this);
                     }
                     return this;
                 }
@@ -397,7 +383,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module controllers get
                 get controllers() {
-                    return this.hash.controllers; //  || (this.getPrototype().hash && this.getPrototype().hash.controllers) || {};
+                    return this.hash.controllers;
                 }
 
                 // !Libre Module [Static-Like] controllers set
@@ -409,7 +395,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module directives get
                 get directives() {
-                    return this.hash.directives; //  || (this.getPrototype().hash && this.getPrototype().hash.directives) || {};
+                    return this.hash.directives;
                 }
 
                 // !Libre Module [Static-Like] directives set
@@ -421,12 +407,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module values get
                 get values() {
-                    return this.hash.values || this.getPrototype().hash.values || {}; //  || (this.getPrototype().hash && this.getPrototype().hash.values) || {};
+                    return this.hash.values || this.getPrototype().hash.values || {};
                 }
 
                 // !Libre Module [Static-Like] values set
                 set values(values) {
-                    // if (grasppe.Libre.isLibreComponent(this)) return;
                     if (typeof values !== 'object') values = {};
                     this.hash.values = values;
                 }
@@ -444,7 +429,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module $view get
                 get $view() {
-                    return angular.element(this.hash.$view); // .appendTo('body');
+                    return angular.element(this.hash.$view);
                 }
 
                 // !Libre Module $rootScope get
@@ -470,7 +455,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !Libre Module template get
                 get template() {
-                    // console.log(this.getPrototype().hash.template)
                     return (typeof this.getPrototype().hash.template === 'string') ? this.getPrototype().hash.template : '<div>';
                 }
 
@@ -491,7 +475,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         // !Libre [LibreModule]
         static get LibreModule() {
             if (!grasppe.Libre.hash.LibreModule) grasppe.Libre.hash.LibreModule = class grasppeLibre extends grasppe.Libre.Module {
-                // constructor() {super(...arguments);} // Implied
                 get requirements() {
                     return ['ngMaterial', 'ngAnimate'];
                 }
@@ -520,9 +503,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             if (!grasppe.Libre.hash.libreController) grasppe.Libre.hash.libreController = new grasppe.Libre.LibreController;
             if (!grasppe.Libre.hash.$controller) {
                 grasppe.Libre.hash.$controller = grasppe.Libre.hash.libreController.$controller;
-                var controller = ['$scope', '$rootScope'].concat(this.$providers || []).concat([grasppe.Libre.hash.$controller]);
-                // console.log(controller);
-                this.$module.controller(grasppe.Libre.hash.LibreController.componentID, controller);
+                this.$module.controller(grasppe.Libre.hash.LibreController.componentID, ['$scope', '$rootScope'].concat(this.$providers || []).concat([grasppe.Libre.hash.$controller]));
             }
             return grasppe.Libre.hash.$controller;
         }
@@ -530,10 +511,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         // !Libre [Static] $view get
         static get $view() {
             if (!grasppe.Libre.hash.libreView || $(grasppe.Libre.hash.libreView).length === 0) {
-                // console.log(grasppe.Libre.$module, grasppe.Libre.$controller);
-                // grasppe.Libre.$controller
                 grasppe.Libre.hash.libreView = $('<div ng-controller="' + grasppe.Libre.$controller.componentID + '">').appendTo('body');
-                angular.bootstrap(grasppe.Libre.hash.libreView, [grasppe.Libre.$module.name]);
+                // angular.bootstrap(grasppe.Libre.hash.libreView, [grasppe.Libre.$module.name]);
             }
             return angular.element(grasppe.Libre.hash.libreView).appendTo('body');
         }
@@ -548,7 +527,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return this.$view.scope();
         }
 
-        // !Libre [Static] isLibreModule
+        // !Libre [Static] isLibreComponent
         static isLibreComponent(reference) {
             return reference instanceof grasppe.Libre.Component;
         }
@@ -575,7 +554,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
         // !Libre [Static] isAngularScopeLike
         static isAngularScopeLike(reference) {
-            return typeof reference === 'object' && reference.hasOwnProperty('$root'); // typeof reference === 'object' && reference.hasOwnProperty('name') && reference.hasOwnProperty('controller');
+            return typeof reference === 'object' && reference.hasOwnProperty('$root');
         }
     };
 

@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -21,130 +20,11 @@
     <script src="http://html5shiv-printshiv.googlecode.com/svn/trunk/html5shiv-printshiv.js"></script>
     <![endif]-->
     <!-- Le styles -->
-<!--     <link rel="stylesheet" href="./supercell.css"> -->
-    <script src="https://code.jquery.com/jquery.min.js"></script>
-<!--     <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
     <script id="grasppe-api" data-css-prefix="../stylesheets/" data-js-prefix="../scripts/" type="text/javascript" src="../scripts/grasppe-api.js"></script>
-    <script id="colorsheet-script" type="text/javascript" src="../scripts/colorsheets.js" data-sheet-id="supercell"></script>
-    <link rel="stylesheet" href="../stylesheets/colorsheets.css">
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-<!--
-    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
-    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
-    <link rel="stylesheet" href="../stylesheets/bootply-google-plus-bootstrap.css">
-    <link rel="stylesheet" href="../stylesheets/materialize.min.css">
-    <link rel="stylesheet" href="../stylesheets/colorsheets-glyphics.css">
-    <link rel="stylesheet" href="../stylesheets/colorsheets-default.css">
-    <link rel="stylesheet" href="../stylesheets/colorsheets-viewport.css">
-
-    <script type="text/javascript" src="../scripts/modernizr.js"></script>
-    <script src="https://code.jquery.com/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="../scripts/materialize.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.3.0/mobile-detect.min.js"></script>
-
-    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <script type="text/javascript" src="../scripts/grasppe-prototypes.js"></script>
-    <script type="text/javascript" src="../scripts/grasppe-function.js"></script>
-    <script type="text/javascript" src="../scripts/grasppe-ui.js"></script>
-    <script type="text/javascript" src="../scripts/grasppe-canvas.js"></script>
-    <script type="text/javascript" src="../scripts/grasppe-geometry.js"></script>
-    <script type="text/javascript" src="../scripts/grasppe-gapi.js"></script>
-    <script type="text/javascript" src="../scripts/colorsheets-jiver.js"></script>
-    <script type="text/javascript" src="../scripts/colorsheets.js"></script>
-    <link rel="stylesheet" href="supercell.css">
-    <script type="text/javascript" src="supercell.js"></script>
--->
+    <script id="color-sheets-script" type="text/javascript" src="../scripts/colorsheets.js"></script><!--data-sheet-id="screening"-->
+    <script id="color-sheets-supercell-demo-script" type="text/javascript" src="supercell.js"></script>
 
 </head>
 <body layout="column">
-    <div id="colorSheets-container" style="display: none;">
-        <div class="supercell-sheet-wrapper">
-            <div class="supercell-sheet-stage" title="Stage">
-                <div class="supercell-sheet-contents">
-                    <div class="supercell-sheet-stage-canvas"><img class="plot-canvas"></div>
-                </div>
-            </div>
-
-            <div class="supercell-sheet-parameters" title="Parameters" grasppe-heading-shade="green lighten-1">
-                <div class="supercell-sheet-results" title="Results" grasppe-heading-shade="red lighten-1"></div>
-
-                <div class="supercell-sheet-overview" title="Overview" grasppe-heading-shade="light-blue lighten-1"></div>
-
-                <div class="supercell-sheet-controls"></div>
-            </div>
-
-            <div class="supercell-sheet-documentation" title="Documentation" style="display: none">
-                <article title="AM Singlecell and Supercell Supercell at a Bitdepth of 1">
-                    <header>
-                        <h4>AM Singlecell and Supercell Supercell at a Bitdepth of 1</h4>
-                        <div class="byline">
-                            <a rel="author" href="#author-for-supercell-paper">Franz Sigg</a>
-                        </div>
-                    </header>
-
-                    <section title="Screening">
-                        <h5>Need for Screening</h5>
-
-                        <p>For Offset or Flexo printing, it is only possible to either print full color, or no color. It is not possible to print fractional ink film thicknesses. Such a system is called a 1 bit graylevel system. For such a system to be able to print tone values other than solid or nothing, screening is required. AM screening uses halftone cells that contain halftone dots. By changing dot size relative to the halftone cell, the different tone values can be generated (dot area). To be functional, it is important that the halftone dots are so small, that they are not resolved by the eye and therefore are perceived as continuous tone rather as separate dots.</p>
-
-                        <p>With AM screening, for a system with a bitdepth of 1, the number of tone values that can be reproduced is given by the number of spots per halftone cell. Therefore, in order to be able to reproduce sufficient tone values, high addressability systems are needed. Often systems are designed to have 256 gray levels, which means that for these systems there have to be 256 spots per halftone cell, or 16x16 spots. The reason CtP systems often use an addressability of 2400 spots per inch (spi) is because, for a screen ruling of 150 lpi, a halftone cell has 16x16 spots. The general equation that can be used to calculate the number of gray levels is:</p>
-
-                        <p>Number of gray levels = (Addressability / screen ruling)2 +1 or (spi / lpi)2 +1<br>
-                        One level is added because no spots at all (white paper) is also a gray level.</p>
-                    </section>
-
-                    <section title="Single-Cell">
-                        <h5>Singlecell Sreening</h5>
-
-                        <p>Halftone cells must mesh with one another seamlessly. The only way this is possible is by making the 4 corners of a halftone cell go exactly to the intersections of the addressability grid. Therefore, when we request a certain screen ruling and screen angle, the Raster Image Processor (RIP) of the output device may not produce exactly the requested values, instead, it must round the halftone cell size so that it’s corners fall exactly on the addressability grid intersections. The increments by which screen rulings or screen angles are possible depend on the halftone cell size. The larger the halftone cell the more accurate the screening parameters and the more gray levels, but also the coarser the screening.</p>
-
-                        <p>If there are not enough gray levels available, gradients in images (sky, skin tone) may be shown with steps. There are ways to reduce the visibility of stepping or posterizing: 1.) use a larger graylevel-cell and 2.) add a small amount of tonal noise to the picture. (The graylevel-cell does not necessarily have to be the same size as a halftone cell.)</p>
-
-                        <p>With single cell screening, the errors in screen angles and screen ruling are so large that for color work, moirés between the 4 colors are likely to occur. Therefore something else is needed in practice.</p>
-                    </section>
-
-                    <section title="Super-Cell">
-                        <h5>Supercell Supercell</h5>
-
-                        <p>There are many ways the spots can be arranged within a halftone cell. Center clustered spots produce single cell AM halftones, randomly placed spots produce FM or Stochastic halftones, however it is also possible to place more than one AM dot in a halftone cell, and this results in a Supercell. The advantage of a supercell is that, because it is larger than a single cell, it can produce more accurate screen rulings and screen angels, and, if the gray level cell is also larger, more gray levels can be produced.</p>
-
-                        <p>The cells for the separate dots within a supercell no longer have to have the four corners aligned with the addressability grid, only the supercell is aligned. This means that the separate dots within the supercell are not necessarily identical to one another, but on average over the supercell, they cover an area that produces the correct tone value.</p>
-
-                        <p>Super cell technology is a very elegant solution to the problems of AM halftoning of 1 bit systems.</p>
-                    </section>
-
-                    <section title="Bit-Depth">
-                        <h5>Systems with a bit depth of more than 1</h5>
-
-                        <p>Systems that are unable to achieve high addressability, such as electrostatic printing, need another method to generate tone values. Fortunately, they are able to image each spot at more than one gray level and therefore also achieve high quality printing. Such systems are said to have a bitdepth of more than one. Bitdepth is measured as the number of possible gray levels of each spot, expressed as the power of 2 (256 gray levels = 28 levels = a bit depth of 8)</p>
-                    </section>
-
-                    <section title="Readings">
-                        <h6>Suggested reading</h6>
-
-                        <p>Chapters 6 and 7 of: Peter Fink, Adobe Supercell: Adobe Accurate Screens, Adobe Press, © 1992</p>
-                    </section>
-
-                    <footer>
-                        <div>
-                            ___________
-                        </div>
-                        <address class="author" id="author-for-supercell-paper"><a rel="author" href="javascript:">Franz Sigg</a>. <time datetime="2008-01-30">30th January, 2008</time>. <a rel="department" href="javascript:">School of Print Media</a>, <a rel="organization">Rochester Institute of Technology</a></address>
-                    </footer>
-                </article>
-            </div>
-        </div>
-    </div>
-    <style>        
-        
-    md-icon{margin-left:.25em;margin-right:.25em;color:red}.truncate{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media screen{body{margin:0;padding:0;width:100vw;height:100vh}}@media screen{body :not(input):not(.selectable){-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;outline-style:none;outline-width:0;outline-color:-webkit-focus-ring-color;cursor:default}}@media all{.color-sheet-body .panel-heading,.color-sheet-body .panel-footer,.color-sheet-body .panel,.color-sheet-sheet .panel-heading,.color-sheet-sheet .panel-footer,.color-sheet-sheet .panel{border-radius:0 !important;border:0 none !important;box-shadow:none}body.window-md .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.window-md .color-sheet-body > div > .panel,body.window-sm .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.window-sm .color-sheet-body > div > .panel{padding:5px;margin:0;display:inine-block}body.window-xs .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.window-xs .color-sheet-body > div > .panel{padding:0;margin:0;display:inine-block;background-color:transparent}}@media all{.color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),.color-sheet-body > div > .panel{background-color:transparent;color:rgba(0,0,0,0.65);text-shadow:0 1px 2px rgba(0,0,0,0.05),0 1px 0 rgba(255,255,255,1)}.color-sheet-body > .panel{background-color:transparent}.color-sheet-sheet{margin-bottom:0;text-align:left;min-height:100vh;display:flex !important;flex-direction:column;margin:0;padding:0;flex:1}.color-sheet-body{flex:1;width:100%;margin:0;padding:0}body.window-xs .color-sheet-sheet > .panel-body{font-size:11pt}body.window-sm .color-sheet-sheet > .panel-body{font-size:11pt}body.window-md .color-sheet-sheet > .panel-body{font-size:12pt}body.window-lg .color-sheet-sheet > .panel-body{font-size:12pt}body.window-xl .color-sheet-sheet > .panel-body{font-size:13pt}.color-sheet-body > .color-sheet-body-left,.color-sheet-body > .color-sheet-body-right,.color-sheet-body > .color-sheet-body-bottom{padding:0;margin:0}.color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),.color-sheet-body > div > .panel{padding:10px;margin:0;display:inine-block;overflow-y:scroll}.color-sheet-body .panel-body{min-height:180px;width:100%;height:100%}.color-sheet-body .panel-body > :first-Child{flex:1}body.window-xs .color-sheet-body .panel-body,body.window-sm .color-sheet-body .panel-body,{padding:2px;margin:0}body.window-md .color-sheet-body .panel-body,body.window-md .color-sheet-body .panel-heading,body.window-sm .color-sheet-body .panel-heading,body.window-xs .color-sheet-body .panel-heading{padding-left:8px;padding-right:8px;margin:0}body.iPhone .color-sheet-body,body.iPhone .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.iPhone .color-sheet-body > div > .panel,body.iPad .color-sheet-body,body.iPad .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.iPad .color-sheet-body > div > .panel{padding:0;margin:0}body.iPhone .color-sheet-body,body.iPad .color-sheet-body{background-color:#fff !important}}@media all{.color-sheet-footer,.color-sheet-panel-footer{padding:0;margin:0;border:0 none}.color-sheet-heading,.color-sheet-panel-heading{height:40px;overflow:hidden}.color-sheet-heading .panel-title,.color-sheet-panel-heading .panel-title{font-size:16px;max-width:50%;min-width:10em;text-overflow:ellipsis}.color-sheet-heading{padding:0.5em 0.5em 0.5em 0}.color-sheet-panel-heading{line-height:20px;text-shadow:0 1px 4px rgba(0,0,0,0.25)}.color-sheet-body .panel-heading .status{padding:0 1em;color:rgba(255,255,255,0.75);text-shadow:0 1px 1px rgba(0,0,0,0.25)}.panel-heading.with-toolbar md-toolbar{min-height:100%;display:flex;flex:1}.panel-heading.with-toolbar md-toolbar .grasppe-icon{width:1.25em;height:1.25em;margin-bottom:-0.25em;margin-left:0.25em;margin-right:0.25em}.panel-heading:not(.color-sheet-heading).with-toolbar{padding:0}.panel-heading.with-toolbar .md-toolbar-tools{max-height:100%;min-height:100%;height:100%;margin:auto;vertical-align:middle;padding:0 .5em;flex:1}.panel-heading.with-toolbar .md-toolbar-tools > *,.panel-heading.with-toolbar .md-toolbar-tools > * > *{max-height:100%;min-height:100%;height:100%}.grasppe-menu-element{font-size:125%}.grasppe-menu-element .grasppe-icon{width:2em;height:2em;margin-left:0.75em;margin-right:1em;vertical-align:middle}.color-sheet-heading a,.color-sheet-heading button,.color-sheet-heading md-button{min-width:28pt !important;text-shadow:0 1px 4px rgba(0,0,0,0.25);font-size:14px;color:#fff;width:28pt;height:24pt;margin-right:0.25em;margin-left:0.25em}.grasppe-icon.button-icon-size{padding:0;margin:0 0.25em;height:auto;overflow:visible;font-size:100%;line-height:100%;vertical-align:baseline}}@media all{.color-sheet-contents-element{vertical-align:middle;display:flex;min-width:50vmin;min-height:50vmin;max-width:100%;max-height:100%;margin:0 auto;overflow:hidden}.color-sheet-stage-element .panel-body{display:flex;min-height:400px}body:not(.portrait):not(.window-sm) .color-sheet-stage-element.col-horizontal .panel-body{max-height:60vh;height:60vh;min-height:50vh}body.window-xs .color-sheet-stage-element .panel-body,body.portrait .color-sheet-stage-element .panel-body,body.portrait .color-sheet-stage-element .panel-body,body.portrait .color-sheet-stage-element .panel-body{max-height:50vh !important;min-height:50vh !important;height:50vh !important}.screening-sheet-overview.col-horizontal,.screening-sheet-results.col-horizontal{min-width:25em}.screening-sheet-overview.col-vertical,.screening-sheet-results.col-vertical{min-height:25em}.color-sheet-contents-element > :first-child{flex:1}.color-sheet-contents-element .plot-canvas{max-width:100%;max-height:100%;position:absolute;margin:0 auto;image-rendering:optimizeQuality;image-rendering:-moz-crisp-edges;image-rendering:-webkit-optimize-contrast;image-rendering:optimize-contrast;-ms-interpolation-mode:nearest-neighbor}.color-sheet-contents-element .legend-wrapper{position:relative;margin:5px 2vmin -100%;width:auto;position:relative}}@media all{.color-sheet-controls-element,.color-sheet-controls-element input{text-shadow:0 1px 4px rgba(0,0,0,0.2),0 1px 0 rgba(255,255,255,1)}.form-group.grasppe{margin-bottom:4px}.form-group.grasppe .input-group input,.form-group.grasppe .input-group > *,.form-group.grasppe .input-group input:focus{border:none;background-color:transparent;box-shadow:none}.form-group.grasppe .ui-slider-horizontal .ui-slider-label{color:rgba(0,0,0,0.5);margin-left:-1em;width:2em;position:absolute;overflow:visible;top:0;text-align:center;font-size:65%;top:12px;cursor:default}.ui-slider-handle{z-index:1 !important}.form-group.grasppe .ui-slider-horizontal .ui-slider-labels{width:100%;background-color:red;height:100%;position:relative;top:100%;margin-top:2px;overflow:visible}.form-group.grasppe .ui-slider-horizontal .ui-slider-bar{width:100%;height:6px;position:relative;top:50%;margin-top:-2px;overflow:visible;border-radius:5px;border:0 none rgba(227,227,227,0.5);background-color:rgba(227,227,227,0.5)}.form-group.grasppe .ui-slider-horizontal{border-color:transparent}.form-group.grasppe .ui-slider-horizontal{min-width:8em;width:100%}.form-group.grasppe .control-label.input-group-addon{min-width:8em;max-width:8em;overflow-x:hidden;width:10%;text-align:left;font-weight:700;font-size:80%;padding-left:.5em;padding-right:.5em}.form-group.grasppe .control-suffix.input-group-addon{min-width:3em;max-width:3em;text-align:left;overflow-x:hidden}.form-group.grasppe .input-group.slider-group .control-text.form-control{text-align:right;min-width:4em;max-width:4em;height:100%}.form-group.grasppe .input-group.slider-group .slider-wrapper,.form-group.grasppe .input-group.slider-group .form-control{margin:1em 0}.form-group.grasppe .input-group.slider-group .input-group-addon.slider-wrapper{height:1em;width:100%;overflow-x:hidden;max-width:50vw;padding:auto 5px}.col-vertical .form-group.grasppe .input-group{display:block;width:100%;text-align:center;margin:1.5em 0;padding-left:0;padding-right:0;font-size:12px;line-height:14px}.col-vertical .form-group.grasppe .control-label{min-width:35% !important;max-width:35% !important;width:35% !important;margin:0 65% 0 0 !important}.col-vertical .form-group.grasppe .input-group.slider-group .control-text{min-width:40% !important;max-width:40% !important;width:40% !important;margin:0 25% 0 35%;top:-5em}.col-vertical .form-group.grasppe .input-group.slider-group .control-suffix{min-width:25% !important;max-width:25% !important;width:20% !important;margin:0 0 0 80%;top:-5em}.col-vertical .form-group.grasppe .control-label,.col-vertical .form-group.grasppe .input-group.slider-group .control-text,.col-vertical .form-group.grasppe .input-group.slider-group .control-suffix{display:inline-flex;height:1.5em;position:relative;padding:0 .5em;font-size:12px;line-height:1.5em;vertical-align:baseline;margin-bottom:-1.5em;overflow-x:visible}.form-group.grasppe .control-label,.form-group.grasppe .input-group.slider-group .control-text,.form-group.grasppe .input-group.slider-group .control-suffix{overflow-x:visible}.col-vertical .form-group.grasppe .input-group.slider-group .slider-wrapper{display:block;width:100%;height:3em;position:relative;margin:.25em 0;padding-left:.5em;padding-right:.5em;font-size:12px;line-height:14px}}@media print{.form-group.grasppe .ui-slider-handle{background-color:#fff !important;border:1px solid #000}}@media all{body.window-xs th,body.window-xs td{padding:0}body.window-sm th,body.window-sm td{padding:1px}body.window-md th,body.window-md td{padding:2px}body.window-lg th,body.window-lg td{padding:3px}body.window-xl th,body.window-xl td{padding:4px}.color-sheet-body table{width:100%}.color-sheet-body td,th{font-size:95%;border-radius:0;color:rgba(0,0,0,0.5)}.color-sheet-body td{text-shadow:0 1px 1px rgba(0,0,0,0.2),0 1px 0 rgba(255,255,255,1)}.color-sheet-body th{background-color:rgba(0,0,0,0.5);color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,0.2),0 1px 0 rgba(0,0,0,1)}.color-sheet-body tr.table-group-header > td,td.table-group-header{background-color:rgba(127,127,127,0.01);border-bottom:1px inset rgba(0,0,0,0.15);color:rgba(0,0,0,0.75);text-align:center;border-radius:.25em}.color-sheet-body tr.table-group-header > td,td.table-group-header > :first-child{margin-top:.25em;position:relative}.color-sheet-body tr.table-group-header:before > td,td.table-group-header:before{width:100%;height:1em;background-color:red}.color-sheet-body tr.table-last-row{border-bottom:1px solid rgba(0,0,0,0.05)}.color-sheet-body tr.table-odd-row{background-color:rgba(0,0,0,0.02)}}@media all{.grasppe-modal-container > *{padding:0.5em 0.5em;font-size:12pt;width:100%}.grasppe-modal-container md-toolbar{padding:0.5em 0.5em;min-height:5em;max-height:5em;height:5em;display:flex;flex-direction:row;width:100%}.grasppe-modal-container header,.grasppe-modal-container header > *{margin:0;padding:0;flex:1;width:100%;vertical-align:middle}.grasppe-modal-container header > *:not(:first-Child){font-size:90%}}@media none{.sheet-heading-buttons{margin:2px 0 0}.sheet-heading-buttons a,.sheet-heading-buttons button,.sheet-heading-buttons md-button{margin:auto 0 auto .75rem;min-width:28pt;text-shadow:0 1px 4px rgba(0,0,0,0.25);font-size:14pt;color:#fff;width:28pt;height:24pt}.color-sheet-element-options .btn,.color-sheet-element-options .md-mini{background-color:rgba(255,255,255,0.25) !important;color:#fff}.color-sheet-element-options *{border-radius:0}.color-sheet-element-options .dropdown-menu a{font-size:125%}.color-sheet-element-options{display:block;position:relative;white-space:nowrap;vertical-align:text-bottom;margin:-10px -5px -10px -15px;padding:2px 3px}.color-sheet-sheet-element md-fab-toolbar{margin-top:-70px}.color-sheet-element-options > div{display:inline-block}.color-sheet-sheet{text-align:left;min-height:100vh;display:flex;flex-direction:column;margin:0;padding:0}.color-sheet-sheet > .panel-body{flex:1;width:100%;margin:0;padding:0}.color-sheet-body md-toolbar,.color-sheet-body .md-toolbar-tools,.color-sheet-body md-toolbar *{min-height:0;height:auto}.color-sheet-body .md-menu,.color-sheet-body md-menu{margin:0 !important;padding:0 !important}.color-sheet-stage-element .panel-body{display:flex;min-height:400px}.supercell-sheet-stage-canvas{padding:0;margin:0}body:not(.portrait):not(.window-sm) .color-sheet-stage-element.col-horizontal .panel-body{max-height:60vh;height:60vh;min-height:50vh}body.window-xs .color-sheet-stage-element .panel-body,body.portrait .color-sheet-stage-element .panel-body,body.portrait .color-sheet-stage-element .panel-body,body.portrait .color-sheet-stage-element .panel-body{max-height:50vh !important;min-height:50vh !important;height:50vh !important}.screening-sheet-overview.col-horizontal,.screening-sheet-results.col-horizontal{min-width:25em}.screening-sheet-overview.col-vertical,.screening-sheet-results.col-vertical{min-height:25em}body.iPhone .color-sheet-body,body.iPhone .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.iPhone .color-sheet-body > div > .panel,body.iPad .color-sheet-body,body.iPad .color-sheet-body > .panel:not(.color-sheet-body-left):not(.color-sheet-body-right):not(.color-sheet-body-bottom),body.iPad .color-sheet-body > div > .panel{padding:0;margin:0}body.iPhone .color-sheet-body,body.iPad .color-sheet-body{background-color:#fff !important}}@media none{.modal.modal-fixed-header,.modal.modal-fixed-header > div{border-radius:0;overflow:hidden}.modal.modal-fixed-header{min-height:90vh;margin-top:-5%;width:90vw;max-width:60em;display:flex;flex-direction:column}.modal.modal-fixed-header .modal-header{padding:24px 12px;margin:0;min-height:7em;overflow:hidden;text-overflow:ellipsis}.modal.modal-fixed-header .modal-header header :first-Child:not(a){font-size:24px}.modal.modal-fixed-header .modal-content{border:0 none;border-radius:0;display:flex;max-height:100%;overflow:hidden;padding:0 24px;flex-direction:column;min-height:100%}.modal.modal-fixed-header .modal-content .row{flex:1;display:flex;max-height:100%;overflow:hidden;padding:0;margin:0}.modal.modal-fixed-header .modal-content .row .paper-body{flex:1;overflow-y:scroll}.modal.modal-fixed-header .modal-content .row .paper-scroll{flex:.25;text-align:right}.modal.modal-fixed-header .modal-content .row .paper-scroll li{display:block;width:100%}.modal.modal-fixed-header .modal-content .row .paper-scroll a{display:block;white-space:nowrap;border:0 none;text-align:right}.modal.modal-fixed-header .modal-content .row .paper-scroll a:hover,.modal.modal-fixed-header .modal-content .row .paper-scroll a:focus{text-decoration:none;border:0 none}.modal.modal-fixed-header .modal-footer{padding:.25em 2em}}@media none{.loading-state > div:first-child:after{-webkit-animation:fa-spin 2s infinite linear;animation:fa-spin 2s infinite linear;content:'\e831';display:inline-block;font:normal normal normal 14px/1 fontelico;text-rendering:auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;position:relative;background-color:rgba(127,127,127,0.02);border-radius:50%;padding:5%;box-shadow:0 0 20vmin rgba(0,0,0,0.05),0 0 20vmin rgba(255,255,255,0.05);font-size:5vmin;vertical-align:top;top:35%;color:rgba(127,127,127,1);text-shadow:-1px -1px 2px rgba(0,0,0,0.15),1px -1px 2px rgba(0,0,0,0.15),-1px 1px 2px rgba(0,0,0,0.15),1px 1px 2px rgba(0,0,0,0.15),-1px -1px 0 rgba(255,255,255,1),1px -1px 0 rgba(255,255,255,1),-1px 1px 0 rgba(255,255,255,1),1px 1px 0 rgba(255,255,255,1)}.loading-state > div{background-color:rgba(0,0,0,0.01)}.loading-state{filter:grayscale(100%) brightness(50%)}}
-
-    .icon{display:inline-block;width:1em;height:1em;fill:currentColor}.fill-color1{fill:#000}.fill-color2{fill:#000}.fill-color3{fill:#404040}.fill-color4{fill:#7f7f7f}.fill-color5{fill:#bfbfbf}.fill-color6{fill:#fff}.icon-fill-cells{width:0.859375em}.icon-fill-only{width:0.859375em}.icon-line-thin{width:0.859375em}.icon-line-normal{width:0.859375em}.icon-fill-normal{width:0.859375em}
-    </style>
 </body>
 </html>

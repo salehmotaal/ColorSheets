@@ -14,6 +14,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     };
 
     window.grasppe = class grasppe extends window.grasppe {
+        static getURLParameters() {
+            if (typeof window.location.parameters !== 'object') {
+                window.location.parameters = {};
+                if (window.location.search.length > 1) for (var aItKey, nKeyId = 0, aCouples = window.location.search.substr(1).split("&"); nKeyId < aCouples.length; nKeyId++) {
+                    aItKey = aCouples[nKeyId].split("=");
+                    window.location.parameters[decodeURIComponent(aItKey[0])] = aItKey.length > 1 ? decodeURIComponent(aItKey[1]) : "";
+                }
+            }
+            return window.location.parameters;
+        }
+
         static contingent(requirements, callback, fallback) {
             if (arguments.length > 1 && typeof arguments[0] === 'boolean' && (typeof arguments[1] === 'string' || Array.isArray(arguments[1]))) return grasppe.contingent.apply(null, Array.prototype.slice.call(arguments, 1));
             if (typeof requirements === 'string') requirements = [requirements];
@@ -194,7 +205,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'colorSheets'],
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore'],
                 objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
@@ -242,8 +253,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                                  "grasppe-libre.js",\
                                                  "grasppe-function.js", \
                                                  "grasppe-ui.js", \
-                                                 "grasppe-chorale.js"]'.toLiteral(),
-                colorSheets: '      scripts:    ["grasppe-canvas.js", \
+                                                 "grasppe-chorale.js",\
+                                                 "grasppe-canvas.js", \
                                                  "grasppe-geometry.js", \
                                                  "colorsheets-jiver.js"]'.toLiteral(),
             };
