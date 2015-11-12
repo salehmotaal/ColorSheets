@@ -5,11 +5,499 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     grasppe.load.status['colorsheets'] = grasppe.load.status['colorsheets'] || false;
     grasppe.require(['colorsheets'], function () {
 
+        grasppe.ColorSheetsApp.SupercellDemoHelper = class SupercellDemoHelper extends grasppe.Libre.Object {
+            constructor(options) {
+                super(...arguments);
+                // console.log(arguments, this);
+
+            }
+
+            get $scope() {
+                return this.hash.$scope || {};
+            }
+
+            set $scope($scope) {
+                this.hash.$scope = $scope;
+            }
+
+            // get calculations() {
+            //     return this.hash.calculations || {};
+            // }
+            // 
+            // set calculations(calculations) {
+            //     this.hash.calculations = calculations;
+            // }
+            
+            get calculations() {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                return this.$scope && this.$scope.calculations
+            }
+            
+            set calculations(calculations) {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                if (this.$scope) Object.assign(this.$scope.calculations, calculations);
+            }
+            
+            get stack() {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                return this.$scope && this.$scope.stack
+            }
+            
+            set stack(stack) {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                if (this.$scope) Object.assign(this.$scope.stack, stack);
+            }
+
+
+            get scenarios() {
+                return {
+                    _order: ['Base Calculations', 'Halftone Calculations', 'Halftone Results', 'Supercell Calculations', 'Supercell Results'],
+                    'Base Calculations': [{
+                        id: "spi", hidden: true, type: "p", fn: "SPI", name: "", description: "", decimals: 2,
+                    }, {
+                        id: "lpi", hidden: true, type: "p", fn: "LPI", name: "", description: "", decimals: 2,
+                    }, {
+                        id: "theta", hidden: true, type: "p", fn: "THETA", name: "", description: "", decimals: 2,
+                    }, {
+                        id: "thetaRadians", hidden: true, type: "c", fn: "theta * (PI/180)", unit: "º rad", name: "", description: "", decimals: 2,
+                    }, {
+                        id: "cells", hidden: true, type: "p", fn: "CELLS", name: "", description: "", decimals: 2,
+                    }, ],
+                    'Halftone Calculations': [{
+                        id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
+                    }, {
+                        id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: "", decimals: 2,
+                    }, {
+                        id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(thetaRadians)", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 2,
+                    }, {
+                        id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "halftone spots in y direction", description: "", decimals: 2,
+                    }, {
+                        id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots))", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 2,
+                    }, {
+                        id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots))", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 2,
+                    }, {
+                        id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "Round halftone spots at screening angle", description: "", decimals: 2,
+                    }],
+                    'Halftone Results': [{
+                        id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "Single-cell Line Ruling (Round)", description: "", decimals: 2,
+                    }, {
+                        id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "Single-cell Line Angle (Round)", description: "", decimals: 2,
+                    }, {
+                        id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "Single-cell Gray Levels (1-bit)", description: "", decimals: 0,
+                    }, {
+                        id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "Single-cell Screen ruling error", description: "", decimals: 2,
+                    }, {
+                        id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "Single-cell Screen angle error", description: "", decimals: 2,
+                    }],
+                    'Supercell Calculations': [{
+                        id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots*cells))", unit: "spots", name: "super-cell spots in x direction", description: "", decimals: 2,
+                    }, {
+                        id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots*cells))", unit: "spots", name: "super-cell spots in y direction", description: "", decimals: 2,
+                    }, {
+                        id: "cellSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2))/cells", unit: "spots", name: "Round super-cell spots at screening angle", description: "", decimals: 2,
+                    }],
+                    'Supercell Results': [{
+                        id: "cellRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*cellSpots)", unit: "lpi", name: "Super-cell Line Ruling (Round)", description: "", decimals: 2,
+                    }, {
+                        id: "cellRoundTheta", group: "roundTheta", type: "r", fn: "(atan2(cellRoundYSpots, cellRoundXSpots) * (180/PI))", unit: "º", name: "Super-cell Line Angle (Round)", description: "", decimals: 2,
+                    }, {
+                        id: "cellGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/(cellRoundLPI/cells), 2))+1", unit: "levels", name: "Super-cell Gray Levels (1-bit)", description: "", decimals: 0,
+                    }, {
+                        id: "cellErrorLPI", group: "errorLPI", type: "r", fn: "(cellRoundLPI-lpi)/lpi*100", unit: "%", name: "Super-cell Screen ruling error", description: "", decimals: 2,
+                    }, {
+                        id: "cellErrorTheta", group: "errorTheta", type: "r", fn: "cellRoundTheta-theta", unit: "º", name: "Super-cell Screen angle error", description: "", decimals: 2,
+                    }],
+                }
+            }
+
+            get plotOptions() {
+                return {
+                    panning: 'cell', shading: 'fills',
+                    // results: 'fills',
+                    plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
+                        plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
+                            strokeStyle: "blue", lineWidth: 1
+                        },
+                        plotBoxStyle: {
+                            fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
+                        },
+                        plotGridStyle: {
+                            lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
+                        },
+                    },
+                    seriesOptions: {
+                        intendedSeriesDefaultStyle: {
+                            lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                            fillStyle: "RGBA(255, 64, 64, 0.1)"
+                        },
+                        halftoneSeriesDefaultStyle: {
+                            lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                        },
+                        supercellSeriesDefaultStyle: {
+                            lineWidth: 2, strokeStyle: "#0000FF"
+                        },
+                        intendedSeriesStyle: {
+                            lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                            fillStyle: "RGBA(255, 64, 64, 0.1)"
+                        },
+                        halftoneSeriesStyle: {
+                            lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                        },
+                        halftoneSeriesFillStyle: {
+                            fillStyle: "RGBA(64, 255, 64, 0.5)"
+                        },
+                        supercellSeriesStyle: {
+                            lineWidth: 2, strokeStyle: "#0000FF"
+                        },
+                        supercellSeriesFillStyle: {
+                            fillStyle: "RGBA(64, 64, 255, 0.25)"
+                        },
+                        supercellSeriesLineStyle: {
+                            lineWidth: 0, strokeStyle: "#0000FF", lineDash: [1, 3]
+                        },
+                    },
+                    legendOptions: {
+                        seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
+                        legendBoxStyle: {
+                            fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2
+                        },
+                    }
+                };
+
+            }
+
+            getParameter(parameter) {
+                return this.$scope.parameters && this.$scope.parameters[parameter];
+            }
+
+            updateData() {
+                self = this.updateData, clearTimeout(self.timeOut), self.timeOut = setTimeout(function () {
+                    this.calculateStack(this.createStack());
+                }.bind(this), 10);
+                return this;
+            }
+
+            createStack(stack) {
+                return [['SPI', this.getParameter('spi')], ['LPI', this.getParameter('lpi')], ['THETA', this.getParameter('theta')], ['CELLS', this.getParameter('cells')]].concat(stack ? [stack] : []);
+            }
+
+            calculateStack(context, stack) {
+                if (!context) context = 'Base Calculations';
+                if (!stack) stack = this.createStack();
+
+                self = this.calculateStack;
+
+                var processStack = function (context, output) {
+                        output.forEach(function (fn, i) {
+                            fn.scenario = context.scenario;
+                        });
+                        if (Array.isArray(context.stack)) output = context.stack.concat(output);
+                        this.calculateStack(context, output);
+                    }.bind(this),
+                    runScenario = function (scenario, stack) {
+                        // if (stack.THETA === 0) stack.THETA = 0.005;
+                        // else if (stack.THETA === 90) stack.THETA = 89.995;
+                        var jiver = new GrasppeJive({}, this.scenarios),
+                            output = jiver.run(scenario, stack),
+                            error = jiver.errors;
+                        return (output === false) ? stack : output;
+                    }.bind(this),
+                    scenarios = this.scenarios._order,
+                    lastScenario = (typeof context === 'object' && context.scenario) ? context.scenario : '',
+                    nextIndex = Math.max(0, scenarios.indexOf(lastScenario) + 1),
+                    nextScenario = (typeof context === 'string') ? context : (nextIndex < scenarios.length) ? scenarios[nextIndex] : undefined;
+
+                if (nextIndex === 0) self.timeStamp = Date.now();
+
+                if (nextScenario) {
+                    processStack({
+                        scenario: nextScenario, stack: stack,
+                    }, runScenario(nextScenario, stack));
+                } else {
+                    
+                    var modelStack = {},
+                        modelCalculations = {};
+                    stack.forEach(function(fn) {
+                        if (typeof fn === 'object' && fn.value) {
+                            modelCalculations[fn.id] = fn.value;
+                            var scenarioIndex = scenarios.indexOf(fn.scenario);
+                            if (fn.hidden!==true) {
+                                if (!modelStack[fn.scenario]) modelStack[fn.scenario] = Object.assign([], {
+                                    name: fn.scenario,
+                                });
+                                modelStack[fn.scenario].push(fn);
+                            }
+                        }
+                    }.bind(this));
+                    
+                    this.stack = modelStack; // Object.assign(this.stack, modelStack);
+                    this.calculations = modelCalculations; // Object.assign(this.calculations, modelCalculations);
+                    // this.$scope.$apply();
+                    this.updatePlot();
+                }
+            }
+
+            updatePlot(f) {
+                self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (f, self) {
+                    var timeStamp = self.timeStamp;
+                    if (!this.calculations) return false;
+                    if (!f) f = this.calculations.values;
+                    if (!f) return this.calculateStack();
+                    // this.setLoadingState(true);
+                    var options = self.options;
+                    STROKE_OPTIONS: {
+                        if (this.options.shading === 'lines' || this.options.panning === 'cell') {
+                            options.intendedSeriesStyle.lineWidth = options.intendedSeriesDefaultStyle.lineWidth;
+                            options.halftoneSeriesStyle.lineWidth = options.halftoneSeriesDefaultStyle.lineWidth;
+                            options.supercellSeriesStyle.lineWidth = options.supercellSeriesDefaultStyle.lineWidth;
+                            options.supercellSeriesLineStyle.lineWidth = 1;
+                        } else if (this.options.panning === 'supercell') {
+                            options.intendedSeriesStyle.lineWidth = 2;
+                            options.halftoneSeriesStyle.lineWidth = 2;
+                            options.supercellSeriesStyle.lineWidth = 0.75;
+                            options.supercellSeriesLineStyle.lineWidth = 1;
+                        } else if (this.options.shading === 'pixels') {
+                            options.intendedSeriesStyle.lineWidth = 0;
+                            options.halftoneSeriesStyle.lineWidth = 0;
+                            options.supercellSeriesStyle.lineWidth = 0;
+                            options.supercellSeriesLineStyle.lineWidth = 0;
+                        } else {
+                            options.intendedSeriesStyle.lineWidth = 1;
+                            options.halftoneSeriesStyle.lineWidth = 0.5;
+                            options.supercellSeriesStyle.lineWidth = 0.5;
+                            options.supercellSeriesLineStyle.lineWidth = 0.25;
+                        }
+                    }
+                    BOX_CALCULATIONS: {
+                        var intendedBox = new grasppe.canvas.Box(0, 0, f.lineXSpots, f.lineYSpots, options.intendedSeriesStyle),
+                            halftoneBox = new grasppe.canvas.Box(0, 0, f.lineRoundXSpots, f.lineRoundYSpots, options.halftoneSeriesStyle),
+                            supercellBox = new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle),
+                            supercellVerticals = new grasppe.canvas.Lines([supercellBox[1][0] / f.cells, supercellBox[1][1] / f.cells], Object.assign({
+                                offset: supercellBox.getPoint(3),
+                            }, options.supercellSeriesLineStyle)),
+                            supercellHorizontals = new grasppe.canvas.Lines([supercellBox[3][0] / f.cells, supercellBox[3][1] / f.cells], Object.assign({
+                                offset: supercellBox.getPoint(1),
+                            }, options.supercellSeriesLineStyle)),
+                            supercellXs, supercellYs;
+                        if (timeStamp !== self.timeStamp) return;
+                        for (var i = 2; i <= f.cells; i++) {
+                            supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]);
+                            supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
+                        }
+                        if (timeStamp !== self.timeStamp) return;
+                    }
+                    BOUNDING_CALCULATIONS: {
+                        var paths = [intendedBox, halftoneBox, supercellBox],
+                            lines = [supercellVerticals, supercellHorizontals],
+                            shapes = paths.concat(lines),
+                            boundingBox = new grasppe.canvas.BoundingBox((this.options.panning === 'cell') ? [intendedBox] : (this.options.shading === 'cells') ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
+                            margin = 4 + Math.min(boundingBox.xMax - boundingBox.xMin, boundingBox.yMax - boundingBox.yMin) / 8;
+                        if (timeStamp !== self.timeStamp) return;
+                    }
+                    ADDRESSABILITY_GRID: {
+                        var gridMargin = 0 + margin,
+                            gridMin = [Math.floor(boundingBox.xMin - gridMargin / 2), Math.floor(boundingBox.yMin - gridMargin / 8)],
+                            gridMax = [Math.ceil(boundingBox.xMax + gridMargin / 2), Math.ceil(boundingBox.yMax + gridMargin * (1 + f.cells))],
+                            gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
+                            gridVerticals = new grasppe.canvas.Lines(gridMin, Object.assign({
+                                offset: [0, gridSteps[0]],
+                            }, options.plotGridStyle)),
+                            gridHorizontals = new grasppe.canvas.Lines(gridMin, Object.assign({
+                                offset: [gridSteps[1], 0],
+                            }, options.plotGridStyle));
+                        if (timeStamp !== self.timeStamp) return;
+                        for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
+                        for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+                        if (timeStamp !== self.timeStamp) return;
+                    }
+                    SIZING_CALCULATIONS: {
+                        var frameWidth = $(options.plotCanvas).width(),
+                            frameHeight = $(options.plotCanvas).height(),
+                            frameRatio = frameWidth / frameHeight;
+                        if (timeStamp !== self.timeStamp) return;
+                        var clippingBox = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
+                            scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
+                            offset = [-clippingBox.xMin, -clippingBox.yMin],
+                            width = (offset[0] + clippingBox.xMax) * scale,
+                            height = width,
+                            xTransform = Object.assign(function (x, self) {
+                                if (!self) self = xTransform;
+                                return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                            }, {
+                                scale: scale, offset: offset[0],
+                            }),
+                            yTransform = Object.assign(function (y, self) {
+                                if (!self) self = yTransform;
+                                var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                                if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
+                                else return fY;
+                            }, {
+                                scale: scale, offset: offset[1],
+                            });
+                        if (timeStamp !== self.timeStamp) return;
+                    }
+            
+                    var supercellPixelBoxes = (this.options.shading === 'cells') ? this.getSuperCellsPixels(supercellBox, f.cells) : [];
+            
+                    DRAWING_OPERATIONS: {
+                        var chart = (self.chart instanceof grasppe.canvas.Chart) ? self.chart : new grasppe.canvas.Chart(options.plotCanvas),
+                            halftonePixelBox = (this.options.shading === 'fills' || this.options.shading === 'pixels') ? new grasppe.canvas.ImageFilter(halftoneBox, options.halftoneSeriesFillStyle) : [],
+                            supercellPixelBox = (this.options.shading === 'fills' || this.options.shading === 'pixels' || this.options.shading === 'cells') ? new grasppe.canvas.ImageFilter(new grasppe.canvas.Box(0, 0, f.cellRoundXSpots, f.cellRoundYSpots, options.supercellSeriesStyle), options.supercellSeriesFillStyle) : [],
+                            paths = [];
+            
+                        if (this.options.shading === 'fills' || this.options.shading === 'pixels') paths.push(supercellPixelBox, halftonePixelBox);
+                        if (this.options.shading === 'cells') paths = paths.concat(supercellPixelBoxes); // .push(supercellPixelBoxes); // ;
+                        paths.push(gridVerticals, gridHorizontals);
+                        if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'cells') paths.push(supercellVerticals, supercellHorizontals);
+                        if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'pixels' || this.options.shading === 'cells') paths.push(intendedBox);
+                        if (this.options.shading === 'fills' || this.options.shading === 'lines' || this.options.shading === 'wires' || this.options.shading === 'cells') paths.push(supercellBox, halftoneBox);
+            
+                        self.chart = chart;
+                        if (timeStamp !== self.timeStamp) return;
+                        chart.draw(paths, {
+                            xModifier: xTransform, yModifier: yTransform, width: width, height: height, bufferScale: options.plotBufferScale, typeScale: options.plotBufferScale * options.plotTypeFactor, lineScale: options.plotBufferScale * options.plotLineFactor, legend: {
+                                labels: options.seriesLabels, styles: [options.intendedSeriesStyle, options.halftoneSeriesStyle, options.supercellSeriesLineStyle],
+                                boxStyle: options.legendBoxStyle
+                            },
+                            transform: function (context, canvas) {
+                                context.translate(canvas.width / 1, canvas.height / 1);
+                                context.scale(-1, -1);
+                            },
+                        });
+                        if (timeStamp !== self.timeStamp) return;
+                        // this.adjustPlotSize();
+                        // this.setLoadingState();
+                    }
+            
+                }.bind(this), 10, f, self);
+                self.options = Object.assign({ // if (!self.options) 
+                    plotWidth: 600, plotHeight: 600, plotBufferScale: 2, plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, intendedSeriesStyle: {
+                        lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 3],
+                        fillStyle: "RGBA(255, 64, 64, 0.1)"
+                    },
+                    halftoneSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    halftoneSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 255, 64, 0.75)"
+                    },
+                    supercellSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    supercellSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 64, 255, 0.125)"
+                    },
+                    supercellSeriesLineStyle: {
+                        lineWidth: 0.5, strokeStyle: "#0000FF", lineDash: [6, 12]
+                    },
+                    plotGridStyle: {
+                        lineWidth: 0.75, strokeStyle: "RGBA(0,0,0,0.15)"
+                    },
+                    plotBoxStyle: {
+                        fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
+                    },
+                    plotFrameStyle: {
+                        strokeStyle: "blue", lineWidth: 1
+                    },
+                    legendBoxStyle: {
+                        fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.75)", lineWidth: 2
+                    },
+                    seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
+                    plotCanvas: $(this.$scope.canvas).first(),
+                    //$(this.elements.contents).find('div').first(),
+                }, this.plotOptions, this.plotOptions.plotOptions, this.plotOptions.seriesOptions, this.plotOptions.legendOptions);
+                return this;
+            }
+            
+            getSuperCellsPixels(path, cells) {
+                var pixels = [],
+                    $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: none;">').appendTo('body'),
+                    offset = 10,
+                    width = path.width + offset * 2,
+                    height = path.height + offset * 2,
+                    xMin = path.xMin,
+                    yMin = path.yMin,
+                    style1 = {
+                        fillStyle: "rgba(255, 196, 0, 0.75)"
+                    },
+                    style2 = {
+                        fillStyle: "rgba(127, 127, 255, 0.75)"
+                    },
+                    context = $canvas[0].getContext("2d"),
+                    imageData, rawData;
+                
+                try {
+                    $canvas[0].width = width, $canvas[0].height = height;
+                    context.clearRect(0, 0, width, height);
+                    context.translate(offset + path.width - path.xMax, offset)
+                    context.rect(0 - offset + xMin, -offset, width, height);
+                    context.fillStyle = '#000';
+                    
+                    for (var i = 0; i < cells; i++) for (var j = 0; j < cells; j++) { // if (((i % 2) + (j % 2) !== 1)) {
+                        var origin = [(path[3][0] / cells * i) + (path[1][0] / cells * j), (path[3][1] / cells * i) + (path[1][1] / cells * j)],
+                            box = path.map(function (point) {
+                                return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
+                            });
+                
+                        context.moveTo(box[0][0], box[0][1]);
+                        context.beginPath()
+                        context.lineTo(box[1][0], box[1][1]);
+                        context.lineTo(box[2][0], box[2][1]);
+                        context.lineTo(box[3][0], box[3][1]);
+                        context.lineTo(box[0][0], box[0][1]);
+                        context.closePath();
+                        context.fillStyle = ((((i % 2) + (j % 2) === 1)) ? '#FFF' : '#000');
+                        context.fill();
+                    }
+                
+                    imageData = context.getImageData(offset, offset, width - offset * 2, height - offset * 2);
+                    rawData = imageData.data;
+                
+                    for (var j = 0; j < imageData.height; j++) for (var i = 0; i < imageData.width; i++) if (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 3] > 110) pixels.push(new grasppe.canvas.Path([
+                        [xMin + i + 0, yMin + j + 0],
+                        [xMin + i + 1, yMin + j + 0],
+                        [xMin + i + 1, yMin + j + 1],
+                        [xMin + i + 0, yMin + j + 1],
+                        [xMin + i + 0, yMin + j + 0]
+                    ], (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 0] > 127) ? style1 : style2));
+                } catch (err) {
+                    console.error('SupercellSheet.getSuperCellsPixels() failed...\n', err);
+                }
+                $canvas.remove();
+                
+                return pixels;
+            }
+            
+            adjustPlotSize() {
+                try {
+                    var plotCanvas = $(this.template.canvas).first(),
+                        //$(this.elements.contents).find('.plot-canvas').first(),
+                        plotWrapper = $(this.elements.contents),
+                        wrapWidth = plotWrapper.innerWidth(),
+                        wrapHeight = plotWrapper.innerHeight(),
+                        wrapRatio = wrapWidth / wrapHeight,
+                        plotSize = Math.ceil(Math.min(wrapWidth, wrapHeight) / 10) * 10;
+                    if (plotCanvas.length > 0 && (plotCanvas[0].width !== plotSize || plotCanvas[0].height !== plotSize)) {
+                        plotCanvas[0].width = plotSize;
+                        plotCanvas[0].height = plotSize;
+                        setTimeout(function () {
+                            // this.updatePlot();
+                        }.bind(this), 100, undefined);
+                    }
+                    plotCanvas.css('left', (wrapWidth - Math.min(wrapWidth, wrapHeight)) / 2);
+                } catch (err) {
+                    console.error('grasppe.colorSheets.SupercellSheet.adjustPlotSize', err);
+                }
+            }
+            
+        };
+
         grasppe.ColorSheetsApp.SupercellDemo = {
             SupercellDemo: {
-                title: 'Supercell Demo', panels: {
+                title: ('Supercell Demo'),
+                panels: {
                     stage: {
-                        tools: {
+                        directive: 'color-sheet-stage', tools: {
                             panning: {
                                 label: 'Panning', svgSrc: 'images/search.svg', classes: 'md-icon-button', menu: {
                                     cell: {
@@ -42,9 +530,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             },
                         }
                     },
-                    parameters: {},
-                    results: {},
-                    overview: {},
+                    parameters: {
+                        directive: 'color-sheet-parameters',
+                    },
+                    results: {
+                        directive: 'color-sheet-results',
+                    },
+                    overview: {
+                        directive: 'color-sheet-overview',
+                    },
                 },
                 parameters: {
                     spi: {
@@ -69,22 +563,38 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     sheetController: grasppe.Libre.Controller.define('SupercellDemoController', function ($scope, model, module) {
                         // !- SupercellDemo [Controllers] SupercellDemoController
                         console.log('SupercellDemo [Controllers] SupercellDemoController');
-                        $scope.$watchCollection('options', function (value, last, $scope) {
-                            console.log('Options changed %o', $scope.options);
+
+                        Object.assign($scope, {
+                            helper: new grasppe.ColorSheetsApp.SupercellDemoHelper({
+                                $scope: $scope,
+                            }),
+                            calculations: {},
+                            stack: {},
+                            canvas: {},
                         });
-                    })
+
+                        $scope.$watchCollection('options', function (value, last, $scope) {
+                            // console.log('Options changed %o', $scope.options);
+                        });
+                        $scope.$watchCollection('parameters', function (value, last, $scope) {
+                            $scope.helper.updateData();
+                            // console.log('Parameters changed %o', $scope);
+                        });
+                        
+                        $scope.$sheet = $scope;
+
+                        window.setTimeout($scope.helper.updateData.bind($scope.helper),0);
+                    }.bind(this))
                 },
                 directives: {
                     // !- SupercellDemo [Directives] colorSheetStage                
                     colorSheetStage: grasppe.Libre.Directive.define('colorSheetStage', function () {
                         return {
                             controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
-                                $scope.$watchCollection('parameters', function (value, last, $scope) {
-                                    // console.log('Parameters changed %o', value);
-                                });
                                 $scope.$on('selected.stage', function (event, selection) {
                                     // console.log('selected', selection, event);
                                 });
+                                $scope.canvas = element.find('.color-sheets-stage-canvas').first();
                             }],
                             template: ('<color-sheets-panel-body layout layout-align="center center">\
                             <canvas class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; border: 1px solid rgba(0,0,0,0.05)"></canvas>\
@@ -98,34 +608,27 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="0" maximum="4800" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Resolution" description="Lines per inch screening resolution." minimum="0" maximum="300" step="1" value="125" suffix="lpi" model="lpi"></color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Supercell angle resolution." minimum="0" maximum="180" step="0.5" value="45" suffix="º" model="theta"></color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="theta-cells" label="Cells" description="Supercell cells." minimum="1" maximum="20" step="1" value="4" suffix=" cells" model="cells"></color-sheets-slider-control>\
+                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Resolution" description="Lines per inch screening resolution." minimum="0" maximum="300" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
+                                    <b>Line Ruling:</b> Lines per inch screening resolution. \
+                                </color-sheets-slider-control>\
+                                <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Supercell angle resolution." minimum="0" maximum="180" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
+                                    <b>Line Angle:</b> Supercell angle resolution. \
+                                </color-sheets-slider-control>\
+                                <color-sheets-slider-control flex layout-fill id="theta-cells" label="Cells" description="Supercell cells." minimum="1" maximum="20" step="1" value="4" suffix=" cells" model="cells"tooltip="@">\
+                                    <b>Cells:</b> Number of cells in a supercell block. \
+                                </color-sheets-slider-control>\
                             </color-sheets-panel-body>'),
                         }
-                    }),
-                    // !- SupercellDemo [Directives] colorSheetResults                
+                    }),            
                     colorSheetResults: grasppe.Libre.Directive.define('colorSheetResults', function () {
                         return {
-                            controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
-                                $scope.$watchCollection('parameters', function (value, last, $scope) {
-                                    $scope.results = {
-                                        parameters: Object.assign([], {
-                                            title: 'Parameters'
-                                        })
-                                    };
-                                    for (var key in $scope.parameters) $scope.results.parameters.push([key, function textFormat(value) {
-                                        var output = '' + value;
-                                        if (output.length > 100) output = '...';
-                                        return output;
-                                    }($scope.parameters[key])]);
-                                });
-                            }],
+                            //controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                             template: ('<color-sheets-panel-body layout><color-sheets-table class="color-sheets-results-table" ng-cloak>\
-                                <color-sheets-table-section ng-repeat="section in results" style="margin-top: 0.125em;">\
-                                    <color-sheets-table-section-header style="padding: 0.125em 0.5em; border-bottom: 1px solid rgba(0,0,0,0.25)">{{section.title}}</color-sheets-table-section-header>\
+                                <color-sheets-table-section ng-repeat="section in stack" style="margin-top: 0.125em;">\
+                                    <color-sheets-table-section-header style="padding: 0.125em 0.5em; border-bottom: 1px solid rgba(0,0,0,0.25)">{{section.name}}</color-sheets-table-section-header>\
                                     <color-sheets-table-row ng-repeat="row in section">\
-                                        <color-sheets-table-column ng-repeat="column in row" style="padding: 0.125em 0.5em;">{{column}}</color-sheets-table-column>\
+                                        <color-sheets-table-cell style="padding: 0 0.5em;">{{row.name}}</color-sheets-table-cell>\
+                                        <color-sheets-table-cell style="padding: 0 0.5em;">{{row.value|number:row.decimals}}</color-sheets-table-cell>\
                                     </color-sheets-table-row>\
                                 </color-sheets-table-section>\
                             </color-sheets-table></color-sheets-panel-body>'),
@@ -134,10 +637,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // !- SupercellDemo [Directives] colorSheetOverview                
                     colorSheetOverview: grasppe.Libre.Directive.define('colorSheetOverview', function () {
                         return {
-                            controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
-                            template: ('<color-sheets-panel-body layout>\
-                            <div flex class="color-sheets-overview-contents" style="max-width: 100%; max-height: 100%;"></canvas>\
-                            </color-sheets-panel-body>'),
+                            // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
+                            template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
+                            <div flex class="color-sheets-overview-contents" style="max-width: 100%; max-height: 100%;">\
+                                <p ng-if="values.lineXSpots || values.lineYSpots">To produce a {{values.lpi|number:2}} lines-per-inch screen at a {{values.theta|number:2}}º degree angle with an addressability of {{values.spi|number:2}} spots-per-inch, each line should measure {{values.lineXSpots|number:2}} × {{values.lineYSpots|number:2}} in the x and y dimensions at the imaging angle.</p>\
+                                <p ng-if="values.lineRoundXSpots || values.lineRoundYSpots">Since imaging must be done in full spot units, rounding must be applied. If rounding is applied to each line, each would measure {{values.lineRoundXSpots|number:2}} × {{values.lineRoundYSpots|number:2}} resulting in a rounded resolution of {{values.lineRoundLPI|number:2}} at {{values.lineRoundTheta|number:2}}º degrees.</p>\
+                                <p ng-if="(values.cellRoundXSpots || values.cellRoundXSpots) && values.cells>1">With Supercell, rounding will be applied for every {{values.cells|number:2}} halftone line, allowing more flexibility for the lines to mesh within the bounds of each cell-block. Then, each cell-block would measure {{values.cellRoundXSpots|number:2}} × {{values.cellRoundYSpots|number:2}} resulting in a rounded resolution of {{values.cellRoundLPI|number:2}} at {{values.cellRoundTheta|number:2}}º degrees.</p>\
+                                <p ng-if="values.lineSpots || values.cellSpots">Due to the rounding, the effective spot size for single halftones versus Supercells will be {{values.lineSpots|number:2}} µ vs. {{values.cellSpots|number:2}} µ (microns), which will produce {{values.lineGrayLevels|number:2}} vs. {{values.cellGrayLevels|number:2}} gray-levels, line angle error of {{values.lineErrorTheta|number:2}}º vs. {{values.cellErrorTheta|number:2}}º degrees, and, resolution error of {{values.lineErrorLPI|number:2}}% vs. {{values.cellErrorLPI|number:2}}%.</p>\
+                            </div></color-sheets-panel-body>'),// ng-bind-html="explaination">
                         }
                     }),
 
