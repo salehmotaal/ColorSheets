@@ -666,7 +666,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
         };
 
-        window.colorSheetsApp = new grasppe.ColorSheetsApp({
+        window.colorSheetsApp = new grasppe.ColorSheetsApp.Sheet({
             sheets: grasppe.ColorSheetsApp.SupercellDemo,
         });
 
