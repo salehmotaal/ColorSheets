@@ -13,7 +13,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             Sheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
                 link: function colorSheetsSheetLink($scope, element, attributes) {
                     if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
-                    console.log($scope.layout);
                 },
                 template: ('<div class="color-sheets-sheet {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;">\
                     <div ng-repeat="segment in layout.contents" \
@@ -42,7 +41,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     mainHeaderHeight=\'48px\'">\
                     @media all {\
                     	/* !- Sheets [Styles] Body */\
-                    	:not(input):not(.selectable) {user-select:none;cursor:default;}\
+                    	:not(input):not(.selectable) {cursor:default;\
+                        	-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;\
+                        }\
                     	input[type=number] {text-align: right}\
                     	* {outline-style:none;outline-width:0;}\
                     	body {display: flex;}\
@@ -146,10 +147,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     sheet: {
                         tools: {
                             refresh: {
-                                fontIcon: 'glyphicon-refresh', label: 'refresh', classes: 'md-button-flat red black-text', click: 'location.reload()',
+                                svgSrc: grasppe.load.url.images + 'refresh.svg', label: 'refresh', classes: 'md-button-flat red black-text', click: 'location.reload()',
                             },
                             documentation: {
-                                fontIcon: 'glyphicon-book', label: 'documentation', classes: 'md-button-flat orange black-text',
+                                svgSrc: grasppe.load.url.images + 'book.svg', label: 'documentation', classes: 'md-button-flat orange black-text',
                             },
                         },
                         prefix: 'sheet', header: 'ColorSheet', toolbarClasses: 'grey lighten-2 black-text', contents: '', footer: '', // controller: 'SheetPanelController', fontIcon: 'glyphicon-menu-hamburger',
@@ -157,24 +158,24 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     stage: {
                         tools: {
                             redraw: {
-                                svgSrc: 'images/magic-wand.svg', label: 'Redraw', classes: 'md-icon-button', click: '$scope.$panel.$broadcast("selected.stage", "redraw", "stage")'
+                                svgSrc: grasppe.load.url.images + 'magic-wand.svg', label: 'Redraw', classes: 'md-icon-button', click: '$scope.$panel.$broadcast("selected.stage", "redraw", "stage")'
                             },
                         },
-                        prefix: 'stage', header: 'Stage', fontIcon: 'glyphicon-stats', toolbarClasses: 'grey darken-1', contents: '', footer: '', controller: 'StagePanelController',
+                        prefix: 'stage', header: 'Stage', svgSrc: grasppe.load.url.images + 'bar-chart.svg', toolbarClasses: 'grey darken-1', contents: '', footer: '', controller: 'StagePanelController',
                     },
                     parameters: {
                         tools: {
                             reset: {
-                                fontIcon: 'glyphicon-repeat', label: 'reset', classes: 'md-icon-button black-text', color: 'black', click: '$scope.$panel.$broadcast("selected.parameters", "reset", "parameters")',
+                                svgSrc: grasppe.load.url.images + 'undo.svg', label: 'reset', classes: 'md-icon-button', click: '$scope.$panel.$broadcast("selected.parameters", "reset", "parameters")',
                             },
                         },
-                        prefix: 'parameters', header: 'Parameters', fontIcon: 'glyphicon-cog', toolbarClasses: 'green lighten-1', contents: '', footer: '', controller: 'ParametersPanelController',
+                        prefix: 'parameters', header: 'Parameters', svgSrc: grasppe.load.url.images + 'sliders.svg', toolbarClasses: 'green lighten-1 white-text', contents: '', footer: '', controller: 'ParametersPanelController',
                     },
                     results: {
-                        prefix: 'results', header: 'Results', fontIcon: 'glyphicon-th-list', toolbarClasses: 'red lighten-1', contents: '', footer: '', tools: undefined, controller: 'ResultsPanelController',
+                        prefix: 'results', header: 'Results', svgSrc: grasppe.load.url.images + 'tasks.svg', toolbarClasses: 'red lighten-1', contents: '', footer: '', tools: undefined, controller: 'ResultsPanelController',
                     },
                     overview: {
-                        prefix: 'overview', header: 'Overview', fontIcon: 'glyphicon-edit', toolbarClasses: 'light-blue lighten-1', contents: '', footer: '', tools: undefined, controller: 'OverviewPanelController',
+                        prefix: 'overview', header: 'Overview', svgSrc: grasppe.load.url.images + 'file-text.svg', toolbarClasses: 'light-blue lighten-1', contents: '', footer: '', tools: undefined, controller: 'OverviewPanelController',
                     },
                 } // Sheet.panels
             } // Sheet

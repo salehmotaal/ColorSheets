@@ -110,7 +110,12 @@ $(function () {
                 if ($legend.length === 0) {
                     $legend = $('<div class="legend-wrapper container-fluid" style="background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '"></div>').appendTo(this.container);
                     legendText.forEach(function (text, index) {
-                        $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="padding: 4px; white-space: no-wrap;"><span class="fontawesome-sign-blank legend-symbol" style="color: ' + legendStyles[index].strokeStyle + ';"></span><span class="legend-text">' + text.replace('\n', ' ') + '</span></div>'));
+                        $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="padding: 4px; white-space: no-wrap;">\
+                            <span class="legend-symbol" style="color: ' + legendStyles[index].strokeStyle + ';">\
+                                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="14" height="12" viewBox="8 8 32 32"><path fill="' + legendStyles[index].strokeStyle + '" d="M27.429 3.429v25.143q0 0.464-0.339 0.804t-0.804 0.339h-25.143q-0.464 0-0.804-0.339t-0.339-0.804v-25.143q0-0.464 0.339-0.804t0.804-0.339h25.143q0.464 0 0.804 0.339t0.339 0.804z"></path></svg>\
+                            </span>\
+                            <span class="legend-text">' + text.replace('\n', ' ') + '</span>\
+                        </div>'));
                     });
                 }
                 options.current.labels = options.legend.labels.join('|').replace(/\s*/g,'');

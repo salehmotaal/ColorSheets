@@ -205,7 +205,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'jQueryUI', 'jQueryTouch', 'mobileDetect', 'fontAwesome', 'grasppeCore'],
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'mobileDetect', 'fontAwesome', 'grasppeCore'],
                 objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
@@ -256,7 +256,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                                  "grasppe-chorale.js",\
                                                  "grasppe-canvas.js", \
                                                  "grasppe-geometry.js", \
-                                                 "colorsheets-jiver.js"]'.toLiteral(),
+                                                 "grasppe-jiver.js"]'.toLiteral(),
             };
             grasppe.load.status.initialize = libraries._order;
             

@@ -17,8 +17,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         grasppe.ColorSheetsApp = grasppe.Libre.Module.define(class ColorSheetsApp extends grasppe.Libre.Module {
 	    }, {}, grasppe.ColorSheetsApp);
 	    
-	    console.log(grasppe.ColorSheetsApp);
-
         // !- [ColorSheetsApp]
         grasppe.ColorSheetsApp.Sheet = grasppe.Libre.Module.define(class ColorSheet extends grasppe.Libre.Module {
             // !- Sheets [Constructor]
@@ -67,7 +65,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 $scope.sheet = sheet, $scope.model.sheet = $scope.sheet, sheet.id = key;
 
                 if (sheet.controllers && sheet.controllers.sheetController) panelContents.empty().attr('ng-controller', sheet.controllers.sheetController.name).attr('color-Sheets-Sheet', '').injector().invoke(function ($compile) {
-                    $compile(panelContents)(panelContents.scope());
+                    $compile(panelContents)($scope.$new(false));
                 });
                 for (var panelKey of['stage', 'parameters', 'results', 'overview']) {
                     panels[panelKey].template = sheet.panels[panelKey].template;

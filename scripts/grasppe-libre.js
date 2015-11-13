@@ -12,10 +12,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         static get hash() {
             return grasppe.hash(grasppe.Libre);
         }
-        
+
         static get Object() {
             return class {
-                
+
                 // !- Libre Object [Constructor]
                 constructor(options) {
                     var args = [...arguments];
@@ -126,7 +126,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 get $scope() {
                     return this.$view.scope();
                 }
-                
+
                 // !- Libre Component toString
                 toString() {
                     return 'LibreComponent';
@@ -232,7 +232,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         value: this,
                     });
                     if (!('componentID' in this.$controller)) Object.defineProperty(this.$controller, 'componentID', {
-                        get: function getComponentID () {
+                        get: function getComponentID() {
                             return this.component.id;
                         }
                     });
@@ -306,7 +306,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         value: this,
                     });
                     if (!('componentID' in this.$module)) Object.defineProperty(this.$module, 'componentID', {
-                        get: function getComponentID () {
+                        get: function getComponentID() {
                             return this.component.id;
                         }
                     });
@@ -318,11 +318,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !- Libre Module $view initializeView
                 initializeView() {
-                    console.log('Libre Module $view initializeView');
+                    // console.log('Libre Module $view initializeView');
                     if (!this.hash.$view || $(this.hash.$view).length === 0) {
                         this.hash.$view = $(this.template).appendTo(this.container).first();
                         if (this.$controller && this.$controller.componentID) this.hash.$view.attr('ng-controller', this.$controller.componentID);
                         for (var configuration of this.configuration) this.$module.config(configuration);
+                        this.$module.config(['$compileProvider', function ($compileProvider) {
+                            $compileProvider.debugInfoEnabled(false);
+                        }]); // if (/\.(com|org|net|info)$/.test(location.host)) 
                         for (var valueID in this.values) this.$module.value(valueID, this.values[valueID]);
                         angular.bootstrap(this.hash.$view, [this.$module.name]);
                     }
