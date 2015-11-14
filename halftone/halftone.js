@@ -359,27 +359,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         //         cell: {
                         //             svgSrc: 'images/zoom-in.svg', label: 'Single-cell', type: 'radio', model: 'panning', value: 'cell',
                         //         },
-                        //         supercell: {
-                        //             svgSrc: 'images/zoom-out.svg', label: 'Super-cell', type: 'radio', model: 'panning', value: 'supercell',
-                        //         },
                         //     },
                         // },
                         // shading: {
                         //     label: 'Shading', svgSrc: 'images/quill.svg', classes: 'md-icon-button', menu: {
                         //         wires: {
                         //             svgSrc: 'images/line-thin.svg', label: 'Thin lines', type: 'radio', model: 'shading', value: 'wires',
-                        //         },
-                        //         lines: {
-                        //             svgSrc: 'images/line-normal.svg', label: 'Normal lines', type: 'radio', model: 'shading', value: 'lines',
-                        //         },
-                        //         fills: {
-                        //             svgSrc: 'images/fill-normal.svg', label: 'Lines & Pixels', type: 'radio', model: 'shading', value: 'fills',
-                        //         },
-                        //         pixels: {
-                        //             svgSrc: 'images/fill-only.svg', label: 'Pixels', type: 'radio', model: 'shading', value: 'pixels',
-                        //         },
-                        //         cells: {
-                        //             svgSrc: 'images/fill-cells.svg', label: 'Cell-Pixels', type: 'radio', model: 'shading', value: 'cells',
                         //         },
                         //     },
                         // 

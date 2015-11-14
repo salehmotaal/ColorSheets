@@ -194,21 +194,21 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
                             offset = [-clippingBox.xMin, -clippingBox.yMin],
                             width = (offset[0] + clippingBox.xMax) * scale,
-                            height = width,
-                            xTransform = Object.assign(function (x, self) {
-                                if (!self) self = xTransform;
-                                return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                            }, {
-                                scale: scale, offset: offset[0],
-                            }),
-                            yTransform = Object.assign(function (y, self) {
-                                if (!self) self = yTransform;
-                                var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                                if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
-                                else return fY;
-                            }, {
-                                scale: scale, offset: offset[1],
-                            });
+                            height = width;
+                            // xTransform = Object.assign(function (x, self) {
+                            //     if (!self) self = xTransform;
+                            //     return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                            // }, {
+                            //     scale: scale, offset: offset[0],
+                            // }),
+                            // yTransform = Object.assign(function (y, self) {
+                            //     if (!self) self = yTransform;
+                            //     var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
+                            //     if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
+                            //     else return fY;
+                            // }, {
+                            //     scale: scale, offset: offset[1],
+                            // });
                     }
 
                     PIXEL_BOXES: {
@@ -468,8 +468,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 }
                             })
                         }],
-                        template: ('<color-sheets-panel-body layout layout-align="center center">\
-                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh;"></div>\
+                        template: ('<color-sheets-panel-body layout layout-align="center center" style="max-height: 50vh;">\
+                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>\
                             </color-sheets-panel-body>'),
                     }
                 }),
