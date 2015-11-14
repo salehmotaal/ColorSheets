@@ -67,7 +67,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //     this.hash['pixelCache' + index] = pixel;
             // }
             
-            getPixelBox(x, y, fillStyle) {
+            getPixelBox(x, y, fillStyle, strokeStyle) {
                 if (!this.hash.pixelCache) this.hash.pixelCache = [];
                 var pixelCache = this.hash.pixelCache;
                 if (!pixelCache[x]) pixelCache[x] = [];
@@ -78,8 +78,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     [x + 0, y + 1],
                     [x + 0, y + 0]
                 ]);
-                pixelCache[x][y].fillStyle = fillStyle;
-                pixelCache[x][y].strokeStyle = 'rgba(0,0,0,0.25)';
+                pixelCache[x][y].fillStyle = fillStyle || 'transparent';
+                pixelCache[x][y].strokeStyle = strokeStyle || 'rgba(0,0,0,0.25)';
                 pixelCache[x][y].lineWidth = 0.05;
                 return pixelCache[x][y];
             }
@@ -126,6 +126,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 return this;
             }
+            
+            getHeleperOptions() {
+                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.HalftoneDemoHelper.Options, this.$options);
+                else Object.assign(this.hash._options, this.$options);
+                return this.hash._options;
+            }
 
             updatePlot() {
                 self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
@@ -133,17 +139,23 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if(!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
                     
                     var values = this.calculations,
-                        options = Object.assign({}, grasppe.ColorSheetsApp.HalftoneDemoHelper.Options, this.$options),
+                        options = this.getHeleperOptions(), // Object.assign({}, grasppe.ColorSheetsApp.HalftoneDemoHelper.Options, this.$options),
                         plotOptions = options.plotOptions,
                         legendOptions = options.legendOptions,
                         plotCanvas = $(this.$scope.canvas), // $(this.$scope.canvas).parent(),
                         series = options.seriesOptions,
                         mode = {
-                            is: options.shading + '-' + options.panning, blockPan: options.panning === 'supercell', cellPan: options.panning !== 'supercell', // options.panning === 'cell',
-                            wires: options.shading === 'wires', lines: options.shading === 'lines', fills: options.shading === 'fills', pixels: options.shading === 'pixels', cells: options.shading === 'cells',
+                            is: options.shading + '-' + options.panning, 
+                            // blockPan: options.panning === 'supercell', 
+                            // cellPan: options.panning !== 'supercell', // options.panning === 'cell',
+                            // wires: options.shading === 'wires', 
+                            // lines: options.shading === 'lines', 
+                            // fills: options.shading === 'fills', 
+                            // pixels: options.shading === 'pixels', 
+                            // cells: options.shading === 'cells',
                         },
                         stroke = {
-                            is: mode.blockPan ? 'thick' : mode.pixels ? 'none' : (mode.lines || mode.cellPan) ? 'initial' : 'thin', initial: mode.lines || mode.cellPan || false, thick: mode.blockPan, thin: !mode.blockPan && !mode.lines && !mode.cellPan && !mode.pixels, none: mode.pixels,
+                            // is: mode.blockPan ? 'thick' : mode.pixels ? 'none' : (mode.lines || mode.cellPan) ? 'initial' : 'thin', initial: mode.lines || mode.cellPan || false, thick: mode.blockPan, thin: !mode.blockPan && !mode.lines && !mode.cellPan && !mode.pixels, none: mode.pixels,
                         },
                         style = {
                             plotGrid: (plotOptions.plotGridStyle),
@@ -187,36 +199,42 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             gridMin = [0, 0],
                             gridMax = [steps, steps],
                             gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
-                            gridCache = this.getGridCache(steps),
-                            gridVerticals = gridCache ? gridCache.verticals : new Lines(gridMin, Object.assign({
-                                offset: [0, gridSteps[0]],
-                            }, style.plotGrid)),
-                            gridHorizontals =  gridCache ? gridCache.horizontals : new Lines(gridMin, Object.assign({
-                                offset: [gridSteps[1], 0],
-                            }, style.plotGrid));
-                        if (timeStamp !== self.timeStamp) return this;
+                            gridCache = this.getGridCache(steps);
+                            // gridVerticals = gridCache ? gridCache.verticals : new Lines(gridMin, Object.assign({
+                            //     offset: [0, gridSteps[0]],
+                            // }, style.plotGrid)),
+                            // gridHorizontals =  gridCache ? gridCache.horizontals : new Lines(gridMin, Object.assign({
+                            //     offset: [gridSteps[1], 0],
+                            // }, style.plotGrid));
+                        // if (timeStamp !== self.timeStamp) return this;
                         
-//                         if (!gridCache) {
-//                             for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i]);
-//                             for (var j = 0; j <= gridSteps[1]; j++) gridVerticals.push([gridMin[0] + j, gridMin[1]]);
-//                             this.setGridCache(steps, {horizontals: gridHorizontals, verticals: gridVerticals})
-//                         }
+                        // if (!gridCache) {
+                        //     for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i]);
+                        //     for (var j = 0; j <= gridSteps[1]; j++) gridVerticals.push([gridMin[0] + j, gridMin[1]]);
+                        //     this.setGridCache(steps, {horizontals: gridHorizontals, verticals: gridVerticals})
+                        // }
                     }
                     
                     // console.table([gridMin, gridMax, gridSteps]); // console.table(gridHorizontals, gridVerticals);
                     
                     HALFTONE_CALCULATIONS: {
-                        var halftonePixels = [],
-                            pixelPath = new grasppe.canvas.Path(eval('[[0,0],[1,0],[1,1],[0,1],[0,0]]'));
-                        if (timeStamp !== self.timeStamp) return this;
+                        var halftonePixels = Array(gridSteps[0]*gridSteps[1]),
+                            n=0;
+                            // pixelPath = new grasppe.canvas.Path(eval('[[0,0],[1,0],[1,1],[0,1],[0,0]]'));
+                            
                         for (var i = 0; i < gridSteps[0]; i++) { 
+                            if (timeStamp !== self.timeStamp) return this;
                             for (var j = 0; j < gridSteps[1]; j++) {
                                 var s = cos(cosTheta*j/lineSpots-sinTheta*i/lineSpots)*sin(sinTheta*j/lineSpots+cosTheta*i/lineSpots),
                                     // v = min(255,max(0,round(255*(s+1)/2))),
                                     t = 255 * (tint !== 100 && min(100,max(0,round(100*(s+1)/2))) >= tint),
-                                    n = 1 + ((i-1)*gridSteps[1] + j),
-                                    fillStyle = 'rgba(' + t + ',' + t + ',' + t + ',1)';
-                                halftonePixels.push(this.getPixelBox(i, j, fillStyle));
+                                    //n = 1 + ((i-1)*gridSteps[1] + j),
+                                    // fillStyle = 'rgba(' + t + ',' + t + ',' + t + ',1)';
+                                    fillStyle = 'rgba(0,0,0,' + t/255 + ')',
+                                    strokeStyle = 'rgba(0,0,0,' + (t>0? 1 : 0.25) + ')';
+                                // halftonePixels.push(this.getPixelBox(i, j, fillStyle, strokeStyle));
+                                halftonePixels[n] = this.getPixelBox(i, j, fillStyle, strokeStyle);
+                                n++;
                                 // halftonePixels.push(new grasppe.canvas.Path([
                                 //     [i + 0, j + 0],
                                 //     [i + 1, j + 0],
@@ -231,8 +249,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // console.log(halftonePixels[0]);
                     
                     BOUNDING_CALCULATIONS: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var bounds = new Bounds([gridVerticals, gridHorizontals]);
+                        // if (timeStamp !== self.timeStamp) return this;
+                        // var bounds = new Bounds([gridVerticals, gridHorizontals]);
                     }
 
                     // SIZING_CALCULATIONS: {
@@ -263,10 +281,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     
                     PATH_CONSOLIDATION: {
                         var paths = [],
-                            scale = 5,
+                            scale = 4,
                             size = steps * scale;
                         for (var path of [halftonePixels]) { // gridVerticals, gridHorizontals
-                            // console.log(path);
+                            if (timeStamp !== self.timeStamp) return this;
                             for (var n = 0; n < path.length; n++) if (path[n].getPath) paths.push(path[n].getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
                         }
                         // console.log('<svg>\n' + paths.join('\n') + '\n</svg>');
@@ -275,7 +293,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + paths.join('') + '</svg>';
                         
                         // if (plotCanvas.find('img').length === 0) plotCanvas.empty().append(Object.assign(new Image(), { src: 'data:image/svg+xml;utf8,' + svg,}));
-                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: 100%; height: auto; border: 1px solid rgba(0,0,0,0.25)">'));
+                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: 100%; height: auto; min-height: 100%;">'));
                         plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
                         
                         
@@ -445,7 +463,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 })
                             }],
                             template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: hidden; max-height: 65vh;">\
-                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 65vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>\
+                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 65vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
                             </color-sheets-panel-body>'),
                         }
                     }),

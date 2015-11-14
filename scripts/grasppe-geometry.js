@@ -94,9 +94,17 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
     },
 });
 grasppe.canvas.Point.isPoint = function () {
-    var results = [...arguments].map(function (point) {
-        return (Array.isArray(point) && point.length === 2) || point instanceof grasppe.canvas.Point;
-    });
+    var results = [];
+    try {
+        // results = [...arguments].map(function (point) {return typeof point === 'object' && point.length && point.length === 2; 
+        // //point instanceof grasppe.canvas.Point; // (Array.isArray(point) && point.length === 2) ||
+        // });
+        for (var argument of arguments) results.push(argument.length !== 2 || typeof argument[0] + argument[1] !== 'number');
+        // return true;
+    } catch (err) {
+        return false;
+    }
+    
     return (arguments.length === 1) ? results[0] : results;
 };
 grasppe.canvas.Path = function (values, parameters) {
@@ -176,9 +184,9 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
     constructor: grasppe.canvas.Path, getPoint: function (index) {
         if (arguments.length > 2 && typeof arguments[1] === 'function' && typeof arguments[2] === 'function') return this.getTransformedPoint.apply(this, arguments);
         if (arguments.length > 2 && typeof arguments[1] === 'number' && typeof arguments[2] === 'number') return this.getTranslatedPoint.apply(this, arguments);
-        //if (this.length > index && Array.isArray(this[index]) && this[index].length === 2) return new grasppe.canvas.Point(this[index]);
-        if (this.length > index && grasppe.canvas.Point.isPoint(this[index])) return new grasppe.canvas.Point(this[index]);
-        else return new grasppe.canvas.Point([null, null]);
+        // if (this.length > index && grasppe.canvas.Point.isPoint(this[index])) return new grasppe.canvas.Point(this[index]);
+        // else return new grasppe.canvas.Point([null, null]);
+        return this[index]; // new grasppe.canvas.Point(this[index]);
     },
     getPoints: function (xModifier, yModifier) {
         var points = [];
@@ -231,8 +239,6 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         yTransform = typeof yTransform === 'function' ? yTransform : function (y) {
             return y;
         };
-        // console.log('getTransformedPoint', xTransform, yTransform, scale);
-        // if (this.length > index && Array.isArray(this[index]) && this[index].length === 2) return new /grasppe.canvas.Point([xTransform(this[index][0]), yTransform(this[index][1])]);
         if (this.length > index && grasppe.canvas.Point.isPoint(this[index])) new grasppe.canvas.Point([xTransform(this[index][0], xTransform), yTransform(this[index][1], yTransform)]);
         else return new grasppe.canvas.Point([null, null]);
     },
@@ -261,22 +267,25 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         return this;
     },
     getPath: function (xModifier, yModifier, scale) {
-        var definition = [],
-            attributes = [],
+        var definition = '', // attributes = [],
             path = '';
-        definition.push('M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
-        for (var i = 1; i < this.length; i++) definition.push('L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
-        definition.push('Z');
-        // definition += 'M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' '); 
-        // for (var i = 1; i < this.length; i++) definition += ' L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
-        // definition += ' Z';
-        if ('lineWidth' in this) attributes.push('stroke-width="' +  this.lineWidth * scale  + '"');
-        if ('strokeStyle' in this) attributes.push('stroke="' +  this.strokeStyle + '"');
-        if ('fillStyle' in this) attributes.push('fill="' +  this.fillStyle + '"');
-        if ('lineDash' in this) attributes.push('stroke-dasharray="' +  this.lineDash + '"');
+        definition += 'M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
+        for (var i = 1; i < this.length; i++) definition += ' L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
+        definition += ' Z';
+        path = '<path' + (this.lineWidth ? ' stroke-width="' + this.lineWidth * scale + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + ' d="' + definition + '"' + ' />';
+
+        // definition.push('M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
+        // for (var i = 1; i < this.length; i++) definition.push('L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
+        // definition.push('Z');
+
+        // if (this.lineWidth) attributes.push('stroke-width="' +  this.lineWidth * scale  + '"');
+        // if (this.strokeStyle) attributes.push('stroke="' +  this.strokeStyle + '"');
+        // if (this.fillStyle) attributes.push('fill="' +  this.fillStyle + '"');
+        // if (this.lineDash) attributes.push('stroke-dasharray="' +  this.lineDash + '"');
+        // path = '<path ' + attributes.concat(['d="' + definition.join(' ') + '"']).join(' ') + '/>';
         
-        path = '<path ' + attributes.concat(['d="' + definition.join(' ') + '"']).join(' ') + '/>';
         // path = '<path ' + attributes.concat(['d="' + definition + '"']).join(' ') + '/>';
+        // console.log(path);
 
         return path;
     },
