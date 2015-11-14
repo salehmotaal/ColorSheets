@@ -93,32 +93,36 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
 
             calculateStack() {
-                var modelStack = {},
-                    modelCalculations = {},
-                    scenarios = grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios,
-                    stack = [
-                        ['SPI', this.getParameter('spi')],
-                        ['LPI', this.getParameter('lpi')],
-                        ['THETA', this.getParameter('theta')],
-                        ['TINT', this.getParameter('tint')]
-                    ];
+                // self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
 
-                for (var scenario of scenarios._order) {
-                    var jiver = new GrasppeJive({}, scenarios),
-                        output = jiver.run(scenario, stack),
-                        errors = jiver.errors;
-
-                    for (var row of output) {
-                        modelCalculations[row.id] = row.value;
-                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
-                            name: scenario,
-                        });
-                        if (row.hidden !== true) modelStack[scenario].push(row);
+                    var modelStack = {},
+                        modelCalculations = {},
+                        scenarios = grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios,
+                        stack = [
+                            ['SPI', this.getParameter('spi')],
+                            ['LPI', this.getParameter('lpi')],
+                            ['THETA', this.getParameter('theta')],
+                            ['TINT', this.getParameter('tint')]
+                        ];
+    
+                    for (var scenario of scenarios._order) {
+                        var jiver = new GrasppeJive({}, scenarios),
+                            output = jiver.run(scenario, stack),
+                            errors = jiver.errors;
+    
+                        for (var row of output) {
+                            modelCalculations[row.id] = row.value;
+                            if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
+                                name: scenario,
+                            });
+                            if (row.hidden !== true) modelStack[scenario].push(row);
+                        }
                     }
-                }
+    
+                    this.stack = modelStack;
+                    this.calculations = modelCalculations;
 
-                this.stack = modelStack;
-                this.calculations = modelCalculations;
+                // }.bind(this), 10, self, self.timeStamp);
 
                 return this;
             }
@@ -205,8 +209,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         var halftonePixels = [],
                             pixelPath = new grasppe.canvas.Path(eval('[[0,0],[1,0],[1,1],[0,1],[0,0]]'));
                         if (timeStamp !== self.timeStamp) return this;
-                        for (var i = 0; i <= gridSteps[0]; i++) { 
-                            for (var j = 0; j <= gridSteps[1]; j++) {
+                        for (var i = 0; i < gridSteps[0]; i++) { 
+                            for (var j = 0; j < gridSteps[1]; j++) {
                                 var s = cos(cosTheta*j/lineSpots-sinTheta*i/lineSpots)*sin(sinTheta*j/lineSpots+cosTheta*i/lineSpots),
                                     // v = min(255,max(0,round(255*(s+1)/2))),
                                     t = 255 * (tint !== 100 && min(100,max(0,round(100*(s+1)/2))) >= tint),
@@ -261,17 +265,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         var paths = [],
                             scale = 5,
                             size = steps * scale;
-                        for (var path of [halftonePixels, gridVerticals, gridHorizontals]) {
+                        for (var path of [halftonePixels]) { // gridVerticals, gridHorizontals
                             // console.log(path);
                             for (var n = 0; n < path.length; n++) if (path[n].getPath) paths.push(path[n].getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
                         }
                         // console.log('<svg>\n' + paths.join('\n') + '\n</svg>');
                         
                         // var svg = '<svg style="width: auto; max-height: 50vh; height: 100%;" width="' + steps * 10 + '" height="' + steps * 10 + '" viewBox="0 0 ' + (steps * 10 + 1) + ' ' + (steps * 10 + 1) + '">' + paths.join('') + '</svg>';
-                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + size + '" height="' + size + '" viewBox="0 0 ' + (size + 1) + ' ' + (size + 1) + '">' + paths.join('') + '</svg>';
+                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + paths.join('') + '</svg>';
                         
                         // if (plotCanvas.find('img').length === 0) plotCanvas.empty().append(Object.assign(new Image(), { src: 'data:image/svg+xml;utf8,' + svg,}));
-                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; max-height: 50vh; max-width: 50vh; height: 100%;">'));
+                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: 100%; height: auto; border: 1px solid rgba(0,0,0,0.25)">'));
                         plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
                         
                         
@@ -440,8 +444,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     }
                                 })
                             }],
-                            template: ('<color-sheets-panel-body layout layout-align="center center">\
-                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%"></div>\
+                            template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: hidden; max-height: 65vh;">\
+                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 65vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>\
                             </color-sheets-panel-body>'),
                         }
                     }),
