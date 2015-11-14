@@ -100,7 +100,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         plotCanvas = $(this.$scope.canvas),
                         // $(this.$scope.canvas).parent(),
                         series = options.seriesOptions,
-                        strokeFactor = 2,
+                        strokeFactor = 1,
                         mode = {
                             is: options.shading + '-' + options.panning, blockPan: options.panning === 'supercell', cellPan: options.panning !== 'supercell', // options.panning === 'cell',
                             wires: options.shading === 'wires', lines: options.shading === 'lines', fills: options.shading === 'fills', pixels: options.shading === 'pixels', cells: options.shading === 'cells',
@@ -195,20 +195,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             offset = [-clippingBox.xMin, -clippingBox.yMin],
                             width = (offset[0] + clippingBox.xMax) * scale,
                             height = width;
-                            // xTransform = Object.assign(function (x, self) {
-                            //     if (!self) self = xTransform;
-                            //     return Math.round((self.offset + x) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                            // }, {
-                            //     scale: scale, offset: offset[0],
-                            // }),
-                            // yTransform = Object.assign(function (y, self) {
-                            //     if (!self) self = yTransform;
-                            //     var fY = Math.round((self.offset + y) * self.scale * (typeof self.bufferScale === 'number' ? self.bufferScale : 1));
-                            //     if (self.mirror) return self.mirror * (typeof self.bufferScale === 'number' ? self.bufferScale : 1) - fY;
-                            //     else return fY;
-                            // }, {
-                            //     scale: scale, offset: offset[1],
-                            // });
                     }
 
                     PIXEL_BOXES: {
@@ -218,7 +204,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
                     }
                     
-                    PATH_CONSOLIDATION: {
+                    PATH_GENERATION: {
                         var paths = [],
                             elements = [],
                             view = [-offset[0] * scale, -offset[1] * scale, width, width],
@@ -229,7 +215,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         elements.push(gridVerticals, gridHorizontals);
                         if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellVerticals, supercellHorizontals);
                         if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) elements.push(intendedBox);
-                        if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox, halftoneBox);
+                        if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox);
+                        if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
 
                         for (var path of elements) if (timeStamp !== self.timeStamp) return this;
                             else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
@@ -238,39 +225,44 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         
                         if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
                         plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
-                        // plotCanvas.css('background', 'url("' + 'data:image/svg+xml;utf8,' + svg + '")');
+                        // plotCanvas.css('background', 'transparent URL("' + 'data:image/svg+xml;utf8,' + svg + '") no-repeat center center').css('background-size', 'contain');
                     }
+                    
+                    this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
 
-
-                    // DRAWING_OPERATIONS: {
-                    //     if (timeStamp !== self.timeStamp) return this;
-                    //     var chart = (this.chart instanceof Chart) ? this.chart : new Chart(plotCanvas),
-                    //         halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
-                    //         supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [],
-                    //         paths = [];
-                    // 
-                    //     if (mode.fills || mode.pixels) paths.push(supercellPixelBox, halftonePixelBox);
-                    //     if (mode.cells) paths = paths.concat(supercellPixelBoxes);
-                    //     paths.push(gridVerticals, gridHorizontals);
-                    //     if (mode.fills || mode.lines || mode.wires || mode.cells) paths.push(supercellVerticals, supercellHorizontals);
-                    //     if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) paths.push(intendedBox);
-                    //     if (mode.fills || mode.lines || mode.wires || mode.cells) paths.push(supercellBox, halftoneBox);
-                    //     if (timeStamp !== self.timeStamp) return this;
-                    //     chart.draw(paths, {
-                    //         xModifier: xTransform, yModifier: yTransform, width: width, height: height, bufferScale: options.plotBufferScale, typeScale: options.plotBufferScale * plotOptions.plotTypeFactor, lineScale: options.plotBufferScale * plotOptions.plotLineFactor, legend: {
-                    //             labels: legendOptions.seriesLabels, styles: [styles.intended, styles.halftone, styles.supercell],
-                    //             boxStyle: styles.legendBox,
-                    //         },
-                    //         transform: function (context, canvas) {
-                    //             context.translate(canvas.width / 1, canvas.height / 1);
-                    //             context.scale(-1, -1);
-                    //         },
-                    //     });
-                    // }
                 }.bind(this), 10, self, self.timeStamp);
 
                 return this;
             }
+            
+            /**
+             * Renders overlay aspects.
+             */
+            drawLegend(legendText, legendStyles, legendBoxStyle, container) {
+                if (legendText && legendText !== '' && legendStyles && legendBoxStyle) {
+                    var $legend;
+    
+                    if (this.hash._currentLabels === legendText.join('|').replace(/\s*/g,'')) return this;
+                    
+                    $legend = (this.hash.legend instanceof HTMLElement) ? $(this.hash.legend) : $(container).find('.legend-wrapper');
+                    if ($legend.length === 0) {
+                        $legend = $('<div class="legend-wrapper container-fluid md-whiteframe-1dp" style="background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '; position:absolute; left: 10%; right: 10%; width:auto; flex; overflow:hidden;"></div>').appendTo(container);
+                        legendText.forEach(function (text, index) {
+                            $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="font-size:10pt; padding:0 .25em; display: flex; flex-direction: row; white-space: no-wrap; overflow: hidden; text-overflow:ellipsis;">\
+                                <div class="legend-symbol" style="color: ' + legendStyles[index].strokeStyle + '; white-space:nowrap; overflow: hidden; display:block; vertical-align: baseline; height: 100%">\
+                                    <svg class="md-whiteframe-1dp" style="border-radius: 50%;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 32 32"><path fill="' + legendStyles[index].strokeStyle + '" d="M0 0L32 0L32 32L0 32L0 0Z"></path></svg>\
+                                </div>\
+                                <div class="legend-text" style="text-overflow:ellipsis; overflow-x:hidden; white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%; flex: 1">' + text.replace('\n', ' ') + '</div>\
+                            </div>'));
+                        });
+                    }
+                    this.hash._currentLabels = legendText.join('|').replace(/\s*/g,'');
+                } else {
+                     $(this.container).find('.legend-wrapper').remove();
+                }
+                return this;
+            }
+
 
             getSuperCellsPixelsPath(path, cells) {
                 var pixels = [],
@@ -291,10 +283,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 try {
                     $canvas[0].width = width, $canvas[0].height = height;
-                    context.clearRect(0, 0, width, height);
-                    context.translate(offset + path.width - path.xMax, offset)
-                    context.rect(0 - offset + xMin, -offset, width, height);
-                    context.fillStyle = '#000';
+                    context.translate(offset + path.width - path.xMax, offset); // context.clearRect(0, 0, width, height), 
+                    context.rect(0 - offset + xMin, -offset, width, height), context.fillStyle = '#000';
                     context.lineWidth = 2;
 
                     for (var i = 0; i < cells; i++) for (var j = 0; j < cells; j++) { // if (((i % 2) + (j % 2) !== 1)) {
@@ -302,16 +292,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
                         });
 
-                        context.moveTo(box[0][0], box[0][1]);
-                        context.beginPath()
-                        context.lineTo(box[1][0], box[1][1]);
-                        context.lineTo(box[2][0], box[2][1]);
-                        context.lineTo(box[3][0], box[3][1]);
-                        context.lineTo(box[0][0], box[0][1]);
-                        context.closePath();
                         context.fillStyle = ((((i % 2) + (j % 2) === 1)) ? '#FFF' : '#000');
                         context.strokeStyle = ((((i % 2) + (j % 2) === 1)) ? '#FFF' : '#000');
-                        context.fill();
+                        context.moveTo(box[0][0], box[0][1]), context.beginPath();
+                        context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]);
+                        context.lineTo(box[3][0], box[3][1]), context.lineTo(box[0][0], box[0][1]);
+                        context.closePath(), context.fill();
                     }
 
                     imageData = context.getImageData(offset, offset, width - offset * 2, height - offset * 2);
@@ -480,8 +466,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="0" maximum="4800" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Resolution" description="Lines per inch screening resolution." minimum="0" maximum="300" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
-                                    <b>Line Ruling:</b> Lines per inch screening resolution. \
+                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="0" maximum="300" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
+                                    <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
                                 <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Supercell angle resolution." minimum="0" maximum="90" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
                                     <b>Line Angle:</b> Supercell angle resolution. \
