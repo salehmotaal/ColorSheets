@@ -98,7 +98,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         plotOptions = options.plotOptions,
                         legendOptions = options.legendOptions,
                         plotCanvas = $(this.$scope.canvas),
-                        // $(this.$scope.canvas).parent(),
                         series = options.seriesOptions,
                         strokeFactor = 1,
                         mode = {
@@ -160,7 +159,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         if (timeStamp !== self.timeStamp) return this;
                         for (var i = 2; i <= cells; i++) supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]), supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
                     }
-
                     BOUNDING_CALCULATIONS: {
                         if (timeStamp !== self.timeStamp) return this;
                         var paths = [intendedBox, halftoneBox, supercellBox],
@@ -174,6 +172,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         var gridMargin = 0 + margin,
                             gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
                             gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
+                            // gridMax = [Math.ceil(bounds.xMax + bounds.xMin + gridMargin), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
                             gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
                             gridVerticals = new Lines(gridMin, Object.assign({
                                 offset: [0, gridSteps[0]],
@@ -193,22 +192,21 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         var clippingBox = new Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
                             scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
                             offset = [-clippingBox.xMin, -clippingBox.yMin],
+                            // width = (offset[0] + clippingBox.xMax) * scale * frameRatio,
+                            // height = width  / frameRatio;
                             width = (offset[0] + clippingBox.xMax) * scale,
                             height = width;
                     }
-
                     PIXEL_BOXES: {
                         if (timeStamp !== self.timeStamp) return this;
                         var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
                             halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
                             supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
                     }
-                    
                     PATH_GENERATION: {
                         var paths = [],
                             elements = [],
-                            view = [-offset[0] * scale, -offset[1] * scale, width, width],
-                            size = width;
+                            view = [-offset[0] * scale, -offset[1] * scale, width, height];
                             
                         if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
                         if (mode.cells) elements = elements.concat(supercellPixelBoxes);
@@ -221,16 +219,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         for (var path of elements) if (timeStamp !== self.timeStamp) return this;
                             else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
                         
-                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + size + '" height="' + size + '" viewBox="' + view.join(' ') + '">' + paths.join('') + '</svg>';
+                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + paths.join('') + '</svg>';
                         
                         if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
                         plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
-                        // plotCanvas.css('background', 'transparent URL("' + 'data:image/svg+xml;utf8,' + svg + '") no-repeat center center').css('background-size', 'contain');
                     }
                     
                     this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
 
-                }.bind(this), 10, self, self.timeStamp);
+                }.bind(this), 0, self, self.timeStamp);
 
                 return this;
             }
@@ -249,7 +246,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         $legend = $('<div class="legend-wrapper container-fluid md-whiteframe-1dp" style="background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '; position:absolute; left: 10%; right: 10%; width:auto; flex; overflow:hidden;"></div>').appendTo(container);
                         legendText.forEach(function (text, index) {
                             $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="font-size:10pt; padding:0 .25em; display: flex; flex-direction: row; white-space: no-wrap; overflow: hidden; text-overflow:ellipsis;">\
-                                <div class="legend-symbol" style="color: ' + legendStyles[index].strokeStyle + '; white-space:nowrap; overflow: hidden; display:block; vertical-align: baseline; height: 100%">\
+                                <div class="legend-symbol" style="color: ' + legendStyles[index].strokeStyle + '; white-space:nowrap; overflow: hidden; display:block; vertical-align: baseline; height: 100%; padding: 0 0.25em;">\
                                     <svg class="md-whiteframe-1dp" style="border-radius: 50%;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 32 32"><path fill="' + legendStyles[index].strokeStyle + '" d="M0 0L32 0L32 32L0 32L0 0Z"></path></svg>\
                                 </div>\
                                 <div class="legend-text" style="text-overflow:ellipsis; overflow-x:hidden; white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%; flex: 1">' + text.replace('\n', ' ') + '</div>\
@@ -463,10 +460,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
                     return {
                         template: ('<color-sheets-panel-body layout="column" flex layout-fill layout-align="start center" style="min-height: 30vh; padding: 0.5em 0;">\
-                                <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="0" maximum="4800" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="150" maximum="4800" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="0" maximum="300" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="300" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
                                     <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
                                 <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Supercell angle resolution." minimum="0" maximum="90" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
