@@ -8,6 +8,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     // Load Modules
     grasppe.load('colorsheets-core', grasppe.load.url.scripts + 'colorsheets-core.js');
     grasppe.load('colorsheets-panels', grasppe.load.url.scripts + 'colorsheets-panels.js');
+    grasppe.load('colorsheets-dialogs', grasppe.load.url.scripts + 'colorsheets-dialogs.js');
     grasppe.load('colorsheets-tables', grasppe.load.url.scripts + 'colorsheets-tables.js');
     grasppe.load('colorsheets-controls', grasppe.load.url.scripts + 'colorsheets-controls.js');
     
@@ -49,10 +50,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             requirements: ['ngMaterial', 'ngAnimate'],
             controller: grasppe.Libre.Controller.define('ColorSheetsAppController', function ($scope, model, module) {
                 // !- Sheets [Controllers] ColorSheetsAppController
-                Object.assign($scope, model);
-                $scope.model = model, $scope.module = module, $scope.$view = module.$view;
-                $scope.$injector = angular.element(module.$view).injector;
-                $scope.layout = model.layout, $scope.panels = model.panels, $scope.sheets = module.sheets;
+                Object.assign($scope, model, {
+                    $app: $scope,
+                    module: module,
+                    $view: module.$view,
+                    $injector: angular.element(module.$view).injector,
+                    model: model,
+                });
 
                 var key = Object.keys($scope.sheets)[0],
                     sheet = $scope.sheets[key],
@@ -62,7 +66,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     panels = $scope.panels,
                     panelContents = $(module.$view).find('.color-sheets-sheet-panel-contents').first();
 
-                $scope.sheet = sheet, $scope.model.sheet = $scope.sheet, sheet.id = key;
+                $scope.sheet = sheet, model.sheet = $scope.sheet, sheet.id = key;
 
                 if (sheet.controllers && sheet.controllers.sheetController) panelContents.empty().attr('ng-controller', sheet.controllers.sheetController.name).attr('color-Sheets-Sheet', '').injector().invoke(function ($compile) {
                     $compile(panelContents)($scope.$new(false));
@@ -109,6 +113,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 colorSheetsPanelTool: grasppe.ColorSheetsApp.Directives.PanelTool,
                 colorSheetsPanelMenuItem: grasppe.ColorSheetsApp.Directives.PanelMenuItem,
                 colorSheetsPanelToolIcon: grasppe.ColorSheetsApp.Directives.PanelToolIcon,
+                
+                // !- Sheets [Directives] Dialogs
+                colorSheetsDocumentationDialog: grasppe.ColorSheetsApp.Directives.DocumentationDialog,
 
             },
         }, {

@@ -260,6 +260,22 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         // if (context.restore) context.restore();
         return this;
     },
+    getPath: function (xModifier, yModifier, scale) {
+        var definition = [],
+            attributes = [],
+            path = '';
+        definition.push('M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
+        for (var i = 1; i < this.length; i++) definition.push('L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
+        definition.push('Z');
+        if ('lineWidth' in this) attributes.push('stroke-width="' +  this.lineWidth * scale  + '"');
+        if ('strokeStyle' in this) attributes.push('stroke="' +  this.strokeStyle + '"');
+        if ('fillStyle' in this) attributes.push('fill="' +  this.fillStyle + '"');
+        if ('lineDash' in this) attributes.push('stroke-dasharray="' +  this.lineDash + '"');
+        
+        path = '<path ' + attributes.concat(['d="' + definition.join(' ') + '"']).join(' ') + '/>';
+
+        return path;
+    },
     push: function () {
         Array.prototype.push.apply(this, [...arguments].map(function (point) {
             // var newPoint = new grasppe.canvas.Point(point[0], point[1]); console.log('Push', arguments[0], newPoint, Array.isArray(newPoint));
