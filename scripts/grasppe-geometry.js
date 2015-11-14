@@ -76,13 +76,13 @@ grasppe.canvas.Point.prototype = Object.assign(Object.create(Array.prototype, {
     },
     moveTo: function (context, xModifier, yModifier, scale) {
         // var point = (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale); console.log('moveTo', point, arguments);
-        xModifier.bufferScale = context.bufferScale || 1;
+        if (xModifier) xModifier.bufferScale = context.bufferScale || 1;
         context.moveTo.apply(context, (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale));
         return this;
     },
     lineTo: function (context, xModifier, yModifier, scale) {
         // var point = (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale); console.log('lineTo', point, arguments);
-        xModifier.bufferScale = context.bufferScale || 1;
+        if (xModifier) xModifier.bufferScale = context.bufferScale || 1;
         context.lineTo.apply(context, (arguments.length === 1) ? this.getPoint() : this.getPoint(xModifier, yModifier, scale));
         return this;
     },
@@ -104,7 +104,7 @@ grasppe.canvas.Point.isPoint = function () {
     } catch (err) {
         return false;
     }
-    
+
     return (arguments.length === 1) ? results[0] : results;
 };
 grasppe.canvas.Path = function (values, parameters) {
@@ -224,6 +224,15 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         if (typeof this.fillStyle === 'string' && this.fillStyle.trim() !== '') style.push(['fill', this.fillStyle.trim(), null, null]);
         return style;
     },
+    getStyle: function () {
+        var style = {};
+        if ('lineWidth' in this) style.lineWidth = this.lineWidth;
+        if ('strokeStyle' in this) style.strokeStyle = this.strokeStyle;
+        if ('fillStyle' in this) style.fillStyle = this.fillStyle;
+        if ('lineDash' in this) style.lineDash = this.lineDash;
+        return style;
+    },
+
     getTranslatedPoint: function (index, xOffset, yOffset, scale) {
         xOffset = typeof xOffset === 'number' ? xOffset : 0;
         yOffset = typeof yOffset === 'number' ? yOffset : 0;
@@ -267,26 +276,25 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         return this;
     },
     getPath: function (xModifier, yModifier, scale) {
-        var definition = '', // attributes = [],
+        if (this.length <= 1) return '';
+        var definition = '',
+            // attributes = [],
             path = '';
         definition += 'M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
         for (var i = 1; i < this.length; i++) definition += ' L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
         definition += ' Z';
-        path = '<path' + (this.lineWidth ? ' stroke-width="' + this.lineWidth * scale + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + ' d="' + definition + '"' + ' />';
+        path = '<path vector-effect="non-scaling-stroke"' + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + ' d="' + definition + '"' + ' />';
 
         // definition.push('M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
         // for (var i = 1; i < this.length; i++) definition.push('L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
         // definition.push('Z');
-
         // if (this.lineWidth) attributes.push('stroke-width="' +  this.lineWidth * scale  + '"');
         // if (this.strokeStyle) attributes.push('stroke="' +  this.strokeStyle + '"');
         // if (this.fillStyle) attributes.push('fill="' +  this.fillStyle + '"');
         // if (this.lineDash) attributes.push('stroke-dasharray="' +  this.lineDash + '"');
         // path = '<path ' + attributes.concat(['d="' + definition.join(' ') + '"']).join(' ') + '/>';
-        
         // path = '<path ' + attributes.concat(['d="' + definition + '"']).join(' ') + '/>';
         // console.log(path);
-
         return path;
     },
     push: function () {
@@ -360,7 +368,8 @@ grasppe.canvas.Lines = function (lines, parameters) {
     grasppe.canvas.Path.call(this, args, parameters);
 }
 grasppe.canvas.Lines.prototype = Object.assign(Object.create(grasppe.canvas.Path.prototype, {}), grasppe.canvas.Path.prototype, {
-    constructor: grasppe.canvas.Lines, draw: function (context, xModifier, yModifier, scale) {
+    constructor: (grasppe.canvas.Lines),
+    draw: function (context, xModifier, yModifier, scale) {
         var bufferScale = (context.bufferScale ? context.bufferScale : 1);
         // if (context.save) context.save();
         if ('lineWidth' in this) context.lineWidth = this.lineWidth * bufferScale;
@@ -381,6 +390,16 @@ grasppe.canvas.Lines.prototype = Object.assign(Object.create(grasppe.canvas.Path
         };
         // if (context.restore) context.restore();
         return this;
+    },
+    getPath: function (xModifier, yModifier, scale) {
+        // return ''; 
+        var definition = '',
+            group = '';
+            
+        for (var i = 0; i < this.length; i += 2) definition += '<path'  + ' d="' + 'M' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' ') + ' L' + this.getPoint(i+1).getTranslatedPoint(xModifier, yModifier, scale).join(' ') + ' Z"' + ' />';
+        
+        group = '<g' + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + '>' + definition + '</g>';
+        return group;
     },
     getPointsData: function (xModifier, yModifier) {
         var points = [];
@@ -537,7 +556,7 @@ grasppe.canvas.PointFilter.prototype = Object.assign(Object.create(grasppe.canva
     },
     draw: function () {
         grasppe.canvas.Path.prototype.draw.apply(this, arguments);
-        console.log(this);
+        // console.log(this);
     },
 });
 
@@ -636,24 +655,24 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
     },
     draw: function (context, xModifier, yModifier, scale) {
         this.apply();
-        var bufferScale = (context.bufferScale ? context.bufferScale : 1);
-        var xOffset = typeof xModifier === 'number' ? xModifier : 0;
-        var yOffset = typeof yModifier === 'number' ? yModifier : 0;
-        var xTransform = typeof xModifier === 'function' ? xModifier : null;
-        var yTransform = typeof yModifier === 'function' ? yModifier : null;
-        var clipping = this.clipping || {};
-        var xMin = this.clipping.xMin;
-        var yMin = this.clipping.yMin;
-        var xMax = this.clipping.xMax;
-        var yMax = this.clipping.yMax;
-        var x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale;
-        var y = yTransform ? yTransform(yMin, yTransform) : (yOffset + yMin) * scale;
-        var x2 = xTransform ? xTransform(xMax, xTransform) : (xOffset + xMax) * scale;
-        var y2 = yTransform ? yTransform(yMax, yTransform) : (yOffset + yMax) * scale;
-        var width = x2 - x;
-        var height = y2 - y;
-        var data = this._data;
-        var rect = new grasppe.canvas.Path([], this.parameters);
+        var bufferScale = (context.bufferScale ? context.bufferScale : 1),
+            xOffset = typeof xModifier === 'number' ? xModifier : 0,
+            yOffset = typeof yModifier === 'number' ? yModifier : 0,
+            xTransform = typeof xModifier === 'function' ? xModifier : null,
+            yTransform = typeof yModifier === 'function' ? yModifier : null,
+            clipping = this.clipping || {},
+            xMin = this.clipping.xMin,
+            yMin = this.clipping.yMin,
+            xMax = this.clipping.xMax,
+            yMax = this.clipping.yMax,
+            x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale,
+            y = yTransform ? yTransform(yMin, yTransform) : (yOffset + yMin) * scale,
+            x2 = xTransform ? xTransform(xMax, xTransform) : (xOffset + xMax) * scale,
+            y2 = yTransform ? yTransform(yMax, yTransform) : (yOffset + yMax) * scale,
+            width = x2 - x,
+            height = y2 - y,
+            data = this._data,
+            rect = new grasppe.canvas.Path([], this.parameters);
 
         context.canvas.drawing += 1;
 
@@ -680,5 +699,60 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
 
         delete rect;
         return this;
+    },
+    getPath: function (xModifier, yModifier, scale) {
+        this.apply();
+        // var bufferScale = (context.bufferScale ? context.bufferScale : 1);
+        var xOffset = typeof xModifier === 'number' ? xModifier : 0,
+            yOffset = typeof yModifier === 'number' ? yModifier : 0,
+            xTransform = typeof xModifier === 'function' ? xModifier : null,
+            yTransform = typeof yModifier === 'function' ? yModifier : null,
+            clipping = this.clipping || {},
+            xMin = this.clipping.xMin,
+            yMin = this.clipping.yMin,
+            xMax = this.clipping.xMax,
+            yMax = this.clipping.yMax,
+            x = xTransform ? xTransform(xMin, xTransform) : (xOffset + xMin) * scale,
+            y = yTransform ? yTransform(yMin, yTransform) : (yOffset + yMin) * scale,
+            x2 = xTransform ? xTransform(xMax, xTransform) : (xOffset + xMax) * scale,
+            y2 = yTransform ? yTransform(yMax, yTransform) : (yOffset + yMax) * scale,
+            width = x2 - x,
+            height = y2 - y,
+            data = this._data,
+            rect = new grasppe.canvas.Path([], this.parameters),
+            definition = '';
+            group = '';
+
+        // context.canvas.drawing += 1;
+
+        for (j = 0; j < data.length; j++) {
+            for (i = 0; i < data[0].length; i++) {
+                v = data[j][i];
+                if (v === 1) {
+                    rect.set([
+                        [xMin + i, yMin + j],
+                        [xMin + i + 1, yMin + j],
+                        [xMin + i + 1, yMin + j + 1],
+                        [xMin + i, yMin + j + 1],
+                        [xMin + i, yMin + j]
+                    ]);
+                    // grasppe.canvas.Path.prototype.draw.call(rect, context, xModifier, yModifier, scale);
+                    // if (this.fillStyle && this.fillStyle !== 'none') context.fillStyle = this.fillStyle;
+                    // else if (this.path.strokeStyle) context.fillStyle = this.path.strokeStyle;
+                    // context.fill();
+                    definition += grasppe.canvas.Path.prototype.getPath.call(rect, xModifier, yModifier, scale);
+                }
+            }
+        }
+
+        // context.canvas.drawing -= 1;
+        group = '<g' + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + '>' + definition + '</g>';
+        
+        delete rect;
+        
+        return group;
+
+
+        // return this;
     },
 });
