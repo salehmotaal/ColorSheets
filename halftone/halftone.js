@@ -195,8 +195,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             if (timeStamp !== self.timeStamp) return this;
                             for (var j = 0; j < gridSteps[1]; j++) {
                                 var s = cos(cosTheta * j / lineSpots - sinTheta * i / lineSpots) * sin(sinTheta * j / lineSpots + cosTheta * i / lineSpots),
-                                    t = 255 * (tint !== 100 && min(100, max(0, round(100 * (s + 1) / 2))) >= tint),
-                                    fillStyle = 'rgba(0,0,0,' + t / 255 + ')',
+                                    t = 1 * (tint !== 0 && min(100, max(0, round(100 * (s + 1) / 2))) >= 100-tint),
+                                    fillStyle = 'rgba(0,0,0,' + t + ')',
                                     strokeStyle = 'rgba(0,0,0,' + (t > 0 ? 1 : 0.25) + ')';
                                 halftonePixels[n] = this.getPixelBox(i, j, fillStyle, strokeStyle);
                                 n++;
