@@ -121,17 +121,26 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
             updatePlot() {
                 self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
-                    if (!/(wires|lines|fills|pixels|cells)/.test(this.$options.shading)) this.$options.shading = 'fills';
-                    if (!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
+                    if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
+                    if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
 
                     var values = this.calculations,
                         options = this.getHeleperOptions(),
                         plotOptions = options.plotOptions,
                         legendOptions = options.legendOptions,
                         plotCanvas = $(this.$scope.canvas),
+                        frameWidth = $(plotCanvas).width(),
+                        frameHeight = $(plotCanvas).height(),
+                        frameRatio = frameWidth / frameHeight,
                         series = options.seriesOptions,
                         mode = {
                             is: options.shading + '-' + options.panning,
+                            tint: options.shading === 'tint',
+                            screen: options.shading === 'screen',
+                            zoomIn: /zoom-in/.test(this.$options.panning),
+                            zoomOut: /zoom-out/.test(this.$options.panning),
+                            panSquare: !/fit/.test(this.$options.panning),
+                            panFit: /fit/.test(this.$options.panning),
                         },
                         stroke = {},
                         style = {
@@ -145,7 +154,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             },
                         },
                         lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
-                        screenView = this.getParameter('screenview'),
+                        screenView = mode.screen,
                         theta = values.theta,
                         tint = this.getParameter('tint'),
                         thetaRadians = theta / 180 * Math.PI,
@@ -163,25 +172,18 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         ImageFilter = grasppe.canvas.ImageFilter,
                         Chart = grasppe.canvas.Chart,
                         margin = 0,
-                        steps = 75; // max(50, min(150, lineSpots*10)); //round(100/lineSpots)*lineSpots;
+                        height = mode.zoomIn ? 40 : 80, // max(50, min(150, lineSpots*10)); //round(100/lineSpots)*lineSpots;
+                        width = mode.panFit ? Math.round(height * frameRatio) : height,
+                        xStep = Math.ceil(width/2),
+                        yStep = Math.ceil(height/2);
                     if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
 
-                    ADDRESSABILITY_GRID: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var gridMargin = 0 + margin,
-                            gridMin = [0, 0],
-                            gridMax = [steps, steps],
-                            gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
-                            gridCache = this.getGridCache(steps);
-                    }
-
                     HALFTONE_CALCULATIONS: {
-                        var halftonePixels = Array(gridSteps[0] * gridSteps[1]),
+                        var halftonePixels = Array(height * width),
                             n = 0;
-
-                        for (var i = 0; i < gridSteps[0]; i++) {
+                        for (var i = -xStep; i <= xStep; i++) {
                             if (timeStamp !== self.timeStamp) return this;
-                            for (var j = 0; j < gridSteps[1]; j++) {
+                            for (var j = -yStep; j <= yStep; j++) {
                                 var s = sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
                                     v = min(1, max(0, (s + 1) / 2)),
                                     t = 1 * (tint !== 0 && (v*100 >= 100-tint)),
@@ -195,15 +197,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                     PATH_GENERATION: {
                         var paths = [],
-                            scale = 4,
-                            size = steps * scale;
-                        for (var path of[halftonePixels]) { // gridVerticals, gridHorizontals
-                            if (timeStamp !== self.timeStamp) return this;
-                            for (var n = 0; n < path.length; n++) if (path[n].getPath) paths.push(path[n].getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
-                        }
-                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + paths.join('') + '</svg>';
+                            scale = 4;
+                        if (timeStamp !== self.timeStamp) return this;
+                        for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
+                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + [-xStep*scale, -yStep*scale, width*scale, height*scale].join(' ') + '">' + paths.join('') + '</svg>';
 
-                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                        if (plotCanvas.find('img').length === 0) {
+                            plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                            $(window).bind('resize', function(){
+                                this.updatePlot();
+                            }.bind(this));
+                        }
                         plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
                     }
 
@@ -211,29 +215,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 return this;
             }
-
-            adjustPlotSize() {
-                try {
-                    var plotCanvas = $(this.template.canvas).first(),
-                        //$(this.elements.contents).find('.plot-canvas').first(),
-                        plotWrapper = $(this.elements.contents),
-                        wrapWidth = plotWrapper.innerWidth(),
-                        wrapHeight = plotWrapper.innerHeight(),
-                        wrapRatio = wrapWidth / wrapHeight,
-                        plotSize = Math.ceil(Math.min(wrapWidth, wrapHeight) / 10) * 10;
-                    if (plotCanvas.length > 0 && (plotCanvas[0].width !== plotSize || plotCanvas[0].height !== plotSize)) {
-                        plotCanvas[0].width = plotSize;
-                        plotCanvas[0].height = plotSize;
-                        setTimeout(function () {
-                            // this.updatePlot();
-                        }.bind(this), 100, undefined);
-                    }
-                    plotCanvas.css('left', (wrapWidth - Math.min(wrapWidth, wrapHeight)) / 2);
-                } catch (err) {
-                    console.error('grasppe.colorSheets.HalftoneSheet.adjustPlotSize', err);
-                }
-            }
-
         };
 
         grasppe.ColorSheetsApp.HalftoneDemo = {
@@ -241,21 +222,33 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             panels: {
                 stage: {
                     directive: 'color-sheet-stage', tools: {
-                        // panning: {
-                        //     label: 'Panning', svgSrc: 'images/search.svg', classes: 'md-icon-button', menu: {
-                        //         cell: {
-                        //             svgSrc: 'images/zoom-in.svg', label: 'Single-cell', type: 'radio', model: 'panning', value: 'cell',
-                        //         },
-                        //     },
-                        // },
-                        // shading: {
-                        //     label: 'Shading', svgSrc: 'images/quill.svg', classes: 'md-icon-button', menu: {
-                        //         wires: {
-                        //             svgSrc: 'images/line-thin.svg', label: 'Thin lines', type: 'radio', model: 'shading', value: 'wires',
-                        //         },
-                        //     },
-                        // 
-                        // },
+                        panning: {
+                            label: 'Panning', svgSrc: 'images/search.svg', classes: 'md-icon-button', menu: {
+                                'zoom-in': {
+                                    svgSrc: 'images/zoom-in.svg', label: 'Zoom-in square', type: 'radio', model: 'panning', value: 'zoom-in',
+                                },
+                                'zoom-out': {
+                                    svgSrc: 'images/zoom-out.svg', label: 'Zoom-out square', type: 'radio', model: 'panning', value: 'zoom-out',
+                                },
+                                'zoom-in-fit': {
+                                    svgSrc: 'images/zoom-in.svg', label: 'Zoom-in fit', type: 'radio', model: 'panning', value: 'zoom-in-fit',
+                                },
+                                'zoom-out-fit': {
+                                    svgSrc: 'images/zoom-out.svg', label: 'Zoom-out fit', type: 'radio', model: 'panning', value: 'zoom-out-fit',
+                                },
+                            },
+                        },
+                        shading: {
+                            label: 'Shading', svgSrc: 'images/quill.svg', classes: 'md-icon-button', menu: {
+                                tint: {
+                                    svgSrc: 'images/halftone-tint.svg', label: 'Halftone tint', type: 'radio', model: 'shading', value: 'tint',
+                                },
+                                screen: {
+                                    svgSrc: 'images/halftone-screen.svg', label: 'Halftone screen', type: 'radio', model: 'shading', value: 'screen',
+                                },
+                            },
+                        
+                        },
                     }
                 },
                 parameters: {
@@ -348,17 +341,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="200" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
                                     <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-toggle-control flex layout-fill id="rounding-toggle" label="Per-round" description="Round screening." value="false" suffix="" model="perrounding" tooltip="@">\
-                                    <b>Periodic Rounding:</b> Algorithm for periodic rounding. \
-                                </color-sheets-toggle-control>\
                                 <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Halftone angle resolution." minimum="0" maximum="90" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
                                     <b>Line Angle:</b> Halftone angle resolution. \
                                 </color-sheets-slider-control>\
                                 <color-sheets-slider-control flex layout-fill id="tint-slider" label="Tint" description="Tint value." minimum="0" maximum="100" step="0.25" value="50" suffix="%" model="tint" tooltip="@" ng-disabled="{{$sheet.parameters.screenview}}">\
                                     <b>Tint Value:</b> Color tint. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-toggle-control flex layout-fill id="screen-toggle" label="Tint/Screen" description="Tint/Screen Toggle" value="false" suffix="" model="screenview" tooltip="@">\
-                                    <b>Tint/Screen toggle:</b> Switch between screen and halftone-tint views. \
+                                <color-sheets-toggle-control flex layout-fill id="rounding-toggle" label="Per-round" description="Round screening." value="false" suffix="" model="perrounding" tooltip="@">\
+                                    <b>Periodic Rounding:</b> Algorithm for periodic rounding. \
                                 </color-sheets-toggle-control>\
                             </color-sheets-panel-body>'),
                     }
@@ -467,7 +457,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         };
 
         grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios = {
-            _order: ['Base Calculations', 'Intended Halftone', 'Periodic-Rounded Halftone', 'Periodic-Rounding Results'],
+            _order: ['Base Calculations', 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
             'Base Calculations': [{
                 id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
             }, {
@@ -488,8 +478,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, {
                 id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
             }],
-            'Periodic-Rounded Halftone': [{
-                id: "linePerroundLPI", group: "roundLPI", type: "r", fn: "SPI/(round(cos(Math.PI/4)*SPI/LPI)/cos(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
+            'Periodically-Rounded Halftone': [{
+                id: "linePerroundLPI", group: "roundLPI", type: "r", fn: "SPI/(floor(sin(Math.PI/4)*SPI/LPI)/sin(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
             }, {
                 id: "linePerroundSpots", group: "roundLPI", type: "r", fn: "25400/linePerroundLPI/spotLength", unit: "spots", name: "per-rounded halftone spots at screening angle", description: "", decimals: 2,
             }, {

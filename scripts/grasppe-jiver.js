@@ -19,10 +19,10 @@ GrasppeJive.prototype = {
     _v: null,
     _t: null,
     _c: null,
-    _function: {
-        Math: ['round', 'min', 'max', 'sqrt', 'pow', 'PI', 'cos', 'sin', 'atan', 'atan2']
-    },
-    _math: ['round', 'min', 'max', 'sqrt', 'pow', 'PI', 'cos', 'sin', 'atan', 'atan2'],
+    // _function: {
+    //     Math: ['round', 'min', 'max', 'sqrt', 'pow', 'PI', 'cos', 'sin', 'atan', 'atan2']
+    // },
+    _math: ['floor', 'ceil', 'round', 'min', 'max', 'sqrt', 'pow', 'PI', 'cos', 'sin', 'atan', 'atan2'],
     functions: {},
     variables: {},
     errors: [],
