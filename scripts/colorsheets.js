@@ -96,6 +96,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 // !- Sheets [Directives] Controls
                 colorSheetsSliderControl: grasppe.ColorSheetsApp.Directives.SliderControl,
+                colorSheetsToggleControl: grasppe.ColorSheetsApp.Directives.ToggleControl,
                 colorSheetsImageControl: grasppe.ColorSheetsApp.Directives.ImageControl,
 
                 // !- Sheets [Directives] Tables

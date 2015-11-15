@@ -96,7 +96,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         padding: 0, margin: 0, flex: 1
                     },
                     contents: {
-                        simulation: {
+                        top: {
                             id: 'simulation', attributes: {
                                 'layout': 'row', 'layout-sm': 'column', 'layout-gt-lg': 'row',
                             },
@@ -116,7 +116,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 },
                             },
                         },
-                        information: {
+                        bottom: {
                             id: 'information', attributes: {
                                 'layout-sm': 'column', 'layout-md': 'row',
                             },

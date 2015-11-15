@@ -43,17 +43,70 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 						})
 					}],
 					template: '\
-                        <div class="color-sheets-control" layout>\
-                            <div flex="30" layout layout-align="center center">\
-                                <span style="text-overflow: ellipsis; overflow:hidden; min-width: 8em; max-width: 100%">{{control.label}}</span>\
+                        <div class="color-sheets-control" layout flex="100">\
+                            <div flex="25" layout layout-align="center center">\
+                                <span style="text-overflow: ellipsis; overflow:hidden; min-width: 7em; max-width: 100%">{{control.label}}</span>\
                             </div>\
                             <md-slider flex min="{{control.minimum}}" max="{{control.maximum}}" aria-label="{{control.description}}" id="{{control.id}}" class ng-model="control.value"></md-slider>\
                             <div flex="25" layout layout-align="center center">\
                                 <input flex type="number" min="{{control.minimum}}" max="{{control.maximum}}" step="{{control.step}}" aria-label="{{control.description}}" aria-controls="{{control.id}}" ng-model="control.value">\
                                 <span class="control-suffix" style="text-overflow: ellipsis; overflow:hidden; min-width: 3em;">{{control.suffix}}</span>\
                             </div>\
-                            <md-tooltip md-delay="1000" ng-if="control.tooltip===\'@\'"><ng-transclude></ng-transclude></md-tooltip>\
-                            <md-tooltip md-delay="1000" ng-if="control.tooltip && control.tooltip!==\'@\'">{{tooltip}}</md-tooltip>\
+                            <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip===\'@\'">\
+                                <ng-transclude></ng-transclude></md-tooltip>\
+                            <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip && control.tooltip!==\'@\'">\
+                                {{tooltip}}</md-tooltip>\
+                        </div>', scope: true, transclude: true
+
+				};
+			}),
+			// !- colorSheetsComponents [Directives] colorSheetsToggleControl
+			ToggleControl: grasppe.Libre.Directive.define('colorSheetsToggleControl', function () {
+				return {
+					link: function colorSheetsToggleControl($scope, element, attributes, controller, transcludeFunction) {
+						var initial = Number(grasppe.getURLParameters()[attributes.model] || attributes.value);
+						$scope.control = {
+							id: attributes.id, model: (attributes.model),
+							label: attributes.label, description: attributes.description, suffix: attributes.suffix, minimum: Number(attributes.minimum),
+							maximum: Number(attributes.maximum),
+							step: Number(attributes.step),
+							value: initial || Number(localStorage.getItem($scope.sheet.id + '-' + attributes.model)) || Number(attributes.value),
+							initial: initial, tooltip: attributes.tooltip,
+						};
+						$scope.control.size = String($scope.control.maximum || $scope.control.value).length;
+						element.find('md-slider, input').attr('ng-model', 'parameters.' + $scope.control.model);
+						element.find('input').attr('size', $scope.control.size).css('min-width', ($scope.control.size) + 'em');
+					},
+					controller: ['$scope', '$element', function ($scope, element) {
+						$scope.$watch('control.value', function (current, last, $scope) {
+							if (current !== $scope.parameters[$scope.control.model] && current !== undefined) {
+								$scope.parameters[$scope.control.model] = current;
+								localStorage.setItem($scope.sheet.id + '-' + $scope.control.model, current);
+							}
+						});
+						$scope.$on('selected.parameters', function (event, action, context) {
+							switch (action) {
+							case 'reset': if (context === "parameters" || context === $scope.control.model) $scope.control.value = $scope.control.initial, $scope.$apply();
+								break;
+							}
+						})
+					}],
+					template: '\
+                        <div class="color-sheets-control" layout flex="45">\
+                            <div flex="55" layout layout-align="center center">\
+                                <span style="text-overflow: ellipsis; overflow:hidden; min-width: 7em; max-width: 100%">{{control.label}}</span>\
+                            </div>\
+                            <div flex="45" layout layout-align="left center">\
+                                <md-switch flex aria-label="{{control.description}}" id="{{control.id}}" class ng-model="control.value"></md-switch>\
+                            </div>\
+                            <!--div flex="25" layout layout-align="center center">\
+                                <input flex type="number" min="{{control.minimum}}" max="{{control.maximum}}" step="{{control.step}}" aria-label="{{control.description}}" aria-controls="{{control.id}}" ng-model="control.value">\
+                                <span class="control-suffix" style="text-overflow: ellipsis; overflow:hidden; min-width: 3em;">{{control.suffix}}</span>\
+                            </div-->\
+                            <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip===\'@\'">\
+                                <ng-transclude></ng-transclude></md-tooltip>\
+                            <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip && control.tooltip!==\'@\'">\
+                                {{tooltip}}</md-tooltip>\
                         </div>', scope: true, transclude: true
 
 				};

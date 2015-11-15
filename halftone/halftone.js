@@ -58,14 +58,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 this.hash['gridCache' + steps] = grids;
             }
 
-            // getPixelCache(x, y) {
-            //     return this.hash.pixelCache && this.hash.pixelCache[x][y];
-            // }
-            // 
-            // setPixelCache(index, pixel) {
-            //     if (!this.hash.pixelCache) this.hash.pixelCache = [];
-            //     this.hash['pixelCache' + index] = pixel;
-            // }
             getPixelBox(x, y, fillStyle, strokeStyle) {
                 if (!this.hash.pixelCache) this.hash.pixelCache = [];
                 var pixelCache = this.hash.pixelCache;
@@ -89,7 +81,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 return this;
             }
-
+            
             calculateStack() {
                 var modelStack = {},
                     modelCalculations = {},
@@ -152,14 +144,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 fillStyle: "white"
                             },
                         },
-                        lineXSpots = values.lineXSpots,
-                        lineYSpots = values.lineYSpots,
-                        lineRoundXSpots = values.lineRoundXSpots,
-                        lineRoundYSpots = values.lineRoundYSpots,
-                        lineSpots = values.lineSpots,
+                        lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
+                        screenView = this.getParameter('screenview'),
                         theta = values.theta,
                         tint = this.getParameter('tint'),
-                        // values.tint,
                         thetaRadians = theta / 180 * Math.PI,
                         cos = Math.cos,
                         sin = Math.sin,
@@ -194,10 +182,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         for (var i = 0; i < gridSteps[0]; i++) {
                             if (timeStamp !== self.timeStamp) return this;
                             for (var j = 0; j < gridSteps[1]; j++) {
-                                var s = cos(cosTheta * j / lineSpots - sinTheta * i / lineSpots) * sin(sinTheta * j / lineSpots + cosTheta * i / lineSpots),
-                                    t = 1 * (tint !== 0 && min(100, max(0, round(100 * (s + 1) / 2))) >= 100-tint),
-                                    fillStyle = 'rgba(0,0,0,' + t + ')',
-                                    strokeStyle = 'rgba(0,0,0,' + (t > 0 ? 1 : 0.25) + ')';
+                                var s = sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
+                                    v = min(1, max(0, (s + 1) / 2)),
+                                    t = 1 * (tint !== 0 && (v*100 >= 100-tint)),
+                                    fillStyle = 'rgba(0,0,0,' + (screenView ? v : t) + ')',
+                                    strokeStyle = 'rgba(0,0,0,' + ((screenView || (t > 0)) ? 1 : 0.25) + ')';
                                 halftonePixels[n] = this.getPixelBox(i, j, fillStyle, strokeStyle);
                                 n++;
                             }
@@ -214,7 +203,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         }
                         var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + paths.join('') + '</svg>';
 
-                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: 100%; height: auto; min-height: 100%;">'));
+                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
                         plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
                     }
 
@@ -344,7 +333,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 }
                             })
                         }],
-                        template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: hidden; max-height: 50vh;">\
+                        template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: visible; max-height: 50vh;">\
                             <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
                             </color-sheets-panel-body>'),
                     }
@@ -352,22 +341,25 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !- HalftoneDemo [Directives] colorSheetParameters                
                 colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
                     return {
-                        template: ('<color-sheets-panel-body layout="column" flex layout-fill layout-align="start center" style="min-height: 30vh; padding: 0.5em 0;">\
+                        template: ('<color-sheets-panel-body layout="column" flex layout-fill layout-align="start center" style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="100" maximum="2540" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
                                 <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="200" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
                                     <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
+                                <color-sheets-toggle-control flex layout-fill id="rounding-toggle" label="Per-round" description="Round screening." value="false" suffix="" model="perrounding" tooltip="@">\
+                                    <b>Periodic Rounding:</b> Algorithm for periodic rounding. \
+                                </color-sheets-toggle-control>\
                                 <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Halftone angle resolution." minimum="0" maximum="90" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
                                     <b>Line Angle:</b> Halftone angle resolution. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="tint-slider" label="Tint" description="Tint value." minimum="0" maximum="100" step="0.25" value="50" suffix="%" model="tint" tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="tint-slider" label="Tint" description="Tint value." minimum="0" maximum="100" step="0.25" value="50" suffix="%" model="tint" tooltip="@" ng-disabled="{{$sheet.parameters.screenview}}">\
                                     <b>Tint Value:</b> Color tint. \
                                 </color-sheets-slider-control>\
-                                <!--color-sheets-toggle-control flex layout-fill id="rounded-toggle" label="Cells" description="Round screening." value="false" suffix=" cells" model="rounded" tooltip="@">\
-                                    <b>Round Screening:</b> Use round versus fractional halftonelines. \
-                                </color-sheets-toggle-control-->\
+                                <color-sheets-toggle-control flex layout-fill id="screen-toggle" label="Tint/Screen" description="Tint/Screen Toggle" value="false" suffix="" model="screenview" tooltip="@">\
+                                    <b>Tint/Screen toggle:</b> Switch between screen and halftone-tint views. \
+                                </color-sheets-toggle-control>\
                             </color-sheets-panel-body>'),
                     }
                 }),
@@ -475,7 +467,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         };
 
         grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios = {
-            _order: ['Base Calculations', 'Intended Halftone', 'Rounded Halftone', 'Rounding Results'],
+            _order: ['Base Calculations', 'Intended Halftone', 'Periodic-Rounded Halftone', 'Periodic-Rounding Results'],
             'Base Calculations': [{
                 id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
             }, {
@@ -493,18 +485,24 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(thetaRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
             }, {
                 id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+            }, {
+                id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
             }],
-            'Rounded Halftone': [{
-                id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots))", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+            'Periodic-Rounded Halftone': [{
+                id: "linePerroundLPI", group: "roundLPI", type: "r", fn: "SPI/(round(cos(Math.PI/4)*SPI/LPI)/cos(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
             }, {
-                id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots))", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                id: "linePerroundSpots", group: "roundLPI", type: "r", fn: "25400/linePerroundLPI/spotLength", unit: "spots", name: "per-rounded halftone spots at screening angle", description: "", decimals: 2,
             }, {
-                id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
-            }],
-            'Rounding Results': [{
-                id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
+                id: "linePerroundLength", type: "c", fn: "25400/linePerroundLPI", unit: "µ", name: "per-rounded halftone side length", description: "", decimals: 2,
             }, {
-                id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
+                id: "linePerroundXSpots", group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(thetaRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+            }, {
+                id: "linePerroundYSpots", group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(thetaRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+            }], // lineRoundLPI = 25400/(spotLength*lineSpots) // lineRoundLPI*spotLength/25400 = 1/lineSpots // 25400/lineRoundLPI/spotLength
+            'Periodic-Rounding Results': [{
+                id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*linePerroundSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
+            }, {
+                id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
             }, {
                 id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "rounded gray-levels (1-bit)", description: "", decimals: 0,
             }, {
