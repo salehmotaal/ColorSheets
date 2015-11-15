@@ -68,7 +68,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 $scope.sheet = sheet, model.sheet = $scope.sheet, sheet.id = key;
 
-                if (sheet.controllers && sheet.controllers.sheetController) panelContents.empty().attr('ng-controller', sheet.controllers.sheetController.name).attr('color-Sheets-Sheet', '').injector().invoke(function ($compile) {
+                if (sheet.controllers && sheet.controllers.sheetController) panelContents.empty().attr('ng-controller', sheet.controllers.sheetController.name + ' as sheetController').attr('color-Sheets-Sheet', '').injector().invoke(function ($compile) {
                     $compile(panelContents)($scope.$new(false));
                 });
                 for (var panelKey of['stage', 'parameters', 'results', 'overview']) {

@@ -245,11 +245,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if ($legend.length === 0) {
                         $legend = $('<div class="legend-wrapper container-fluid md-whiteframe-1dp" style="background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '; position:absolute; left: 10%; right: 10%; width:auto; flex; overflow:hidden;"></div>').appendTo(container);
                         legendText.forEach(function (text, index) {
-                            $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="font-size:10pt; padding:0 .25em; display: flex; flex-direction: row; white-space: no-wrap; overflow: hidden; text-overflow:ellipsis;">\
-                                <div class="legend-symbol" style="color: ' + legendStyles[index].strokeStyle + '; white-space:nowrap; overflow: hidden; display:block; vertical-align: baseline; height: 100%; padding: 0 0.25em;">\
-                                    <svg class="md-whiteframe-1dp" style="border-radius: 50%;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 32 32"><path fill="' + legendStyles[index].strokeStyle + '" d="M0 0L32 0L32 32L0 32L0 0Z"></path></svg>\
+                            $legend.append($('<div class="legend-item col-xs-4 legend-item-' + index + '" style="font-size:10pt; line-height: 10pt; padding:.5em .25em; display: flex; flex-direction: row; white-space: no-wrap; overflow: hidden; text-overflow:ellipsis;">\
+                                <div class="legend-symbol" style="color: ' + legendStyles[index].strokeStyle + '; white-space:nowrap; display:block; vertical-align: top; height: 100%; padding: 0 0.25em;">\
+                                    <div class="md-whiteframe-0dp" style="vertical-align: baseline; margin-top: -2.125pt; border-radius: 50%; width:6.25pt; height:6.25pt; background-color: ' + legendStyles[index].strokeStyle + '"></div>\
+                                    <!--svg class="md-whiteframe-1dp" style="border-radius: 50%;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 32 32"><path fill="' + legendStyles[index].strokeStyle + '" d="M0 0L32 0L32 32L0 32L0 0Z"></path></svg-->\
                                 </div>\
-                                <div class="legend-text" style="text-overflow:ellipsis; overflow-x:hidden; white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%; flex: 1">' + text.replace('\n', ' ') + '</div>\
+                                <div class="legend-text" style="text-overflow:ellipsis; overflow-x:hidden; white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%; flex: 1;">' + text.replace('\n', ' ') + '</div>\
                             </div>'));
                         });
                     }

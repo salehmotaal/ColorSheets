@@ -55,7 +55,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     	.color-sheets-sheet-panel-contents {flex: 1; background-color: #fff; overflow-y: scroll;}\
                     	.color-sheets-sheet-panel-header md-toolbar.color-sheets-toolbar, .color-sheets-sheet-panel-header md-toolbar.color-sheets-toolbar > *, .color-sheets-sheet-panel-header  md-menu-content > :first-Child > md-button {max-height: {{mainHeaderHeight}}; min-height: {{mainHeaderHeight}};}\
                     	.color-sheets-panel-body {overflow: hidden; max-width: calc(100% - 1em); max-height: calc(100% - 1em); /*border: 1px solid rgba(0,0,0,0.05);*/ min-height: 25vh; margin: 0.5em;}\
-                    	\
+                    	.color-sheets-panel-body * {text-shadow:0 1px 2px rgba(0,0,0,0.15),0 1px 0 rgba(255,255,255,1);}\
+                    	.color-sheets-sheet-panel-header {text-shadow:0 1px 4px rgba(0,0,0,0.25);}\
                     	/* !- Sheets [Styles] Controls */\
                     	.color-sheets-control {margin: 0.25em 0; padding: 0.25em 0; width: 100%;}\
                     	.color-sheets-control > * {padding: 0 0.25em;}\

@@ -118,101 +118,207 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 else Object.assign(this.hash._options, this.$options);
                 return this.hash._options;
             }
+            
+            downloadPlot(a) {
+                var link = Object.assign(document.createElement('a'), {
+                    href: 'data:image/svg+xml;utf8,' + this.generatePlotImage(), target: '_download', download: 'halftone.svg'
+                });
+                document.body.appendChild(link), link.click(), $(link).remove();
+                // if (!a) 
+            }
+            
+            generatePlotImage(width, height) {
+                var self = this.generatePlotImage,
+                    timeStamp = self.timeStamp;
+                self.timeStamp = timeStamp;
+                
+                if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
+                if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
+
+                var values = this.calculations,
+                    options = this.getHeleperOptions(),
+                    plotOptions = options.plotOptions,
+                    legendOptions = options.legendOptions,
+                    plotCanvas = $(this.$scope.canvas),
+                    frameWidth = width || $(plotCanvas).width(),
+                    frameHeight = height || $(plotCanvas).height(),
+                    frameRatio = frameWidth / frameHeight,
+                    series = options.seriesOptions,
+                    mode = {
+                        is: options.shading + '-' + options.panning,
+                        tint: options.shading === 'tint',
+                        screen: options.shading === 'screen',
+                        zoomIn: /zoom-in/.test(this.$options.panning),
+                        zoomOut: /zoom-out/.test(this.$options.panning),
+                        panSquare: !/fit/.test(this.$options.panning),
+                        panFit: /fit/.test(this.$options.panning),
+                    },
+                    stroke = {},
+                    style = {
+                        plotGrid: (plotOptions.plotGridStyle),
+                        legendBox: (legendOptions.legendBoxStyle),
+                        filled: {
+                            fillStyle: "black"
+                        },
+                        empty: {
+                            fillStyle: "white"
+                        },
+                    },
+                    lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
+                    screenView = mode.screen,
+                    theta = values.theta,
+                    tint = this.getParameter('tint'),
+                    thetaRadians = theta / 180 * Math.PI,
+                    sinTheta = Math.sin(thetaRadians),
+                    cosTheta = Math.cos(thetaRadians),
+                    margin = 0;
+                    
+                height = height || mode.zoomIn ? 40 : 80;
+                width = width || mode.panFit ? Math.round(height * frameRatio) : height;
+
+                var xStep = Math.ceil(width/2),
+                    yStep = Math.ceil(height/2);
+                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+
+                HALFTONE_CALCULATIONS: {
+                    var halftonePixels = Array(height * width),
+                        n = 0;
+                    for (var i = -xStep; i <= xStep; i++) {
+                        if (timeStamp !== self.timeStamp) return this;
+                        for (var j = -yStep; j <= yStep; j++) {
+                            var s = Math.sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * Math.sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
+                                v = Math.min(1, Math.max(0, (s + 1) / 2)),
+                                t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
+                                fill = Math.round(255 * (screenView ? v : t)),
+                                fillStyle = 'rgb(' + fill + ',' + fill + ',' + fill + ')',
+                                strokeStyle = (screenView || (t === 0)) ? 'black' : 'rgb(127,127,127)';
+                            halftonePixels[n] = this.getPixelBox(xStep+i, yStep+j, fillStyle, strokeStyle);
+                            n++;
+                        }
+                    }
+                }
+
+                PATH_GENERATION: {
+                    var paths = [],
+                        scale = 4;
+                    if (timeStamp !== self.timeStamp) return this;
+                    for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
+                    var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + [0, 0, width*scale, height*scale].join(' ') + '">' + paths.join('') + '</svg>';
+
+                    // if (plotCanvas.find('img').length === 0) {
+                    //     plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                    //     $(window).bind('resize', function(){
+                    //         this.updatePlot();
+                    //     }.bind(this));
+                    // }
+                    // plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
+                }
+                
+                return svg;
+            }
 
             updatePlot() {
-                self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
-                    if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
-                    if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
-
-                    var values = this.calculations,
-                        options = this.getHeleperOptions(),
-                        plotOptions = options.plotOptions,
-                        legendOptions = options.legendOptions,
-                        plotCanvas = $(this.$scope.canvas),
-                        frameWidth = $(plotCanvas).width(),
-                        frameHeight = $(plotCanvas).height(),
-                        frameRatio = frameWidth / frameHeight,
-                        series = options.seriesOptions,
-                        mode = {
-                            is: options.shading + '-' + options.panning,
-                            tint: options.shading === 'tint',
-                            screen: options.shading === 'screen',
-                            zoomIn: /zoom-in/.test(this.$options.panning),
-                            zoomOut: /zoom-out/.test(this.$options.panning),
-                            panSquare: !/fit/.test(this.$options.panning),
-                            panFit: /fit/.test(this.$options.panning),
-                        },
-                        stroke = {},
-                        style = {
-                            plotGrid: (plotOptions.plotGridStyle),
-                            legendBox: (legendOptions.legendBoxStyle),
-                            filled: {
-                                fillStyle: "black"
-                            },
-                            empty: {
-                                fillStyle: "white"
-                            },
-                        },
-                        lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
-                        screenView = mode.screen,
-                        theta = values.theta,
-                        tint = this.getParameter('tint'),
-                        thetaRadians = theta / 180 * Math.PI,
-                        cos = Math.cos,
-                        sin = Math.sin,
-                        round = Math.round,
-                        min = Math.min,
-                        max = Math.max,
-                        sinTheta = Math.sin(thetaRadians),
-                        cosTheta = Math.cos(thetaRadians),
-                        Box = grasppe.canvas.Box,
-                        Lines = grasppe.canvas.Lines,
-                        Bounds = grasppe.canvas.BoundingBox,
-                        Rectangle = grasppe.canvas.Rectangle,
-                        ImageFilter = grasppe.canvas.ImageFilter,
-                        Chart = grasppe.canvas.Chart,
-                        margin = 0,
-                        height = mode.zoomIn ? 40 : 80, // max(50, min(150, lineSpots*10)); //round(100/lineSpots)*lineSpots;
-                        width = mode.panFit ? Math.round(height * frameRatio) : height,
-                        xStep = Math.ceil(width/2),
-                        yStep = Math.ceil(height/2);
-                    if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
-
-                    HALFTONE_CALCULATIONS: {
-                        var halftonePixels = Array(height * width),
-                            n = 0;
-                        for (var i = -xStep; i <= xStep; i++) {
-                            if (timeStamp !== self.timeStamp) return this;
-                            for (var j = -yStep; j <= yStep; j++) {
-                                var s = sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
-                                    v = min(1, max(0, (s + 1) / 2)),
-                                    t = 1 * (tint !== 0 && (v*100 >= 100-tint)),
-                                    fillStyle = 'rgba(0,0,0,' + (screenView ? v : t) + ')',
-                                    strokeStyle = 'rgba(0,0,0,' + ((screenView || (t > 0)) ? 1 : 0.25) + ')';
-                                halftonePixels[n] = this.getPixelBox(i, j, fillStyle, strokeStyle);
-                                n++;
-                            }
-                        }
+                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
+                    var plotCanvas = $(this.$scope.canvas);
+                    if (plotCanvas.find('img').length === 0) {
+                        plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                        $(window).bind('resize', function(){
+                            this.updatePlot();
+                        }.bind(this));
                     }
+                    plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + this.generatePlotImage());
 
-                    PATH_GENERATION: {
-                        var paths = [],
-                            scale = 4;
-                        if (timeStamp !== self.timeStamp) return this;
-                        for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
-                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + [-xStep*scale, -yStep*scale, width*scale, height*scale].join(' ') + '">' + paths.join('') + '</svg>';
+                    // if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
+                    // if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
+                    // 
+                    // var values = this.calculations,
+                    //     options = this.getHeleperOptions(),
+                    //     plotOptions = options.plotOptions,
+                    //     legendOptions = options.legendOptions,
+                    //     plotCanvas = $(this.$scope.canvas),
+                    //     frameWidth = $(plotCanvas).width(),
+                    //     frameHeight = $(plotCanvas).height(),
+                    //     frameRatio = frameWidth / frameHeight,
+                    //     series = options.seriesOptions,
+                    //     mode = {
+                    //         is: options.shading + '-' + options.panning,
+                    //         tint: options.shading === 'tint',
+                    //         screen: options.shading === 'screen',
+                    //         zoomIn: /zoom-in/.test(this.$options.panning),
+                    //         zoomOut: /zoom-out/.test(this.$options.panning),
+                    //         panSquare: !/fit/.test(this.$options.panning),
+                    //         panFit: /fit/.test(this.$options.panning),
+                    //     },
+                    //     stroke = {},
+                    //     style = {
+                    //         plotGrid: (plotOptions.plotGridStyle),
+                    //         legendBox: (legendOptions.legendBoxStyle),
+                    //         filled: {
+                    //             fillStyle: "black"
+                    //         },
+                    //         empty: {
+                    //             fillStyle: "white"
+                    //         },
+                    //     },
+                    //     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
+                    //     screenView = mode.screen,
+                    //     theta = values.theta,
+                    //     tint = this.getParameter('tint'),
+                    //     thetaRadians = theta / 180 * Math.PI,
+                    //     cos = Math.cos,
+                    //     sin = Math.sin,
+                    //     round = Math.round,
+                    //     min = Math.min,
+                    //     max = Math.max,
+                    //     sinTheta = Math.sin(thetaRadians),
+                    //     cosTheta = Math.cos(thetaRadians),
+                    //     Box = grasppe.canvas.Box,
+                    //     Lines = grasppe.canvas.Lines,
+                    //     Bounds = grasppe.canvas.BoundingBox,
+                    //     Rectangle = grasppe.canvas.Rectangle,
+                    //     ImageFilter = grasppe.canvas.ImageFilter,
+                    //     Chart = grasppe.canvas.Chart,
+                    //     margin = 0,
+                    //     height = mode.zoomIn ? 40 : 80, // max(50, min(150, lineSpots*10)); //round(100/lineSpots)*lineSpots;
+                    //     width = mode.panFit ? Math.round(height * frameRatio) : height,
+                    //     xStep = Math.ceil(width/2),
+                    //     yStep = Math.ceil(height/2);
+                    // if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+                    // 
+                    // HALFTONE_CALCULATIONS: {
+                    //     var halftonePixels = Array(height * width),
+                    //         n = 0;
+                    //     for (var i = -xStep; i <= xStep; i++) {
+                    //         if (timeStamp !== self.timeStamp) return this;
+                    //         for (var j = -yStep; j <= yStep; j++) {
+                    //             var s = sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
+                    //                 v = min(1, max(0, (s + 1) / 2)),
+                    //                 t = 1 * (tint !== 0 && (v*100 >= 100-tint)),
+                    //                 fillStyle = 'rgba(0,0,0,' + (screenView ? v : t) + ')',
+                    //                 strokeStyle = 'rgba(0,0,0,' + ((screenView || (t > 0)) ? 1 : 0.25) + ')';
+                    //             halftonePixels[n] = this.getPixelBox(i, j, fillStyle, strokeStyle);
+                    //             n++;
+                    //         }
+                    //     }
+                    // }
+                    // 
+                    // PATH_GENERATION: {
+                    //     var paths = [],
+                    //         scale = 4;
+                    //     if (timeStamp !== self.timeStamp) return this;
+                    //     for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
+                    //     var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + [-xStep*scale, -yStep*scale, width*scale, height*scale].join(' ') + '">' + paths.join('') + '</svg>';
+                    // 
+                    //     if (plotCanvas.find('img').length === 0) {
+                    //         plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                    //         $(window).bind('resize', function(){
+                    //             this.updatePlot();
+                    //         }.bind(this));
+                    //     }
+                    //     plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
+                    // }
 
-                        if (plotCanvas.find('img').length === 0) {
-                            plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
-                            $(window).bind('resize', function(){
-                                this.updatePlot();
-                            }.bind(this));
-                        }
-                        plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
-                    }
-
-                }.bind(this), 10, self, self.timeStamp);
-
+                }.bind(this), 0);
                 return this;
             }
         };
@@ -222,6 +328,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             panels: {
                 stage: {
                     directive: 'color-sheet-stage', tools: {
+                        save: {
+                            label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function(link, $scope, event){
+                                console.log(arguments);
+                                $scope.$sheet.helper.downloadPlot(link);
+                            },
+                        },
                         panning: {
                             label: 'Panning', svgSrc: 'images/search.svg', classes: 'md-icon-button', menu: {
                                 'zoom-in': {
@@ -247,7 +359,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     svgSrc: 'images/halftone-screen.svg', label: 'Halftone screen', type: 'radio', model: 'shading', value: 'screen',
                                 },
                             },
-                        
                         },
                     }
                 },

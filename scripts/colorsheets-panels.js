@@ -24,31 +24,25 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- [Directives] PanelMenuItem
             PanelMenuItem: grasppe.Libre.Directive.define('colorSheetsPanelMenuItem', {
                 link: function colorSheetsPanelMenuItemLink ($scope, element, attributes) {
-                    if (typeof $scope.menu.click === 'string') {
-                        $scope.menu.click = Object.assign(function (event, data) {
-                            eval('var $scope = event.data.$scope; ' + event.data.menu.click.expression);
-                        }, {
-                            expression: $scope.menu.click
-                        });
-                    } else if (/radio/i.test('' + $scope.menu.type)) {
-                        $scope.menu.click = function radioMenuItemClick (event, data) {
-                            var $scope = event.data.$scope;
-                            if (event.data.menu.model) $scope.options[event.data.menu.model] = event.data.menu.value;
-                        }
-                    } else if (/checkbox/i.test('' + $scope.menu.type)) {
-                        $scope.menu.click = function checkboxMenuItemClick (event, data) {
-                            var $scope = event.data.$scope;
-                            if (event.data.menu.model) $scope.options[event.data.menu.model] = !($scope.options[event.data.menu.model] === true);
-                        }
-                    }
-
-                    if (typeof $scope.menu.click === 'function') element.bind('click', {
-                        $scope: $scope, menu: $scope.menu
-                    }, $scope.menu.click);
-
+                    // console.log($scope.menu.click);
                     if ($scope.menu.model) element.attr('ng-model', $scope.menu.model);
-                    
                     $scope.menu.iconColor = 'black';
+
+                    if ($scope.menu.click || (/radio|checkbox/i.test('' + $scope.menu.type))) $(element).bind('click', {
+                        $scope: $scope, $menu: $scope.menu,
+                    }, function(event, data) {
+                        var $scope = event.data.$scope,
+                            $menu = event.data.$menu;
+                        if (typeof $menu.click === 'string')
+                            eval($menu.click);
+                        else if (typeof $menu.click === 'function')
+                            $menu.click($scope, event, data);
+                        else if (/radio/i.test('' + $menu.type)) 
+                            if ($menu.model) $scope.options[$menu.model] = $menu.value;
+                        else if (/checkbox/i.test('' + $menu.type))
+                            if ($menu.model) $scope.options[$menu.model] = !($scope.options[$menu.model]===true);
+                    });
+
                 },
                 template: '\
                     <md-menu-item ng-init="menu.iconColor = menu.iconColor || menuColor" class="md-indent" type="{{menu.type}}">\
@@ -61,10 +55,19 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- [Directives] PanelTool
             PanelTool: grasppe.Libre.Directive.define('colorSheetsPanelTool', {
                 link: function colorSheetsPanelToolLink ($scope, element, attributes) {
-                    if ($scope.tool.click) element.bind('click', {
-                        $scope: $scope, expression: $scope.tool.click
+                    if (typeof $scope.tool.click) element.bind('click', {
+                        $scope: $scope, $tool: $scope.tool
                     }, function (event, data) {
-                        eval('var $scope = event.data.$scope; ' + event.data.expression);
+                        var $scope = event.data.$scope,
+                            $tool = event.data.$tool;
+                        if (typeof $tool.click === 'string')
+                            eval($tool.click);
+                        else if (typeof $tool.click === 'function')
+                            $tool.click(this, $scope, event, data);
+                        else if (/radio/i.test('' + $tool.type)) 
+                            if ($tool.model) $scope.options[$tool.model] = $tool.value;
+                        else if (/checkbox/i.test('' + $tool.type))
+                            if ($tool.model) $scope.options[$tool.model] = !($scope.options[$tool.model]===true);
                     });
                     $scope.menuButtonClasses = $scope.toolbarClasses.replace(/darken-\d*/, '');
                 },
