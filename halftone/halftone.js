@@ -76,7 +76,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
 
             updateData() {
-                // if (this.getParameter('spi') && this.getParameter('lpi') && this.getParameter('theta') && this.getParameter('cells') && this) window.history.pushState({}, document.title, window.location.href.replace(/\?[^\#]*/, ['?spi=', this.getParameter('spi'), '&lpi=', this.getParameter('lpi'), '&theta=', this.getParameter('theta'), '&cells=', this.getParameter('cells'), (this.$options.shading ? '&shading=' + this.$options.shading : 'supercells'), (this.$options.panning ? '&panning=' + this.$options.panning : 'cell'), ].join('')));
+                // if (this.getParameter('spi') && this.getParameter('lpi') && this.getParameter('angle') && this.getParameter('cells') && this) window.history.pushState({}, document.title, window.location.href.replace(/\?[^\#]*/, ['?spi=', this.getParameter('spi'), '&lpi=', this.getParameter('lpi'), '&angle=', this.getParameter('angle'), '&cells=', this.getParameter('cells'), (this.$options.shading ? '&shading=' + this.$options.shading : 'supercells'), (this.$options.panning ? '&panning=' + this.$options.panning : 'cell'), ].join('')));
                 this.calculateStack().updatePlot();
 
                 return this;
@@ -89,7 +89,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     stack = [
                         ['SPI', this.getParameter('spi')],
                         ['LPI', this.getParameter('lpi')],
-                        ['THETA', this.getParameter('theta')],
+                        ['ANGLE', this.getParameter('angle')],
                         ['TINT', this.getParameter('tint')]
                     ];
 
@@ -120,16 +120,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
             
             downloadPlot(a) {
-                var svg = (''+this.generatePlotImage(125, 125)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
+                var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
                     link = Object.assign(document.createElement('a'), {
                     href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
                 });
-                console.log(svg);
+                // console.log(svg);
                 document.body.appendChild(link), link.click(), $(link).remove();
                 // if (!a) 
             }
             
-            generatePlotImage(width, height) {
+            generatePlotImage(width, height, scale) {
                 var self = this.generatePlotImage,
                     timeStamp = self.timeStamp;
                 self.timeStamp = timeStamp;
@@ -166,13 +166,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             fillStyle: "white"
                         },
                     },
-                    lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
+                    lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
                     screenView = mode.screen,
-                    theta = values.theta,
+                    lineAngle = values.lineAngle,
+                    lineFrequency = values.lineFrequency,
                     tint = this.getParameter('tint'),
-                    thetaRadians = theta / 180 * Math.PI,
-                    sinTheta = Math.sin(thetaRadians),
-                    cosTheta = Math.cos(thetaRadians),
+                    sinAngle = Math.sin(lineAngle),
+                    cosAngle = Math.cos(lineAngle),
                     stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)';
                     
                 if (!height) height = mode.zoomIn ? 40 : 80;
@@ -185,12 +185,23 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 HALFTONE_CALCULATIONS: {
                     var halftonePixels = Array(height * width),
                         n = 0,
-                        valleys = [],
-                        peaks = [];
+                        lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2,
+                        lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row,
+                        valleys = [], peaks = [];
                     for (var i = -xStep; i <= xStep; i++) {
                         if (timeStamp !== self.timeStamp) return this;
+                        // var alphaRow = [], 
+                        //     alpha2Row = [],
+                        //     betaRow = [], 
+                        //     beta2Row = [];
                         for (var j = -yStep; j <= yStep; j++) {
-                            var s = Math.sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * Math.sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
+                            var alpha = Math.cos(Math.cos(lineAngle % Math.PI/2) * (j) * lineFrequency - Math.sin(lineAngle % Math.PI/2) * (i) * lineFrequency),
+                                // alpha2 = Math.sin(Math.cos(lineAngle) * (j) * lineFrequency - Math.sin(lineAngle) * (i) * lineFrequency),
+                                beta = Math.sin(Math.cos(lineAngle % Math.PI/2) * (i) * lineFrequency + Math.sin(lineAngle % Math.PI/2) * (j) * lineFrequency),
+                                // beta2 = Math.sin(Math.cos(lineAngle - Math.PI) * (j) * lineFrequency - Math.sin(lineAngle - Math.PI) * (i) * lineFrequency),
+                                // alpha3 = Math.sin(sinAngle * (j) * lineFrequency -  cosAngle * (i) * lineFrequency),
+                                // beta2 = Math.cos(Math.cos(lineAngle + Math.PI/2) * (j) * lineFrequency - Math.sin(lineAngle + Math.PI/2) * (i) * lineFrequency),
+                                s = alpha * beta,
                                 v = Math.min(1, Math.max(0, (s + 1) / 2)),
                                 t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
                                 fill = Math.round(255 * (screenView ? v : t)),
@@ -200,46 +211,68 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 id: undefined,//'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j,
                             });
                             
-                            if (v < 0.005) {
-                                halftonePixels[n].id = 'htv' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
-                                valleys.push([i + i%2, j + i%2, v]);
+                            var idx = (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
+                            
+                            if (i===0 && j===0) halftonePixels[n].id = 'ht' + idx;
+                            // if (Math.abs(alpha)>0.9 && Math.abs(beta)>0.9) halftonePixels[n].id = 'htp' + idx, peaks.push([i + i%2, j + i%2, v]);
+                            if (i>-xStep && j>-yStep && i<xStep && j<yStep) {
+
+                                // if (lastAlpha2 && lastAlpha2Row && ((lastAlpha2 <= 0 && alpha2 >= 0) || (lastAlpha2 >= 0 && alpha2 <= 0) || (lastAlpha2Row[i] <= 0 && alpha2 >= 0) || (lastAlpha2Row[i] >= 0 && alpha2 <= 0))) halftonePixels[n].fillStyle = 'red';
+                                // if (lastBeta2 && lastBeta2Row && ((lastBeta2 <= 0 && beta2 >= 0) || (lastBeta2 >= 0 && beta2 <= 0) || (lastBeta2Row[i] <= 0 && beta2 >= 0) || (lastBeta2Row[i] >= 0 && beta2 <= 0))) halftonePixels[n].fillStyle = 'rgba(0, 255, 0, 1)';
+
+                                // if (lastAlpha && ((lastAlpha <= 0 && alpha >= 0) || (lastAlpha >= 0 && alpha <= 0))) halftonePixels[n].fillStyle = 'rgba(0, 255, 255, 1)';
+                                // if (lastBetaRow && ((lastBetaRow[i] <= 0 && beta >= 0) || (lastBetaRow[i] >= 0 && beta <= 0))) halftonePixels[n].fillStyle = 'rgba(255, 0, 255, 1)';
+                                // if (lastBeta2Row && ((lastBeta2Row[i] <= 0 && beta2 >= 0) || (lastBeta2Row[i] >= 0 && beta2 <= 0))) halftonePixels[n].fillStyle = 'rgba(0, 255, 0, 1)';
+                                // if (lastBeta && ((lastBeta <= 0 && beta >= 0) || (lastBeta >= 0 && beta <= 0))) halftonePixels[n].fillStyle = 'rgba(255, 0, 255, 1)';
+
+                                // if (lastAlpha3 && ((lastAlpha3 <= 0 && alpha3 >= 0) || (lastAlpha3 >= 0 && alpha3 <= 0))) halftonePixels[n].fillStyle = 'yellow';
+                                // if (lastBeta && ((lastBeta <= 0 && beta >= 0) || (lastBeta >= 0 && beta <= 0))) halftonePixels[n].fillStyle = 'rgba(255, 0 , 255, 1)';
+                                // if (lastBeta2 && ((lastBeta2 <= 0 && beta2 >= 0) || (lastBeta2 >= 0 && beta2 <= 0))) halftonePixels[n].fillStyle = 'rgba(0, 255, 0, 1)';
                             }
-                            // if (v > 0.992) halftonePixels[n].id = 'htp' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j, peaks.push([i, j, v]);
-                            if (i===0 && j===0) halftonePixels[n].id = 'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
+
+                                // lastAlpha = alpha, lastAlpha2 = alpha2;
+                                // alphaRow[i] = alpha, alpha2Row[i] = alpha2;
+                                // lastBeta = beta, lastBeta2 = beta2;
+                                // betaRow[i] = beta, beta2Row[i] = beta2;
+                            // console.log([lastAlpha, lastBeta]);
+                            
                             if (halftonePixels[n].id) halftonePixels[n].fillStyle = 'red';
                             // if (halftonePixels[n].id) halftonePixels[n].strokeStyle = 'red';
                             n++;
                         }
+                        // lastAlphaRow = alphaRow, lastAlpha2Row = alpha2Row;
+                        // lastBetaRow = betaRow, lastBeta2Row = beta2Row;
                     }
                 }
-                CENTRIOD_CONSOLIDATION: {
-                    var lpi = this.getParameter('perrounding') ? values.linePerroundLPI : values.lpi,
-                        spotLength = values.spotLength,
-                        lineLength = 25400 / lpi,
-                        lineXSpots = lineSpots * Math.cos(thetaRadians),
-                        lineYSpots = lineSpots * Math.sin(thetaRadians),
-                        lineSize = Math.sqrt(lineXSpots^2 + lineYSpots^2),
-                        lineXPeriodX = lineSize,
-                        lineXPeriodY = lineSize * Math.cos(1/2*Math.PI);
-
-                    console.log([lineXSpots, lineYSpots, lineSize, lineXPeriodX, lineXPeriodY]);
-                //     var valleyX = [], valleyY = [], centroids = [],
-                //         lastV, lastP;
-                //     for (var v of valleys) {
-                //         if (!centroids[v[0]]) centroids[v[0]] = [];
-                //         if (!centroids[v[0]][v[1]]) valleyX.push(v[0]), valleyY.push(v[1]);
-                //         centroids[v[0]][v[1]] = v;
+                // CENTRIOD_CALCULATION: {
+                //     var periodX = Math.cos(lineAngle % 180) * lineSpots,
+                //         periodY = Math.cos(90+lineAngle % 180) * lineSpots,
+                //         chiX = Math.cos((lineAngle)) * lineFrequency,
+                //         chiY = Math.sin((lineAngle)) * lineFrequency,
+                //         chiZ = Math.sqrt(Math.abs(chiX^2)+Math.abs(chiY^2)),
+                //         lengthX = width / chiZ,
+                //         lengthY = height / chiZ,
+                //         centroids = Object.assign({}, {
+                //             periods: [periodX, periodY, ''],
+                //             length: [lengthX, lengthY , ''],
+                //             chi: [chiX, chiY, chiZ]
+                //         });
+                //     for (var i = 0; i <= lengthX; i++) {
+                //        for (var j = 0; j <= lengthY; j++) {
+                //             this.getPixelBox(
+                //                 Math.round(chiX + chiZ * (i+0.5)),
+                //                 Math.round(chiY + chiZ * (j+0.5))
+                //             ).fillStyle = 'rgb(127,' + Math.round(i/lengthX*255) + ',' + Math.round(j/lengthY*255) + ')';
+                //        }
                 //     }
-                //     centroids = [];
-                //     for (var n = 0; n < valleyX.length; n++) centroids.push([valleyX[n], valleyY[n]]);
                 //     console.table(centroids);
-                }
+                // }
 
                 PATH_GENERATION: {
                     var paths = [],
-                        scale = 4,
                         view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
                     if (timeStamp !== self.timeStamp) return this;
+                    if (!scale) scale = 4;
                     for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
                     var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
 
@@ -319,8 +352,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 lpi: {
                     id: 'spi', name: 'Resolution', description: 'The number of individual halftone cells imaged by the system across one inch in each direction.', type: 'number', unit: "lpi", quantifier: "lines per inch", format: "0.##",
                 },
-                theta: {
-                    id: 'theta', name: 'Angle', description: 'The angle of rotation of the halftone cells imaged by the system.', type: 'number', unit: "º", quantifier: 'degrees', format: "0.##",
+                angle: {
+                    id: 'angle', name: 'Angle', description: 'The angle of rotation of the halftone cells imaged by the system.', type: 'number', unit: "º", quantifier: 'degrees', format: "0.##",
                 },
                 tint: {
                     id: 'tint', name: 'Tint', description: 'The color tint value.', type: 'number', unit: "%", quantifier: 'percent', format: "0",
@@ -328,13 +361,18 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             },
             defaults: {
                 options: {
-                    panning: 'cell', shading: 'fills',
+                    // panning: 'cell', shading: 'fills',
                 },
             },
             controllers: {
                 sheetController: grasppe.Libre.Controller.define('HalftoneDemoController', function ($scope, model, module) {
                     // !- HalftoneDemo [Controllers] HalftoneDemoController
                     console.log('HalftoneDemo [Controllers] HalftoneDemoController');
+                    
+                    if ($scope.parameters) {
+                        if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
+                        if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
+                    }
 
                     Object.assign($scope, {
                         helper: new grasppe.ColorSheetsApp.HalftoneDemoHelper({
@@ -392,7 +430,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="200" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
                                     <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Halftone angle resolution." minimum="0" maximum="90" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="angle-slider" label="Angle" description="Halftone angle resolution." minimum="-180" maximum="180" step="0.5" value="45" suffix="º" model="angle"tooltip="@">\
                                     <b>Line Angle:</b> Halftone angle resolution. \
                                 </color-sheets-slider-control>\
                                 <color-sheets-slider-control flex layout-fill id="tint-slider" label="Tint" description="Tint value." minimum="0" maximum="100" step="0.25" value="50" suffix="%" model="tint" tooltip="@" ng-disabled="{{$sheet.parameters.screenview}}">\
@@ -426,9 +464,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
                             <div flex class="color-sheets-overview-contents" style="max-width: 100%; max-height: 100%;">\
-                                <p ng-if="values.lineXSpots || values.lineYSpots">To produce a {{values.lpi|number:1}} lines-per-inch screen at a {{values.theta|number:2}}º degree angle with an addressability of {{values.spi|number:0}} spots-per-inch, each halftone cell should measure {{values.lineXSpots|number:1}} × {{values.lineYSpots|number:1}} spots in the x and y dimensions at the imaging angle.</p>\
-                                <p ng-if="values.lineRoundXSpots || values.lineRoundYSpots">Since imaging must be done in full spot units, rounding must be applied. When rounding is applied, a cell would measure {{values.lineRoundXSpots|number:0}} × {{values.lineRoundYSpots|number:0}} spots, resulting in a rounded screen-ruling of {{values.lineRoundLPI|number:1}} at {{values.lineRoundTheta|number:1}}º.</p>\
-                                <p ng-if="values.lineSpots || values.cellSpots">Due to the rounding, the effective spot size for single halftones versus Halftones will be {{values.lineSpots|number:1}} µ (microns), which will produce {{values.lineGrayLevels|number:0}} gray-levels, line angle error of {{values.lineErrorTheta|number:1}}º degrees, and, resolution error of {{values.lineErrorLPI|number:1}}%.</p>\
+                                <p ng-if="values.lineXSpots || values.lineYSpots">To produce a {{values.lpi|number:1}} lines-per-inch screen at a {{values.angle|number:2}}º degree angle with an addressability of {{values.spi|number:0}} spots-per-inch, each halftone cell should measure {{values.lineXSpots|number:1}} × {{values.lineYSpots|number:1}} spots in the x and y dimensions at the imaging angle.</p>\
+                                <p ng-if="values.lineRoundXSpots || values.lineRoundYSpots">Since imaging must be done in full spot units, rounding must be applied. When rounding is applied, a cell would measure {{values.lineRoundXSpots|number:0}} × {{values.lineRoundYSpots|number:0}} spots, resulting in a rounded screen-ruling of {{values.lineRoundLPI|number:1}} at {{values.lineRoundAngle|number:1}}º.</p>\
+                                <p ng-if="values.lineSpots || values.cellSpots">Due to the rounding, the effective spot size for single halftones versus Halftones will be {{values.lineSpots|number:1}} µ (microns), which will produce {{values.lineGrayLevels|number:0}} gray-levels, line angle error of {{values.lineErrorAngle|number:1}}º degrees, and, resolution error of {{values.lineErrorLPI|number:1}}%.</p>\
                             </div></color-sheets-panel-body>'),
                         // ng-bind-html="explaination">
                     }
@@ -508,24 +546,43 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         };
 
         grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios = {
-            _order: ['Base Calculations', 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
+            _order: ['Base Calculations', 'GrasppeScreen', 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
             'Base Calculations': [{
                 id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
             }, {
                 id: "lpi", hidden: true, type: "p", fn: "LPI", decimals: 1,
             }, {
-                id: "theta", hidden: true, type: "p", fn: "THETA", decimals: 2,
+                id: "angle", hidden: true, type: "p", fn: "ANGLE", decimals: 2,
             }, {
-                id: "thetaRadians", hidden: true, type: "c", fn: "theta * (PI/180)", unit: "º rad", decimals: 2,
+                id: "angleRadians", hidden: true, type: "c", fn: "angle * (PI/180)", unit: "º rad", decimals: 2,
+            }],
+            'GrasppeScreen': [{
+                id: "lineRuling", type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
+            }, {
+                id: "effectiveSPL", type: "c", fn: "lineRuling/cos(PI/4)", unit: 'spl', decimals: 1, name: "effective spots per line"
+            }, {
+                id: "effectiveLPI", type: "c", fn: "SPI/effectiveSPL", unit: 'lpi', decimals: 2, name: "effective lines per inch"
+            }, {
+                id: "lineFrequency", type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
+            }, {
+                id: "lineAngle", type: "c", fn: "PI/4-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
+            }, {
+                id: "lineXSpots", type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+            }, {
+                id: "lineYSpots", type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+            }, {
+                id: "lineOffsetX", type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
+            }, {
+                id: "lineOffsetY", type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
             }],
             'Intended Halftone': [{
                 id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
             }, {
                 id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: "", decimals: 2,
             }, {
-                id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(thetaRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+                id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
             }, {
-                id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+                id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(angleRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
             }, {
                 id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
             // }, {
@@ -538,20 +595,20 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, {
                 id: "linePerroundLength", type: "c", fn: "25400/linePerroundLPI", unit: "µ", name: "per-rounded halftone side length", description: "", decimals: 2,
             }, {
-                id: "linePerroundXSpots", group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(thetaRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                id: "linePerroundXSpots", group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
             }, {
-                id: "linePerroundYSpots", group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(thetaRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                id: "linePerroundYSpots", group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
             }], // lineRoundLPI = 25400/(spotLength*lineSpots) // lineRoundLPI*spotLength/25400 = 1/lineSpots // 25400/lineRoundLPI/spotLength
             'Periodic-Rounding Results': [{
                 id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*linePerroundSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
             }, {
-                id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
+                id: "lineRoundAngle", group: "roundAngle", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
             }, {
                 id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "rounded gray-levels (1-bit)", description: "", decimals: 0,
             }, {
                 id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "line ruling error", description: "", decimals: 2,
             }, {
-                id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "line angle error", description: "", decimals: 2,
+                id: "lineErrorAngle", group: "errorAngle", type: "r", fn: "lineRoundAngle-angle", unit: "º", name: "line angle error", description: "", decimals: 2,
             }],
         };
 
