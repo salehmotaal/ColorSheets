@@ -275,15 +275,18 @@ grasppe.canvas.Path.prototype = Object.assign(Object.create(Array.prototype, {
         // if (context.restore) context.restore();
         return this;
     },
-    getPath: function (xModifier, yModifier, scale) {
+    getPath: function (xModifier, yModifier, scale, id) {
         if (this.length <= 1) return '';
         var definition = '',
             // attributes = [],
             path = '';
+            
+        if (!id) id = this.id;
+        
         definition += 'M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
         for (var i = 1; i < this.length; i++) definition += ' L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' ');
         definition += ' Z';
-        path = '<path vector-effect="non-scaling-stroke"' + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + ' d="' + definition + '"' + ' />';
+        path = '<path' + (id ? ' id="' + id + '"' : '') + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + ' d="' + definition + '"' + ' />'; // vector-effect="non-scaling-stroke"
 
         // definition.push('M' + this.getPoint(0).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
         // for (var i = 1; i < this.length; i++) definition.push('L' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' '));
@@ -391,14 +394,16 @@ grasppe.canvas.Lines.prototype = Object.assign(Object.create(grasppe.canvas.Path
         // if (context.restore) context.restore();
         return this;
     },
-    getPath: function (xModifier, yModifier, scale) {
+    getPath: function (xModifier, yModifier, scale, id) {
         // return ''; 
         var definition = '',
             group = '';
             
+        if (!id) id = this.id;
+            
         for (var i = 0; i < this.length; i += 2) definition += '<path'  + ' d="' + 'M' + this.getPoint(i).getTranslatedPoint(xModifier, yModifier, scale).join(' ') + ' L' + this.getPoint(i+1).getTranslatedPoint(xModifier, yModifier, scale).join(' ') + ' Z"' + ' />';
         
-        group = '<g' + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + '>' + definition + '</g>';
+        group = '<g' + (id ? ' id="' + id + '"' : '') +  (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + '>' + definition + '</g>';
         return group;
     },
     getPointsData: function (xModifier, yModifier) {
@@ -700,7 +705,7 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         delete rect;
         return this;
     },
-    getPath: function (xModifier, yModifier, scale) {
+    getPath: function (xModifier, yModifier, scale, id) {
         this.apply();
         // var bufferScale = (context.bufferScale ? context.bufferScale : 1);
         var xOffset = typeof xModifier === 'number' ? xModifier : 0,
@@ -723,7 +728,7 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
             definition = '';
             group = '';
 
-        // context.canvas.drawing += 1;
+        if (!id) id = this.path.id;
 
         for (j = 0; j < data.length; j++) {
             for (i = 0; i < data[0].length; i++) {
@@ -746,7 +751,7 @@ grasppe.canvas.ImageFilter.prototype = Object.assign(Object.create(grasppe.canva
         }
 
         // context.canvas.drawing -= 1;
-        group = '<g' + (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + '>' + definition + '</g>';
+        group = '<g' + (id ? ' id="' + id + '"' : '') +  (this.lineWidth ? ' stroke-width="' + this.lineWidth + '"' : '') + (this.strokeStyle ? ' stroke="' + this.strokeStyle + '"' : '') + (this.fillStyle ? ' fill="' + this.fillStyle + '"' : '') + (this.lineDash ? ' stroke-dasharray="' + this.lineDash + '"' : '') + '>' + definition + '</g>';
         
         delete rect;
         

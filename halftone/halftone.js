@@ -120,9 +120,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
             
             downloadPlot(a) {
-                var link = Object.assign(document.createElement('a'), {
-                    href: 'data:image/svg+xml;utf8,' + this.generatePlotImage(), target: '_download', download: 'halftone.svg'
+                var svg = (''+this.generatePlotImage(125, 125)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
+                    link = Object.assign(document.createElement('a'), {
+                    href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
                 });
+                console.log(svg);
                 document.body.appendChild(link), link.click(), $(link).remove();
                 // if (!a) 
             }
@@ -171,10 +173,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     thetaRadians = theta / 180 * Math.PI,
                     sinTheta = Math.sin(thetaRadians),
                     cosTheta = Math.cos(thetaRadians),
-                    margin = 0;
+                    stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)';
                     
-                height = height || mode.zoomIn ? 40 : 80;
-                width = width || mode.panFit ? Math.round(height * frameRatio) : height;
+                if (!height) height = mode.zoomIn ? 40 : 80;
+                if (!width) width = mode.panFit ? Math.round(height * frameRatio) : height;
 
                 var xStep = Math.ceil(width/2),
                     yStep = Math.ceil(height/2);
@@ -182,7 +184,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 HALFTONE_CALCULATIONS: {
                     var halftonePixels = Array(height * width),
-                        n = 0;
+                        n = 0,
+                        valleys = [],
+                        peaks = [];
                     for (var i = -xStep; i <= xStep; i++) {
                         if (timeStamp !== self.timeStamp) return this;
                         for (var j = -yStep; j <= yStep; j++) {
@@ -191,27 +195,54 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
                                 fill = Math.round(255 * (screenView ? v : t)),
                                 fillStyle = 'rgb(' + fill + ',' + fill + ',' + fill + ')',
-                                strokeStyle = (screenView || (t === 0)) ? 'black' : 'rgb(127,127,127)';
-                            halftonePixels[n] = this.getPixelBox(xStep+i, yStep+j, fillStyle, strokeStyle);
+                                strokeStyle = (screenView || (t === 0)) ? 'black' : stroke;
+                            halftonePixels[n] = Object.assign(this.getPixelBox(xStep+i, yStep+j, fillStyle, strokeStyle), {
+                                id: undefined,//'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j,
+                            });
+                            
+                            if (v < 0.005) {
+                                halftonePixels[n].id = 'htv' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
+                                valleys.push([i + i%2, j + i%2, v]);
+                            }
+                            // if (v > 0.992) halftonePixels[n].id = 'htp' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j, peaks.push([i, j, v]);
+                            if (i===0 && j===0) halftonePixels[n].id = 'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
+                            if (halftonePixels[n].id) halftonePixels[n].fillStyle = 'red';
+                            // if (halftonePixels[n].id) halftonePixels[n].strokeStyle = 'red';
                             n++;
                         }
                     }
                 }
+                CENTRIOD_CONSOLIDATION: {
+                    var lpi = this.getParameter('perrounding') ? values.linePerroundLPI : values.lpi,
+                        spotLength = values.spotLength,
+                        lineLength = 25400 / lpi,
+                        lineXSpots = lineSpots * Math.cos(thetaRadians),
+                        lineYSpots = lineSpots * Math.sin(thetaRadians),
+                        lineSize = Math.sqrt(lineXSpots^2 + lineYSpots^2),
+                        lineXPeriodX = lineSize,
+                        lineXPeriodY = lineSize * Math.cos(1/2*Math.PI);
+
+                    console.log([lineXSpots, lineYSpots, lineSize, lineXPeriodX, lineXPeriodY]);
+                //     var valleyX = [], valleyY = [], centroids = [],
+                //         lastV, lastP;
+                //     for (var v of valleys) {
+                //         if (!centroids[v[0]]) centroids[v[0]] = [];
+                //         if (!centroids[v[0]][v[1]]) valleyX.push(v[0]), valleyY.push(v[1]);
+                //         centroids[v[0]][v[1]] = v;
+                //     }
+                //     centroids = [];
+                //     for (var n = 0; n < valleyX.length; n++) centroids.push([valleyX[n], valleyY[n]]);
+                //     console.table(centroids);
+                }
 
                 PATH_GENERATION: {
                     var paths = [],
-                        scale = 4;
+                        scale = 4,
+                        view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
                     if (timeStamp !== self.timeStamp) return this;
                     for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
-                    var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + [0, 0, width*scale, height*scale].join(' ') + '">' + paths.join('') + '</svg>';
+                    var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
 
-                    // if (plotCanvas.find('img').length === 0) {
-                    //     plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
-                    //     $(window).bind('resize', function(){
-                    //         this.updatePlot();
-                    //     }.bind(this));
-                    // }
-                    // plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
                 }
                 
                 return svg;
@@ -227,97 +258,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         }.bind(this));
                     }
                     plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + this.generatePlotImage());
-
-                    // if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
-                    // if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
-                    // 
-                    // var values = this.calculations,
-                    //     options = this.getHeleperOptions(),
-                    //     plotOptions = options.plotOptions,
-                    //     legendOptions = options.legendOptions,
-                    //     plotCanvas = $(this.$scope.canvas),
-                    //     frameWidth = $(plotCanvas).width(),
-                    //     frameHeight = $(plotCanvas).height(),
-                    //     frameRatio = frameWidth / frameHeight,
-                    //     series = options.seriesOptions,
-                    //     mode = {
-                    //         is: options.shading + '-' + options.panning,
-                    //         tint: options.shading === 'tint',
-                    //         screen: options.shading === 'screen',
-                    //         zoomIn: /zoom-in/.test(this.$options.panning),
-                    //         zoomOut: /zoom-out/.test(this.$options.panning),
-                    //         panSquare: !/fit/.test(this.$options.panning),
-                    //         panFit: /fit/.test(this.$options.panning),
-                    //     },
-                    //     stroke = {},
-                    //     style = {
-                    //         plotGrid: (plotOptions.plotGridStyle),
-                    //         legendBox: (legendOptions.legendBoxStyle),
-                    //         filled: {
-                    //             fillStyle: "black"
-                    //         },
-                    //         empty: {
-                    //             fillStyle: "white"
-                    //         },
-                    //     },
-                    //     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineSpots,
-                    //     screenView = mode.screen,
-                    //     theta = values.theta,
-                    //     tint = this.getParameter('tint'),
-                    //     thetaRadians = theta / 180 * Math.PI,
-                    //     cos = Math.cos,
-                    //     sin = Math.sin,
-                    //     round = Math.round,
-                    //     min = Math.min,
-                    //     max = Math.max,
-                    //     sinTheta = Math.sin(thetaRadians),
-                    //     cosTheta = Math.cos(thetaRadians),
-                    //     Box = grasppe.canvas.Box,
-                    //     Lines = grasppe.canvas.Lines,
-                    //     Bounds = grasppe.canvas.BoundingBox,
-                    //     Rectangle = grasppe.canvas.Rectangle,
-                    //     ImageFilter = grasppe.canvas.ImageFilter,
-                    //     Chart = grasppe.canvas.Chart,
-                    //     margin = 0,
-                    //     height = mode.zoomIn ? 40 : 80, // max(50, min(150, lineSpots*10)); //round(100/lineSpots)*lineSpots;
-                    //     width = mode.panFit ? Math.round(height * frameRatio) : height,
-                    //     xStep = Math.ceil(width/2),
-                    //     yStep = Math.ceil(height/2);
-                    // if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
-                    // 
-                    // HALFTONE_CALCULATIONS: {
-                    //     var halftonePixels = Array(height * width),
-                    //         n = 0;
-                    //     for (var i = -xStep; i <= xStep; i++) {
-                    //         if (timeStamp !== self.timeStamp) return this;
-                    //         for (var j = -yStep; j <= yStep; j++) {
-                    //             var s = sin(cosTheta * (j+1) / lineSpots  - sinTheta * (i+1) / lineSpots) * sin(sinTheta * (j+1) / lineSpots + cosTheta * (i+1) / lineSpots),
-                    //                 v = min(1, max(0, (s + 1) / 2)),
-                    //                 t = 1 * (tint !== 0 && (v*100 >= 100-tint)),
-                    //                 fillStyle = 'rgba(0,0,0,' + (screenView ? v : t) + ')',
-                    //                 strokeStyle = 'rgba(0,0,0,' + ((screenView || (t > 0)) ? 1 : 0.25) + ')';
-                    //             halftonePixels[n] = this.getPixelBox(i, j, fillStyle, strokeStyle);
-                    //             n++;
-                    //         }
-                    //     }
-                    // }
-                    // 
-                    // PATH_GENERATION: {
-                    //     var paths = [],
-                    //         scale = 4;
-                    //     if (timeStamp !== self.timeStamp) return this;
-                    //     for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
-                    //     var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + [-xStep*scale, -yStep*scale, width*scale, height*scale].join(' ') + '">' + paths.join('') + '</svg>';
-                    // 
-                    //     if (plotCanvas.find('img').length === 0) {
-                    //         plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
-                    //         $(window).bind('resize', function(){
-                    //             this.updatePlot();
-                    //         }.bind(this));
-                    //     }
-                    //     plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
-                    // }
-
                 }.bind(this), 0);
                 return this;
             }
@@ -473,7 +413,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     <color-sheets-table-section-header ng-if="section.length>0"\
                                     style="padding: 0.125em 0.5em; border-bottom: 1px solid rgba(0,0,0,0.25)">{{section.name}}</color-sheets-table-section-header>\
                                     <color-sheets-table-row ng-repeat="row in section">\
-                                        <color-sheets-table-cell style="padding: 0 0.5em;">{{row.name}}</color-sheets-table-cell>\
+                                        <color-sheets-table-cell style="padding: 0 0.5em;">{{row.name}} ({{row.id}})</color-sheets-table-cell>\
                                         <color-sheets-table-cell style="padding: 0 0.5em;">{{row.value|number:row.decimals}}</color-sheets-table-cell>\
                                     </color-sheets-table-row>\
                                 </color-sheets-table-section>\
@@ -588,6 +528,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
             }, {
                 id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
+            // }, {
+            //     id: "lineSpots", group: "roundedSpots", type: "c", fn: "lineLength/spotLength", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
             }],
             'Periodically-Rounded Halftone': [{
                 id: "linePerroundLPI", group: "roundLPI", type: "r", fn: "SPI/(floor(sin(Math.PI/4)*SPI/LPI)/sin(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
