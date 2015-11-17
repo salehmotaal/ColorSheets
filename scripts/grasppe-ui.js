@@ -141,21 +141,34 @@ $(function () {
                 $(this).attr('class', newClasses);
             });
             
-            $('.col').find(orientation === 'portrait' ? '.landscape-row, .landscape-column' : '.portrait-row, .portrait-column').each(function () {
+            $('body').find(orientation === 'portrait' ? '.portrait-row, .portrait-column' : '.landscape-row, .landscape-column').each(function () {
                 var classes = $(this).attr('class'),
+                    $this = $(this),
+                    display = $this.css('display');
                     // newClasses = classes.replace(/\b(portrait|landscape)-(s|m|l)(\d*)\b/g, '$1-$2$3 $2$3');
                 // console.log($(this), classes, newClasses);
-                if (/(landscape|portrait)-row/.test(classes))
-                    $(this).css('flex-direction', 'row');
-                else if (/(landscape|portrait)-column/.test(classes))
-                    $(this).css('flex-direction', 'column');
+                if (orientation === 'portrait') {
+                    if (/portrait-row/.test(classes))
+                        $this.css('flex-direction', 'row');
+                    else if (/portrait-column/.test(classes))
+                        $this.css('flex-direction', 'column');
+                } else {
+                    if (/landscape-row/.test(classes))
+                        $this.css('flex-direction', 'row');
+                    else if (/landscape-column/.test(classes))
+                        $this.css('flex-direction', 'column');
+                }
+                    
+                console.log('flex-direction', $(this).css('flex-direction'));
+                
+                if (/(flex|inline-flex|none)/.test(display)) return;
+                if (/inline-/.test(display))
+                    $this.css('display', 'inline-flex');
+                else
+                    $this.css('display', 'flex');
             });
-
-
-
-            // $("*[class*='window-xs-']")
-
         });
         window.setTimeout('$(window).resize()', 0);
+        window.setTimeout('$(window).resize()', 100);
     });
 });

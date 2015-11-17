@@ -303,7 +303,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 var screenScale = Math.min(1750/sourceWidth, 1750/sourceHeight),
                     screenWidth = Math.ceil(sourceWidth * screenScale),
                     screenHeight = Math.ceil(sourceHeight * screenScale),
-                    screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">').appendTo('body')[0],
+                    screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">')[0], // .appendTo('body')[0],
                     screenContext = screenCanvas.getContext('2d');
 
                 screenContext.fillStyle = 'rgba(255,255,255,1)';
@@ -496,7 +496,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                     if (plotCanvas.find('img').length === 0) {
-                        plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; height: 75vh; max-height: 100%;">'));
+                        plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; min-height: 50vh; max-height: 100%; max-width: 100%;">'));
                         $(window).bind('resize', function(){
                             // this.updatePlot();
                         }.bind(this));
@@ -636,16 +636,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     return element.find('.color-sheets-stage-canvas').first();
                                 }
                             })
-                        }],
-                        template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: visible; max-height: 75vh;">\
-                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 75vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
+                        }], // layout layout-align="center center"
+                        template: ('<color-sheets-panel-body style="overflow: visible; /*max-height: 75vh;*/">\
+                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; max-height: 85vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
                             </color-sheets-panel-body>'),
                     }
                 }),
                 // !- ScreeningDemo [Directives] colorSheetParameters                
                 colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
-                    return {
-                        template: ('<color-sheets-panel-body layout="column" flex layout-fill layout-align="start center" style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
+                    return { // layout="column" flex layout-fill layout-align="start center"
+                        template: ('<color-sheets-panel-body style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="100" maximum="2540" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
@@ -665,7 +665,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 colorSheetResults: grasppe.Libre.Directive.define('colorSheetResults', function () {
                     return {
                         //controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
-                        template: ('<color-sheets-panel-body layout><color-sheets-table class="color-sheets-results-table" ng-cloak>\
+                        //layout
+                        template: ('<color-sheets-panel-body><color-sheets-table class="color-sheets-results-table" ng-cloak>\
                                 <color-sheets-table-section ng-repeat="section in stack"\
                                  style="margin-top: 0.125em;">\
                                     <color-sheets-table-section-header ng-if="section.length>0"\
@@ -683,7 +684,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     return {
                         // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
-                            <div flex class="color-sheets-overview-contents" style="max-width: 100%; max-height: 100%;">\
+                            <div flex class="color-sheets-overview-contents" style="max-width: 100%; ">\
                                 <p>Drag an image onto the image field and change the parameters to see the screened image.</p>\
                             </div></color-sheets-panel-body>'),
                         // ng-bind-html="explaination">

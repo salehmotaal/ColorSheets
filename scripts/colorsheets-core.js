@@ -13,6 +13,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             Sheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
                 link: function colorSheetsSheetLink($scope, element, attributes) {
                     if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
+                    window.setTimeout('$(window).resize()', 100);
                 },
                 template: ('<div class="color-sheets-sheet {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;">\
                     <div ng-repeat="segment in layout.contents" \
@@ -51,8 +52,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     	/* !- Sheets [Styles] Panels */\
                     	md-toolbar.color-sheets-toolbar, md-toolbar.color-sheets-toolbar > * {max-height: {{panelHeaderHeight}}; min-height: {{panelHeaderHeight}};}\
                     	color-sheets-sheet-panel > * {flex: 1; display: flex; flex-direction: column;}\
-                    	.color-sheets-panel {flex: 1; display: flex; flex-direction: column; max-height: 100vh;}\
-                    	.color-sheets-sheet-panel-contents {flex: 1; background-color: #fff; overflow-y: scroll;}\
+                    	.color-sheets-panel {flex: 1; display: flex; flex-direction: column; min-height: 40vh; /* max-height: 100vh; */}\
+                    	.color-sheets-panel-contents {flex: 1; display: flex; flex-direction: column;}\
+                    	.color-sheets-sheet-panel-contents {flex: 1; background-color: #fff; /*overflow-y: scroll;*/}\
                     	.color-sheets-sheet-panel-header md-toolbar.color-sheets-toolbar, .color-sheets-sheet-panel-header md-toolbar.color-sheets-toolbar > *, .color-sheets-sheet-panel-header  md-menu-content > :first-Child > md-button {max-height: {{mainHeaderHeight}}; min-height: {{mainHeaderHeight}};}\
                     	.color-sheets-panel-body {overflow: hidden; max-width: calc(100% - 1em); min-height: 25vh; margin: 0.5em;}\
                     	.color-sheets-panel-body * {text-shadow:0 1px 2px rgba(0,0,0,0.15),0 1px 0 rgba(255,255,255,1);}\
@@ -79,6 +81,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     @media print {\
                         md-slider {display: none !important;}\
                         md-button * {opacity: 0.5 !important;}\
+                        .color-sheets-panel { width: 100%}\
                     }\
                 </style><color-sheets-styles></color-sheets-styles>',
             }),
@@ -89,62 +92,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         Object.assign(grasppe.ColorSheetsApp.Models, {
             Sheet: {
                 // !- [Models] Sheet
-                toolsIconSize: '18px', toolsColor: 'white', menuColor: 'black', menuIcon: 'glyphicon-menu-hamburger', toolsIconClasses: 'tools-icon', layout: {
-                    id: 'default', attributes: {
-                        'layout': 'column', 'layout-gt-lg': 'row', 'layout-fill': ' ',
+                toolsIconSize: '18px', toolsColor: 'white', menuColor: 'black', menuIcon: 'glyphicon-menu-hamburger', toolsIconClasses: ('tools-icon'),
+                layout: {
+                    id: 'default', classes: 'container-fluid', style: {
+                        padding: 0, margin: 0, flex: 1, maxWidth: '100vw', whiteSpace: 'normal',
                     },
-                    classes: 'container-fluid', style: {
-                        padding: 0, margin: 0, flex: 1
-                    },
-                    contents: {
-                        top: {
-                            id: 'simulation', attributes: {
-                                'layout': 'row', 'layout-sm': 'column', 'layout-gt-lg': 'row',
-                            },
-                            classes: 'row col-xs-12', style: {
-                                padding: 0, margin: 0, flex: 1
-                            },
-                            contents: {
-                                stage: {
-                                    id: 'stage', classes: 'col-xs-12 col-sm-7 col-md-8 col-lg-8', style: {
-                                        padding: 0, margin: 0
-                                    },
-                                },
-                                parameters: {
-                                    id: 'parameters', classes: 'col-xs-12 col-sm-5 col-md-4 col-lg-4', style: {
-                                        padding: 0, margin: 0
-                                    },
-                                },
-                            },
-                        },
-                        bottom: {
-                            id: 'information', attributes: {
-                                'layout-sm': 'column', 'layout-md': 'row',
-                            },
-                            classes: 'row col-xs-12', style: {
-                                padding: 0, margin: 0, flex: 1
-                            },
-                            contents: {
-                                results: {
-                                    id: 'results', attributes: {
-                                        'flex-order-sm': -1,
-                                    },
-                                    classes: 'col-xs-12 col-sm-5', style: {
-                                        padding: 0, margin: 0
-                                    },
-                                },
-                                overview: {
-                                    id: 'overview', attributes: {
-                                        'flex-order-sm': 1,
-                                    },
-                                    classes: 'col-xs-12 col-sm-7', style: {
-                                        padding: 0, margin: 0
-                                    },
-                                },
-                            },
-                        },
-                    }
-                }, panels: {
+                },
+                panels: {
                     sheet: {
                         tools: {
                             refresh: {
@@ -154,7 +108,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 svgSrc: grasppe.load.url.images + 'book.svg', label: 'documentation', classes: 'md-button-flat orange black-text', click: 'console.log($scope.$app.documentationController.dialog); $scope.$app.documentationController.show();', //'$app.',
                             },
                         },
-                        prefix: 'sheet', header: 'ColorSheet', toolbarClasses: 'grey lighten-2 black-text', contents: '', footer: '', // controller: 'SheetPanelController', fontIcon: 'glyphicon-menu-hamburger',
+                        prefix: 'sheet', header: 'ColorSheet', toolbarClasses: 'grey lighten-2 black-text', contents: '', footer: '',
                     },
                     stage: {
                         tools: {
@@ -181,5 +135,93 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 } // Sheet.panels
             } // Sheet
         }); // Object.assign (grasppe.ColorSheetsApp.Models) {}
+        if (grasppe.agent.is('iPhone') || grasppe.agent.is('iPad')) {
+            grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
+                top: {
+                    id: 'simulation', attributes: {
+                        'layout': 'row', 'layout-sm': 'column', 'layout-gt-lg': 'row',
+                    },
+                    classes: 'row landscape-row portrait-column col-xs-12', style: {
+                        padding: 0, margin: 0, flex: 1
+                    },
+                    contents: {
+                        stage: {
+                            id: 'stage', classes: 'landscape-s-7 portrait-s-12 col-md-8 col-lg-8', style: {
+                                padding: 0, margin: 0
+                            },
+                        },
+                        parameters: {
+                            id: 'parameters', classes: 'landscape-s-5 portrait-s-12 col-md-4 col-lg-4', style: {
+                                padding: 0, margin: 0
+                            },
+                        },
+                    },
+                },
+                bottom: {
+                    id: 'information', attributes: {
+                        'layout-sm': 'column', 'layout-md': 'row',
+                    },
+                    classes: 'row col-xs-12', style: {
+                        padding: 0, margin: 0, flex: 1
+                    },
+                    contents: {
+                        results: {
+                            id: 'results', attributes: {
+                                'flex-order-sm': 1,
+                            },
+                            classes: 'col-xs-12 col-sm-5', style: {
+                                padding: 0, margin: 0
+                            },
+                        },
+                        overview: {
+                            id: 'overview', attributes: {
+                                'flex-order-sm': -1,
+                            },
+                            classes: 'col-xs-12 col-sm-7', style: {
+                                padding: 0, margin: 0
+                            },
+                        },
+                    },
+                },
+            };
+        } else {
+            grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
+                top: {
+                    id: 'simulation', classes: 'row landscape-row portrait-column col-xs-12', style: {
+                        padding: 0, margin: 0, flex: 1, maxWidth: '100vw', minHeight: '50vh', whiteSpace: 'normal',
+                    },
+                    contents: {
+                        stage: {
+                            id: 'stage', classes: 'col-md-8 col-lg-6', style: {
+                                padding: 0, margin: 0, display: 'flex', flexDirection: 'column', flex: 1, minHeight: '40vh', height: 'auto',
+                            },
+                        },
+                        parameters: {
+                            id: 'parameters', classes: 'col-md-4 col-lg-3', style: {
+                                padding: 0, margin: 0, display: 'flex', flexDirection: 'column', flex: 0.5, minHeight: '40vh', height: 'auto',
+                            },
+                        },
+                        results: {
+                            id: 'results', classes: 'col-xs-5 col-lg-3', style: {
+                                padding: 0, margin: 0, minHeight: '20vh', height: 'auto',
+                            },
+                        },
+                        overview: {
+                            id: 'overview', classes: 'col-xs-7 col-lg-12', style: {
+                                padding: 0, margin: 0, minHeight: '20vh', height: 'auto',
+                            },
+                        },
+                    },
+                },
+                bottom: {
+                    id: 'information', attributes: {
+                    },
+                    classes: 'row landscape-row portrait-column col-xs-12', style: {
+                        padding: 0, margin: 0, flex: 0.5, maxWidth: '100vw',
+                    },
+                    contents: {},
+                },
+            };
+        }
     });
 }(this, this.grasppe));

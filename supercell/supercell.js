@@ -247,7 +247,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                     if (plotCanvas.find('img').length === 0) {
-                        plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%;">'));
+                        plotCanvas.append($('<img style="width: auto; height: 100%; max-width: 100%; max-height: 100%;">'));
                         $(window).bind('resize', function(){
                             this.updatePlot();
                         }.bind(this));
@@ -632,8 +632,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 }
                             })
                         }],
-                        template: ('<color-sheets-panel-body layout layout-align="center center" style="max-height: 50vh;">\
-                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>\
+                        template: ('<color-sheets-panel-body layout layout-fill layout-align="top-center" style="/*max-height: 50vh;*/ flex: 1">\
+                            <div class="color-sheets-stage-canvas" flex style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>\
                             </color-sheets-panel-body>'),
                     }
                 }),

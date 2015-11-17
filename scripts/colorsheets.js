@@ -83,7 +83,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 $providers: ['$libreModel'],
             }),
             controllers: {},
-            template: '<div color-Sheets-Sheet-Panel layout="column"></div>', configuration: [function ($mdIconProvider, $sceProvider) {
+            template: '<div color-Sheets-Sheet-Panel></div>', configuration: [function ($mdIconProvider, $sceProvider) {
                 $mdIconProvider.defaultFontSet('glyphicon').defaultIconSet('icon-set.svg', 20); // Register a default set of SVG icons
                 $sceProvider.enabled(false);
             }],
