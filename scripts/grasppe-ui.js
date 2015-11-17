@@ -135,13 +135,22 @@ $(function () {
             $(disabling + ' .collapse').removeClass('in').first().collapse('hide');
 
             $('.col').find(landscapeSelectors + ', ' + portraitSelectors).removeClass(sizingClasses);
-            // console.log($('.col').find(landscapeSelectors + ', ' + portraitSelectors), $('.col').find(orientation === 'portrait' ? landscapeSelectors : portraitSelectors));
             $('.col').find(orientation === 'portrait' ? landscapeSelectors : portraitSelectors).each(function () {
                 var classes = $(this).attr('class'),
                     newClasses = classes.replace(/\b(portrait|landscape)-(s|m|l)(\d*)\b/g, '$1-$2$3 $2$3');
-                // console.log($(this), classes, newClasses);
                 $(this).attr('class', newClasses);
             });
+            
+            $('.col').find(orientation === 'portrait' ? '.landscape-row, .landscape-column' : '.portrait-row, .portrait-column').each(function () {
+                var classes = $(this).attr('class'),
+                    // newClasses = classes.replace(/\b(portrait|landscape)-(s|m|l)(\d*)\b/g, '$1-$2$3 $2$3');
+                // console.log($(this), classes, newClasses);
+                if (/(landscape|portrait)-row/.test(classes))
+                    $(this).css('flex-direction', 'row');
+                else if (/(landscape|portrait)-column/.test(classes))
+                    $(this).css('flex-direction', 'column');
+            });
+
 
 
             // $("*[class*='window-xs-']")
