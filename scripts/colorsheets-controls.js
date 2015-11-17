@@ -121,18 +121,31 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 							},
 							error = function colorSheetsImageControlError(message) {
 								$mdDialog.show($mdDialog.alert().openFrom(element).closeTo(element).clickOutsideToClose(true).title('Image not saved...').content(message).ariaLabel('Image not saved...').ok('OK'));
-							};
+							},
+							controller = this;
+        				this.loadImageFromFile = function loadImageFromFile(file) {
+							Object.assign(new FileReader(), {
+								onload: function colorSheetsImageControlFileReaderOnload(event) {
+									if (event.target.result.match(/^data:image\/(png|jpeg|gif|svg)/i)) {
+										$scope.control.value = event.target.result;
+										$scope.control.suffix = event.target.result.match(/^data:image\/(png|jpeg|gif|svg)/i)[1];
+										$scope.$apply();
+									} else error('Only png, gif, jpeg, and svg images can be used!');
+								},
+							}).readAsDataURL(file);
+                        };
 						element.find('.image-preview').bind('drop', function (event) {
 							if (event.originalEvent.dataTransfer.files.length == 1) {
-								Object.assign(new FileReader(), {
-									onload: function colorSheetsImageControlFileReaderOnload(event) {
-										if (event.target.result.match(/^data:image\/(png|jpeg|gif|svg)/i)) {
-											$scope.control.value = event.target.result;
-											$scope.control.suffix = event.target.result.match(/^data:image\/(png|jpeg|gif|svg)/i)[1];
-											$scope.$apply();
-										} else error('Only png, gif, jpeg, and svg images can be used!');
-									},
-								}).readAsDataURL(event.originalEvent.dataTransfer.files[0]);
+                                // Object.assign(new FileReader(), {
+                                // 	onload: function colorSheetsImageControlFileReaderOnload(event) {
+                                // 		if (event.target.result.match(/^data:image\/(png|jpeg|gif|svg)/i)) {
+                                // 			$scope.control.value = event.target.result;
+                                // 			$scope.control.suffix = event.target.result.match(/^data:image\/(png|jpeg|gif|svg)/i)[1];
+                                // 			$scope.$apply();
+                                // 		} else error('Only png, gif, jpeg, and svg images can be used!');
+                                // 	},
+                                // }).readAsDataURL(event.originalEvent.dataTransfer.files[0]);
+                                controller.loadImageFromFile(event.originalEvent.dataTransfer.files[0]);
 							} else {
 								$scope.control.value = Object.assign(new Image, {
 									src: event.originalEvent.dataTransfer.getData('URL'),
@@ -160,14 +173,44 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 						$scope.control = {
 							id: attributes.id, label: attributes.label, description: attributes.description, suffix: attributes.suffix, value: localStorage.getItem($scope.sheet.id + '-' + attributes.model) || '', model: attributes.model, text: '',
 						}
-						element.find('md-slider, input').attr('ng-model', 'parameters.' + $scope.control.model);
+						element.find('input').attr('ng-model', 'parameters.' + $scope.control.model);
+						element.find('.image-select').bind('change', {
+    						$scope: $scope, $control: $scope.control, $element: element,
+        				}, function onImageSelectChange(event, data) {
+            				console.log('Image-Select Change', event, data, this);
+            				if (event.target.files.length) controller.loadImageFromFile(event.target.files[0]);
+    						// data.$scope[data.$control.model] = this.value;
+        				});
+        				element.find('.control-image, .image-select-button').bind('click', { 
+    						$scope: $scope, $control: $scope.control, $element: element,
+                        }, function onImageSelectClick(event, data) {
+            				// console.log($(this).closest('.image-select'));
+                            element.find('.image-select').click();
+                        });
 					},
-					template: '\
-                        <div class="color-sheets-control" layout>\
-                            <div class="control-label md-body-1" flex="30" layout layout-align="center center">{{control.label}}</div>\
+                    template: '\
+                        <div class="color-sheets-control" layout flex="100">\
+                            <div flex="25" layout layout-align="center center">\
+                                <span style="text-overflow: ellipsis; overflow:hidden; min-width: 7em; max-width: 100%">{{control.label}}</span>\
+                            </div>\
                             <div class="control-image image-preview md-button" flex style="height: 6em; background-position: center center; background-size: contain; background-repeat: no-repeat;" ng-style="{\'background-image\': \'url(\' + control.value + \')\'}", layout layout-align="center center">{{control.text}}</div>\
-                            <div class="control-suffix md-body-1" flex="25" layout layout-align="center center">{{control.suffix}}</div>\
-                        </div>', scope: true,
+                            <div flex="25" layout="column" layout-align="center center">\
+                                <input style="display: none;"class="image-select" type="file" accept="image/*"/>\
+                                <md-button class="image-select-button">Choose</md-button>\
+                                <span class="control-suffix" style="text-overflow: ellipsis; overflow:hidden; min-width: 3em;">{{control.suffix}}</span>\
+                            </div>\
+                            <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip===\'@\'">\
+                                <ng-transclude></ng-transclude></md-tooltip>\
+                            <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip && control.tooltip!==\'@\'">\
+                                {{tooltip}}</md-tooltip>\
+                        </div>', scope: true, transclude: true
+
+                    // template: '\
+                    //     <div class="color-sheets-control" layout>\
+                    //         <div class="control-label md-body-1" flex="30" layout layout-align="center center">{{control.label}}</div>\
+                    //         <div class="control-image image-preview md-button" flex style="height: 6em; background-position: center center; background-size: contain; background-repeat: no-repeat;" ng-style="{\'background-image\': \'url(\' + control.value + \')\'}", layout layout-align="center center">{{control.text}}</div>\
+                    //         <div class="control-suffix md-body-1" flex="25" layout layout-align="center center"><input type="file" accept="image/*"/>{{control.suffix}}</div>\
+                    //     </div>', scope: true,
 				};
 			}),
 

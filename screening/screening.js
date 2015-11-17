@@ -283,9 +283,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         },
                     },
                     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
+                    stochastic = this.getParameter('stochastic') === true,
                     screenView = mode.screen,
                     lineAngle = values.lineAngle,
-                    lineAngles = [15, 75, -60, -45],
+                    lineAngleOffsets = [-30, 30, 15, -90],
+                    lineAngles = lineAngleOffsets.map(function(offset) {
+                        return lineAngle + offset;
+                    }),
+                    // lineAngles = [15, 75, -60, -45],
                     lineFrequency = values.lineFrequency,
                     tint = 0,
                     sinAngle = Math.sin(lineAngle % Math.PI/2) * lineFrequency,
@@ -295,7 +300,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     sourceWidth = sourceImage.width,
                     sourceHeight = sourceImage.height;
                     
-                var screenScale = Math.min(2000/sourceWidth, 2000/sourceHeight),
+                var screenScale = Math.min(1750/sourceWidth, 1750/sourceHeight),
                     screenWidth = Math.ceil(sourceWidth * screenScale),
                     screenHeight = Math.ceil(sourceHeight * screenScale),
                     screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">').appendTo('body')[0],
@@ -323,31 +328,39 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row,
                         valleys = [], peaks = [];
                     for (var c = 0; c < 3; c++) {
-                        // sourceImage.channel = c;
                         var angle = lineAngles[c]/180 * Math.PI, //(lineAngle + (c-2)*Math.PI/10) % Math.PI/2,
                             lineOffsetX = Math.PI/2 + Math.PI*(angle<0),
                             lineOffsetY = Math.PI/2 + 0;
                         sinAngle = Math.sin(angle) * lineFrequency;
                         cosAngle = Math.cos(angle) * lineFrequency;
-                        for (var i = 0; i < screenWidth; i++) {
-                            if (timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
+                        if (timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
+                        if (stochastic) for (var i = 0; i < screenWidth; i++) {
+                            for (var j = 0; j < screenHeight; j++) {
+                                // var v = Math.random(),
+                                var alpha = Math.sin(cosAngle * (j*Math.random()) - sinAngle * (i*Math.random())),
+                                    beta = Math.sin(cosAngle * (i*Math.random()) + sinAngle * (j*Math.random())),
+                                    v = (alpha * beta + 1) / 2, // * Math.random(),
+                                    rI = Math.floor(i / screenScale),
+                                    rJ = Math.floor(j / screenScale),
+                                    rV = sourceImage.data[4 * (sourceWidth * rJ + rI) + c] / 255,
+                                    t = v <= rV,
+                                    p = Math.round(255 * t),
+                                    n = 4 * (screenWidth * j + i);
+                                screenData.data[n + c] = p;
+                            }
+                        } else for (var i = 0; i < screenWidth; i++) {
                             for (var j = 0; j < screenHeight; j++) {
                                 var alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinAngle * (i + lineOffsetX)),
                                     beta = Math.sin(cosAngle * (i + lineOffsetX) + sinAngle * (j + lineOffsetY)),
-                                    s = alpha * beta,
-                                    v = Math.min(1, Math.max(0, (s + 1) / 2)),
-                                    rI = Math.floor(i/screenScale),
-                                    rJ = Math.floor(j/screenScale),
-                                    rV = sourceImage.data[4*(sourceWidth * rJ + rI) + c],
-                                    // tint = 100 - (sourceImage.pixelData[Math.floor(j/screenScale)][Math.floor(i/screenScale)] / 255 * 100),
-                                    tint = 100 - (rV / 255 * 100),
-                                    t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
+                                    v = (alpha * beta + 1) / 2,
+                                    rI = Math.floor(i / screenScale),
+                                    rJ = Math.floor(j / screenScale),
+                                    rV = sourceImage.data[4 * (sourceWidth * rJ + rI) + c] / 255,
+                                    t = v <= rV,
+                                    // rV !== 0
                                     p = Math.round(255 * t),
-                                    n = 4*(screenWidth * j + i);
+                                    n = 4 * (screenWidth * j + i);
                                 screenData.data[n + c] = p;
-                                // screenData.data[n + 1] = p;
-                                // screenData.data[n + 2] = p;
-                                screenData.data[n + 3] = 255;
                             }
                         }
                     }
@@ -483,7 +496,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                     if (plotCanvas.find('img').length === 0) {
-                        plotCanvas.append($('<img style="object-fit: cover; width: auto; height: 50vh; max-height: 100%;">'));
+                        plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; height: 75vh; max-height: 100%;">'));
                         $(window).bind('resize', function(){
                             // this.updatePlot();
                         }.bind(this));
@@ -624,8 +637,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 }
                             })
                         }],
-                        template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: visible; max-height: 50vh;">\
-                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
+                        template: ('<color-sheets-panel-body layout layout-align="center center" style="overflow: visible; max-height: 75vh;">\
+                            <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 75vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
                             </color-sheets-panel-body>'),
                     }
                 }),
@@ -639,10 +652,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="200" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
                                     <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="angle-slider" label="Angle" description="Halftone angle resolution." minimum="-180" maximum="180" step="0.5" value="45" suffix="º" model="angle"tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="angle-slider" label="Angle" description="Halftone angle resolution." minimum="-90" maximum="90" step="0.5" value="45" suffix="º" model="angle"tooltip="@">\
                                     <b>Line Angle:</b> Halftone angle resolution. \
                                 </color-sheets-slider-control>\
                                 <color-sheets-image-control id="sourceImage" label="Image" description="Image to be screened." suffix="" model="sourceImage" value="images/franz-flower-purple.jpg"></color-sheets-image-control>\
+                                <color-sheets-toggle-control flex layout-fill id="stochastic-toggle" label="Stochastic" description="Stochastic screening." value="false" suffix="" model="stochastic" tooltip="@">\
+                                    <b>Stochastic screening:</b> Screen using freqeuncy modulation versus amplitude. \
+                                </color-sheets-toggle-control>\
                             </color-sheets-panel-body>'),
                     }
                 }),
@@ -668,9 +684,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
                             <div flex class="color-sheets-overview-contents" style="max-width: 100%; max-height: 100%;">\
-                                <p ng-if="values.lineXSpots || values.lineYSpots">To produce a {{values.lpi|number:1}} lines-per-inch screen at a {{values.angle|number:2}}º degree angle with an addressability of {{values.spi|number:0}} spots-per-inch, each halftone cell should measure {{values.lineXSpots|number:1}} × {{values.lineYSpots|number:1}} spots in the x and y dimensions at the imaging angle.</p>\
-                                <p ng-if="values.lineRoundXSpots || values.lineRoundYSpots">Since imaging must be done in full spot units, rounding must be applied. When rounding is applied, a cell would measure {{values.lineRoundXSpots|number:0}} × {{values.lineRoundYSpots|number:0}} spots, resulting in a rounded screen-ruling of {{values.lineRoundLPI|number:1}} at {{values.lineRoundAngle|number:1}}º.</p>\
-                                <p ng-if="values.lineSpots || values.cellSpots">Due to the rounding, the effective spot size for single halftones versus Halftones will be {{values.lineSpots|number:1}} µ (microns), which will produce {{values.lineGrayLevels|number:0}} gray-levels, line angle error of {{values.lineErrorAngle|number:1}}º degrees, and, resolution error of {{values.lineErrorLPI|number:1}}%.</p>\
+                                <p>Drag an image onto the image field and change the parameters to see the screened image.</p>\
                             </div></color-sheets-panel-body>'),
                         // ng-bind-html="explaination">
                     }
@@ -761,23 +775,23 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 id: "angleRadians", hidden: true, type: "c", fn: "angle * (PI/180)", unit: "º rad", decimals: 2,
             }],
             'GrasppeScreen': [{
-                id: "lineRuling", type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
+                id: "lineRuling", hidden: true, type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
             }, {
                 id: "effectiveSPL", type: "c", fn: "lineRuling/cos(PI/4)", unit: 'spl', decimals: 1, name: "effective spots per line"
             }, {
                 id: "effectiveLPI", type: "c", fn: "SPI/effectiveSPL", unit: 'lpi', decimals: 2, name: "effective lines per inch"
             }, {
-                id: "lineFrequency", type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
+                id: "lineFrequency", hidden: true, type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
             }, {
-                id: "lineAngle", type: "c", fn: "PI/4-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
+                id: "lineAngle", hidden: true, type: "c", fn: "PI/4-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
             }, {
-                id: "lineXSpots", type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+                id: "lineXSpots", hidden: true, type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
             }, {
-                id: "lineYSpots", type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+                id: "lineYSpots", hidden: true, type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
             }, {
-                id: "lineOffsetX", type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
+                id: "lineOffsetX", hidden: true, type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
             }, {
-                id: "lineOffsetY", type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
+                id: "lineOffsetY", hidden: true, type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
             }],
             'Intended Halftone': [{
                 id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
