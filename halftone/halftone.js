@@ -76,7 +76,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
 
             updateData() {
-                // if (this.getParameter('spi') && this.getParameter('lpi') && this.getParameter('angle') && this.getParameter('cells') && this) window.history.pushState({}, document.title, window.location.href.replace(/\?[^\#]*/, ['?spi=', this.getParameter('spi'), '&lpi=', this.getParameter('lpi'), '&angle=', this.getParameter('angle'), '&cells=', this.getParameter('cells'), (this.$options.shading ? '&shading=' + this.$options.shading : 'supercells'), (this.$options.panning ? '&panning=' + this.$options.panning : 'cell'), ].join('')));
                 this.calculateStack().updatePlot();
 
                 return this;
@@ -124,9 +123,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     link = Object.assign(document.createElement('a'), {
                     href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
                 });
-                // console.log(svg);
                 document.body.appendChild(link), link.click(), $(link).remove();
-                // if (!a) 
             }
             
             generatePlotImage(width, height, scale) {

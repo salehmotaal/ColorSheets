@@ -87,150 +87,319 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 return this;
             }
+            
+            downloadPlot(a) {
+                var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
+                    link = Object.assign(document.createElement('a'), {
+                    href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'supercell.svg'
+                });
+                document.body.appendChild(link), link.click(), $(link).remove();
+            }
+            
+            generatePlotImage(width, height, scale) {
+                var self = this.generatePlotImage,
+                    timeStamp = self.timeStamp;
+                self.timeStamp = timeStamp;
+                
+                if (!/(wires|lines|fills|pixels|cells)/.test(this.$options.shading)) this.$options.shading = 'fills';
+                if (!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
 
+                var values = this.calculations,
+                    options = Object.assign({}, grasppe.ColorSheetsApp.SupercellDemoHelper.Options, this.$options),
+                    plotOptions = options.plotOptions,
+                    legendOptions = options.legendOptions,
+                    plotCanvas = $(this.$scope.canvas),
+                    series = options.seriesOptions,
+                    strokeFactor = 1,
+                    mode = {
+                        is: options.shading + '-' + options.panning, blockPan: options.panning === 'supercell', cellPan: options.panning !== 'supercell', // options.panning === 'cell',
+                        wires: options.shading === 'wires', lines: options.shading === 'lines', fills: options.shading === 'fills', pixels: options.shading === 'pixels', cells: options.shading === 'cells',
+                    },
+                    stroke = {
+                        is: mode.blockPan ? 'thick' : mode.pixels ? 'none' : (mode.lines || mode.cellPan) ? 'initial' : 'thin', initial: mode.lines || mode.cellPan || false, thick: mode.blockPan, thin: !mode.blockPan && !mode.lines && !mode.cellPan && !mode.pixels, none: mode.pixels,
+                    },
+                    styles = {
+                        intended: Object.assign({}, series.intendedSeriesStyle, {
+                            lineWidth: stroke.initial ? series.intendedSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 1 : 0
+                        }),
+                        halftone: Object.assign({}, series.halftoneSeriesStyle, {
+                            lineWidth: stroke.initial ? series.halftoneSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 0.5 : 0
+                        }),
+                        supercell: Object.assign({}, series.supercellSeriesStyle, {
+                            lineWidth: stroke.initial ? series.supercellSeriesDefaultStyle.lineWidth : stroke.thick ? 0.75 : stroke.thin ? 0.5 : 0
+                        }),
+                        supercellLines: Object.assign({}, series.supercellSeriesLineStyle, {
+                            lineWidth: stroke.initial ? 1 : stroke.thick ? 1 : stroke.thin ? 0.25 : 0
+                        }),
+                        halftoneFill: Object.assign({}, series.halftoneSeriesFillStyle),
+                        supercellFill: Object.assign({}, series.supercellSeriesFillStyle),
+                        plotGrid: Object.assign({}, plotOptions.plotGridStyle, {lineWidth: 0.125}),
+                        legendBox: Object.assign({}, legendOptions.legendBoxStyle),
+                    },
+                    lineXSpots = values.lineXSpots,
+                    lineYSpots = values.lineYSpots,
+                    lineRoundXSpots = values.lineRoundXSpots,
+                    lineRoundYSpots = values.lineRoundYSpots,
+                    cellRoundXSpots = values.cellRoundXSpots,
+                    cellRoundYSpots = values.cellRoundYSpots,
+                    cells = values.cells,
+                    Box = grasppe.canvas.Box,
+                    Lines = grasppe.canvas.Lines,
+                    Bounds = grasppe.canvas.BoundingBox,
+                    Rectangle = grasppe.canvas.Rectangle,
+                    ImageFilter = grasppe.canvas.ImageFilter,
+                    Chart = grasppe.canvas.Chart,
+                    happy = true;
+                    
+                for (var s in styles) if (styles[s].lineWidth) styles[s].lineWidth = Number(styles[s].lineWidth) * strokeFactor;
+                
+                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+
+                BOX_CALCULATIONS: {
+                    if (timeStamp !== self.timeStamp) return this;
+                    var intendedBox = new Box(0, 0, lineXSpots, lineYSpots, styles.intended),
+                        halftoneBox = new Box(0, 0, lineRoundXSpots, lineRoundYSpots, styles.halftone),
+                        supercellBox = new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell),
+                        supercellVerticals = new Lines([supercellBox[1][0] / cells, supercellBox[1][1] / cells], Object.assign({
+                            offset: supercellBox.getPoint(3),
+                        }, styles.supercellSeriesLineStyle)),
+                        supercellHorizontals = new Lines([supercellBox[3][0] / cells, supercellBox[3][1] / cells], Object.assign({
+                            offset: supercellBox.getPoint(1),
+                        }, styles.supercellSeriesLineStyle)),
+                        supercellXs, supercellYs;
+                    if (timeStamp !== self.timeStamp) return this;
+                    for (var i = 2; i <= cells; i++) supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]), supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
+                }
+                BOUNDING_CALCULATIONS: {
+                    if (timeStamp !== self.timeStamp) return this;
+                    var paths = [intendedBox, halftoneBox, supercellBox],
+                        lines = [supercellVerticals, supercellHorizontals],
+                        shapes = paths.concat(lines),
+                        bounds = new Bounds(mode.cellPan ? [intendedBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
+                        margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 8;
+                }
+                ADDRESSABILITY_GRID: {
+                    if (timeStamp !== self.timeStamp) return this;
+                    var gridMargin = 0 + margin,
+                        gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
+                        gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
+                        // gridMax = [Math.ceil(bounds.xMax + bounds.xMin + gridMargin), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
+                        gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
+                        gridVerticals = new Lines(gridMin, Object.assign({
+                            offset: [0, gridSteps[0]],
+                        }, styles.plotGrid)),
+                        gridHorizontals = new Lines(gridMin, Object.assign({
+                            offset: [gridSteps[1], 0],
+                        }, styles.plotGrid));
+                    if (timeStamp !== self.timeStamp) return this;
+                    for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
+                    for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+                }
+                SIZING_CALCULATIONS: {
+                    if (timeStamp !== self.timeStamp) return this;
+                    var frameWidth = $(plotCanvas).width(),
+                        frameHeight = $(plotCanvas).height(),
+                        frameRatio = frameWidth / frameHeight;
+                    var clippingBox = new Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
+                        scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
+                        offset = [-clippingBox.xMin, -clippingBox.yMin],
+                        // width = (offset[0] + clippingBox.xMax) * scale * frameRatio,
+                        // height = width  / frameRatio;
+                        width = (offset[0] + clippingBox.xMax) * scale,
+                        height = width;
+                }
+                PIXEL_BOXES: {
+                    if (timeStamp !== self.timeStamp) return this;
+                    var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
+                        halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
+                        supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
+                }
+                PATH_GENERATION: {
+                    var paths = [],
+                        elements = [],
+                        view = [-offset[0] * scale, 0, width, height];
+                        // view = [-offset[0] * scale, -offset[1] * scale, width, height];
+                        
+                    if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
+                    if (mode.cells) elements = elements.concat(supercellPixelBoxes);
+                    elements.push(gridVerticals, gridHorizontals);
+                    if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellVerticals, supercellHorizontals);
+                    if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) elements.push(intendedBox);
+                    if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox);
+                    if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
+
+                    for (var path of elements) if (timeStamp !== self.timeStamp) return this;
+                        else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
+                    
+                    var group = '<g transform="scale(1, -1) translate(0 -' + (height-scale*2) + ')">' + paths.join('') + "</g>",
+                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + group + '</svg>';
+                    
+                    // if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
+                    // plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
+                }
+                
+                this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
+
+                return svg;
+            }
+            
             updatePlot() {
-                self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
-                    if (!/(wires|lines|fills|pixels|cells)/.test(this.$options.shading)) this.$options.shading = 'fills';
-                    if (!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
-
-                    var values = this.calculations,
-                        options = Object.assign({}, grasppe.ColorSheetsApp.SupercellDemoHelper.Options, this.$options),
-                        plotOptions = options.plotOptions,
-                        legendOptions = options.legendOptions,
-                        plotCanvas = $(this.$scope.canvas),
-                        series = options.seriesOptions,
-                        strokeFactor = 1,
-                        mode = {
-                            is: options.shading + '-' + options.panning, blockPan: options.panning === 'supercell', cellPan: options.panning !== 'supercell', // options.panning === 'cell',
-                            wires: options.shading === 'wires', lines: options.shading === 'lines', fills: options.shading === 'fills', pixels: options.shading === 'pixels', cells: options.shading === 'cells',
-                        },
-                        stroke = {
-                            is: mode.blockPan ? 'thick' : mode.pixels ? 'none' : (mode.lines || mode.cellPan) ? 'initial' : 'thin', initial: mode.lines || mode.cellPan || false, thick: mode.blockPan, thin: !mode.blockPan && !mode.lines && !mode.cellPan && !mode.pixels, none: mode.pixels,
-                        },
-                        styles = {
-                            intended: Object.assign({}, series.intendedSeriesStyle, {
-                                lineWidth: stroke.initial ? series.intendedSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 1 : 0
-                            }),
-                            halftone: Object.assign({}, series.halftoneSeriesStyle, {
-                                lineWidth: stroke.initial ? series.halftoneSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 0.5 : 0
-                            }),
-                            supercell: Object.assign({}, series.supercellSeriesStyle, {
-                                lineWidth: stroke.initial ? series.supercellSeriesDefaultStyle.lineWidth : stroke.thick ? 0.75 : stroke.thin ? 0.5 : 0
-                            }),
-                            supercellLines: Object.assign({}, series.supercellSeriesLineStyle, {
-                                lineWidth: stroke.initial ? 1 : stroke.thick ? 1 : stroke.thin ? 0.25 : 0
-                            }),
-                            halftoneFill: Object.assign({}, series.halftoneSeriesFillStyle),
-                            supercellFill: Object.assign({}, series.supercellSeriesFillStyle),
-                            plotGrid: Object.assign({}, plotOptions.plotGridStyle, {lineWidth: 0.125}),
-                            legendBox: Object.assign({}, legendOptions.legendBoxStyle),
-                        },
-                        lineXSpots = values.lineXSpots,
-                        lineYSpots = values.lineYSpots,
-                        lineRoundXSpots = values.lineRoundXSpots,
-                        lineRoundYSpots = values.lineRoundYSpots,
-                        cellRoundXSpots = values.cellRoundXSpots,
-                        cellRoundYSpots = values.cellRoundYSpots,
-                        cells = values.cells,
-                        Box = grasppe.canvas.Box,
-                        Lines = grasppe.canvas.Lines,
-                        Bounds = grasppe.canvas.BoundingBox,
-                        Rectangle = grasppe.canvas.Rectangle,
-                        ImageFilter = grasppe.canvas.ImageFilter,
-                        Chart = grasppe.canvas.Chart,
-                        happy = true;
-                        
-                    for (var s in styles) if (styles[s].lineWidth) styles[s].lineWidth = Number(styles[s].lineWidth) * strokeFactor;
-                    
-                    if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
-
-                    BOX_CALCULATIONS: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var intendedBox = new Box(0, 0, lineXSpots, lineYSpots, styles.intended),
-                            halftoneBox = new Box(0, 0, lineRoundXSpots, lineRoundYSpots, styles.halftone),
-                            supercellBox = new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell),
-                            supercellVerticals = new Lines([supercellBox[1][0] / cells, supercellBox[1][1] / cells], Object.assign({
-                                offset: supercellBox.getPoint(3),
-                            }, styles.supercellSeriesLineStyle)),
-                            supercellHorizontals = new Lines([supercellBox[3][0] / cells, supercellBox[3][1] / cells], Object.assign({
-                                offset: supercellBox.getPoint(1),
-                            }, styles.supercellSeriesLineStyle)),
-                            supercellXs, supercellYs;
-                        if (timeStamp !== self.timeStamp) return this;
-                        for (var i = 2; i <= cells; i++) supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]), supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
+                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
+                    var plotCanvas = $(this.$scope.canvas);
+                    if (plotCanvas.find('img').length === 0) {
+                        plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%;">'));
+                        $(window).bind('resize', function(){
+                            this.updatePlot();
+                        }.bind(this));
                     }
-                    BOUNDING_CALCULATIONS: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var paths = [intendedBox, halftoneBox, supercellBox],
-                            lines = [supercellVerticals, supercellHorizontals],
-                            shapes = paths.concat(lines),
-                            bounds = new Bounds(mode.cellPan ? [intendedBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
-                            margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 8;
-                    }
-                    ADDRESSABILITY_GRID: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var gridMargin = 0 + margin,
-                            gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
-                            gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
-                            // gridMax = [Math.ceil(bounds.xMax + bounds.xMin + gridMargin), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
-                            gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
-                            gridVerticals = new Lines(gridMin, Object.assign({
-                                offset: [0, gridSteps[0]],
-                            }, styles.plotGrid)),
-                            gridHorizontals = new Lines(gridMin, Object.assign({
-                                offset: [gridSteps[1], 0],
-                            }, styles.plotGrid));
-                        if (timeStamp !== self.timeStamp) return this;
-                        for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
-                        for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
-                    }
-                    SIZING_CALCULATIONS: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var frameWidth = $(plotCanvas).width(),
-                            frameHeight = $(plotCanvas).height(),
-                            frameRatio = frameWidth / frameHeight;
-                        var clippingBox = new Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
-                            scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
-                            offset = [-clippingBox.xMin, -clippingBox.yMin],
-                            // width = (offset[0] + clippingBox.xMax) * scale * frameRatio,
-                            // height = width  / frameRatio;
-                            width = (offset[0] + clippingBox.xMax) * scale,
-                            height = width;
-                    }
-                    PIXEL_BOXES: {
-                        if (timeStamp !== self.timeStamp) return this;
-                        var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
-                            halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
-                            supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
-                    }
-                    PATH_GENERATION: {
-                        var paths = [],
-                            elements = [],
-                            view = [-offset[0] * scale, -offset[1] * scale, width, height];
-                            
-                        if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
-                        if (mode.cells) elements = elements.concat(supercellPixelBoxes);
-                        elements.push(gridVerticals, gridHorizontals);
-                        if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellVerticals, supercellHorizontals);
-                        if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) elements.push(intendedBox);
-                        if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox);
-                        if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
-
-                        for (var path of elements) if (timeStamp !== self.timeStamp) return this;
-                            else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
-                        
-                        var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + paths.join('') + '</svg>';
-                        
-                        if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
-                        plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
-                    }
-                    
-                    this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
-
-                }.bind(this), 0, self, self.timeStamp);
-
+                    plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + this.generatePlotImage());
+                }.bind(this), 0);
                 return this;
             }
+
+            // updatePlot() {
+            //     self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
+            //         if (!/(wires|lines|fills|pixels|cells)/.test(this.$options.shading)) this.$options.shading = 'fills';
+            //         if (!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
+            // 
+            //         var values = this.calculations,
+            //             options = Object.assign({}, grasppe.ColorSheetsApp.SupercellDemoHelper.Options, this.$options),
+            //             plotOptions = options.plotOptions,
+            //             legendOptions = options.legendOptions,
+            //             plotCanvas = $(this.$scope.canvas),
+            //             series = options.seriesOptions,
+            //             strokeFactor = 1,
+            //             mode = {
+            //                 is: options.shading + '-' + options.panning, blockPan: options.panning === 'supercell', cellPan: options.panning !== 'supercell', // options.panning === 'cell',
+            //                 wires: options.shading === 'wires', lines: options.shading === 'lines', fills: options.shading === 'fills', pixels: options.shading === 'pixels', cells: options.shading === 'cells',
+            //             },
+            //             stroke = {
+            //                 is: mode.blockPan ? 'thick' : mode.pixels ? 'none' : (mode.lines || mode.cellPan) ? 'initial' : 'thin', initial: mode.lines || mode.cellPan || false, thick: mode.blockPan, thin: !mode.blockPan && !mode.lines && !mode.cellPan && !mode.pixels, none: mode.pixels,
+            //             },
+            //             styles = {
+            //                 intended: Object.assign({}, series.intendedSeriesStyle, {
+            //                     lineWidth: stroke.initial ? series.intendedSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 1 : 0
+            //                 }),
+            //                 halftone: Object.assign({}, series.halftoneSeriesStyle, {
+            //                     lineWidth: stroke.initial ? series.halftoneSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 0.5 : 0
+            //                 }),
+            //                 supercell: Object.assign({}, series.supercellSeriesStyle, {
+            //                     lineWidth: stroke.initial ? series.supercellSeriesDefaultStyle.lineWidth : stroke.thick ? 0.75 : stroke.thin ? 0.5 : 0
+            //                 }),
+            //                 supercellLines: Object.assign({}, series.supercellSeriesLineStyle, {
+            //                     lineWidth: stroke.initial ? 1 : stroke.thick ? 1 : stroke.thin ? 0.25 : 0
+            //                 }),
+            //                 halftoneFill: Object.assign({}, series.halftoneSeriesFillStyle),
+            //                 supercellFill: Object.assign({}, series.supercellSeriesFillStyle),
+            //                 plotGrid: Object.assign({}, plotOptions.plotGridStyle, {lineWidth: 0.125}),
+            //                 legendBox: Object.assign({}, legendOptions.legendBoxStyle),
+            //             },
+            //             lineXSpots = values.lineXSpots,
+            //             lineYSpots = values.lineYSpots,
+            //             lineRoundXSpots = values.lineRoundXSpots,
+            //             lineRoundYSpots = values.lineRoundYSpots,
+            //             cellRoundXSpots = values.cellRoundXSpots,
+            //             cellRoundYSpots = values.cellRoundYSpots,
+            //             cells = values.cells,
+            //             Box = grasppe.canvas.Box,
+            //             Lines = grasppe.canvas.Lines,
+            //             Bounds = grasppe.canvas.BoundingBox,
+            //             Rectangle = grasppe.canvas.Rectangle,
+            //             ImageFilter = grasppe.canvas.ImageFilter,
+            //             Chart = grasppe.canvas.Chart,
+            //             happy = true;
+            //             
+            //         for (var s in styles) if (styles[s].lineWidth) styles[s].lineWidth = Number(styles[s].lineWidth) * strokeFactor;
+            //         
+            //         if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+            // 
+            //         BOX_CALCULATIONS: {
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             var intendedBox = new Box(0, 0, lineXSpots, lineYSpots, styles.intended),
+            //                 halftoneBox = new Box(0, 0, lineRoundXSpots, lineRoundYSpots, styles.halftone),
+            //                 supercellBox = new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell),
+            //                 supercellVerticals = new Lines([supercellBox[1][0] / cells, supercellBox[1][1] / cells], Object.assign({
+            //                     offset: supercellBox.getPoint(3),
+            //                 }, styles.supercellSeriesLineStyle)),
+            //                 supercellHorizontals = new Lines([supercellBox[3][0] / cells, supercellBox[3][1] / cells], Object.assign({
+            //                     offset: supercellBox.getPoint(1),
+            //                 }, styles.supercellSeriesLineStyle)),
+            //                 supercellXs, supercellYs;
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             for (var i = 2; i <= cells; i++) supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]), supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
+            //         }
+            //         BOUNDING_CALCULATIONS: {
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             var paths = [intendedBox, halftoneBox, supercellBox],
+            //                 lines = [supercellVerticals, supercellHorizontals],
+            //                 shapes = paths.concat(lines),
+            //                 bounds = new Bounds(mode.cellPan ? [intendedBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
+            //                 margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 8;
+            //         }
+            //         ADDRESSABILITY_GRID: {
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             var gridMargin = 0 + margin,
+            //                 gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
+            //                 gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
+            //                 // gridMax = [Math.ceil(bounds.xMax + bounds.xMin + gridMargin), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
+            //                 gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
+            //                 gridVerticals = new Lines(gridMin, Object.assign({
+            //                     offset: [0, gridSteps[0]],
+            //                 }, styles.plotGrid)),
+            //                 gridHorizontals = new Lines(gridMin, Object.assign({
+            //                     offset: [gridSteps[1], 0],
+            //                 }, styles.plotGrid));
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
+            //             for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+            //         }
+            //         SIZING_CALCULATIONS: {
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             var frameWidth = $(plotCanvas).width(),
+            //                 frameHeight = $(plotCanvas).height(),
+            //                 frameRatio = frameWidth / frameHeight;
+            //             var clippingBox = new Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
+            //                 scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
+            //                 offset = [-clippingBox.xMin, -clippingBox.yMin],
+            //                 // width = (offset[0] + clippingBox.xMax) * scale * frameRatio,
+            //                 // height = width  / frameRatio;
+            //                 width = (offset[0] + clippingBox.xMax) * scale,
+            //                 height = width;
+            //         }
+            //         PIXEL_BOXES: {
+            //             if (timeStamp !== self.timeStamp) return this;
+            //             var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
+            //                 halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
+            //                 supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
+            //         }
+            //         PATH_GENERATION: {
+            //             var paths = [],
+            //                 elements = [],
+            //                 view = [-offset[0] * scale, -offset[1] * scale, width, height];
+            //                 
+            //             if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
+            //             if (mode.cells) elements = elements.concat(supercellPixelBoxes);
+            //             elements.push(gridVerticals, gridHorizontals);
+            //             if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellVerticals, supercellHorizontals);
+            //             if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) elements.push(intendedBox);
+            //             if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox);
+            //             if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
+            // 
+            //             for (var path of elements) if (timeStamp !== self.timeStamp) return this;
+            //                 else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
+            //             
+            //             var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + paths.join('') + '</svg>';
+            //             
+            //             if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
+            //             plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
+            //         }
+            //         
+            //         this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
+            // 
+            //     }.bind(this), 0, self, self.timeStamp);
+            // 
+            //     return this;
+            // }
             
             /**
              * Renders overlay aspects.
@@ -345,6 +514,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             panels: {
                 stage: {
                     directive: 'color-sheet-stage', tools: {
+                        save: {
+                            label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function(link, $scope, event){
+                                console.log(arguments);
+                                $scope.$sheet.helper.downloadPlot(link);
+                            },
+                        },
                         panning: {
                             label: 'Panning', svgSrc: 'images/search.svg', classes: 'md-icon-button', menu: {
                                 cell: {
@@ -410,6 +585,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 sheetController: grasppe.Libre.Controller.define('SupercellDemoController', function ($scope, model, module) {
                     // !- SupercellDemo [Controllers] SupercellDemoController
                     console.log('SupercellDemo [Controllers] SupercellDemoController');
+                    
+                    if ($scope.parameters) {
+                        if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
+                        if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
+                    }
 
                     Object.assign($scope, {
                         helper: new grasppe.ColorSheetsApp.SupercellDemoHelper({

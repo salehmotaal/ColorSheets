@@ -256,7 +256,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'mobileDetect', 'fontAwesome', 'grasppeCore'],
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'd3', 'mobileDetect', 'fontAwesome', 'grasppeCore'],
                 objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
@@ -284,6 +284,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 materializeCSS: '   styles:     ["materialize.min.css"]'.toLiteral(),
                 materialize: '      scripts:    ["materialize.min.js"], \
                                     styles:     ["materialize.min.css"]'.toLiteral(),
+                d3: '               scripts:    ["d3.min.js"]'.toLiteral(),
                 // jQueryUI: '         scripts:    ["//code.jquery.com/ui/1.11.4/jquery-ui.min.js"], \
                 //                     styles:     ["//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css"]'.toLiteral(),
                 jQueryUI: '         scripts:    ["jquery-ui.min.js"], \

@@ -1,0 +1,30 @@
+@media all {
+    
+    .legend-item {
+    	white-space:nowrap;
+    	font-size:10pt;
+    	overflow-x:hidden;
+    	text-overflow:ellipsis;
+    	padding:0 .25em;
+    }
+    
+    .legend-item .legend-symbol {
+    	white-space:nowrap;
+    	text-align:right;
+    	font-size:75%;
+    	vertical-align:text-top;
+    	display:inline-block;
+    	margin:.2em 4px 0 2px;
+    }
+    
+    .legend-item .legend-text {
+    	white-space:normal;
+    	text-align:left;
+    	overflow-x:hidden;
+    	text-overflow:ellipsis;
+    	display:inline-block;
+    	vertical-align:text-top;
+    	margin:0 2px 0 0;
+    }
+
+}
