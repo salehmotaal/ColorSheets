@@ -51,7 +51,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
 
             updateData() {
-                // if (this.getParameter('spi') && this.getParameter('lpi') && this.getParameter('theta') && this.getParameter('cells') && this) window.history.pushState({}, document.title, window.location.href.replace(/\?[^\#]*/, ['?spi=', this.getParameter('spi'), '&lpi=', this.getParameter('lpi'), '&theta=', this.getParameter('theta'), '&cells=', this.getParameter('cells'), (this.$options.shading ? '&shading=' + this.$options.shading : 'supercells'), (this.$options.panning ? '&panning=' + this.$options.panning : 'cell'), ].join('')));
                 this.calculateStack().updatePlot();
 
                 return this;
@@ -183,7 +182,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var gridMargin = 0 + margin,
                         gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
                         gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
-                        // gridMax = [Math.ceil(bounds.xMax + bounds.xMin + gridMargin), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
                         gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
                         gridVerticals = new Lines(gridMin, Object.assign({
                             offset: [0, gridSteps[0]],
@@ -203,8 +201,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var clippingBox = new Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
                         scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
                         offset = [-clippingBox.xMin, -clippingBox.yMin],
-                        // width = (offset[0] + clippingBox.xMax) * scale * frameRatio,
-                        // height = width  / frameRatio;
                         width = (offset[0] + clippingBox.xMax) * scale,
                         height = width;
                 }
@@ -214,11 +210,41 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
                         supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
                 }
+                // LEGEND_BOX: {
+                //     var fontSize = 10,
+                //         lineSize = 2,
+                //         legendStyles = [styles.intended, styles.halftone, styles.supercell],
+                //         legendMargin = 1,
+                //         legendPadding = 1,
+                //         legendWidth = gridSteps[0] - legendMargin * 2,
+                //         legendHeight = lineSize * 2 + legendPadding * 2,
+                //         legendColumn = Math.floor(legendWidth / legendOptions.seriesLabels.length),
+                //         legendRow = legendHeight - legendPadding * 2,
+                //         legendBox = new grasppe.canvas.Rectangle(gridMin[0] + legendMargin, gridMin[1] + legendMargin + 2, legendWidth, legendHeight, {
+                //                 fillStyle: 'rgba(255, 255, 255, 0.75)', strokeStyle: 'rgba(0, 0, 0, 0.05)'
+                //             }),
+                //         legendGroup = '<g>';
+                //         
+                //     legendGroup += legendBox.getPath(undefined, undefined, scale);
+                // 
+                //     for (var i = 0; i < legendOptions.seriesLabels.length; i ++) {
+                //         var cellLeft = gridMin[0]  + legendMargin + legendColumn * i + legendPadding,
+                //             cellTop = gridMin[1] + legendMargin + 2 + legendPadding + lineSize,
+                //             markerStyle = legendStyles[i].strokeStyle ||legendStyles[i].fillStyle,
+                //             marker = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14; fill:' + markerStyle + '">•</text>',
+                //             label = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function(line, index) {
+                //                     return '<tspan x="' + (cellLeft + legendPadding * 4) * scale + '" dy="' + index * lineSize * scale + '">' + line + '</tspan>';
+                //                 }).join('\n') + '</text>';
+                //         console.log([cellLeft, cellTop]);
+                //         legendGroup += marker + label;
+                //     }
+                //         
+                //     legendGroup += '</g>';
+                // }
                 PATH_GENERATION: {
                     var paths = [],
                         elements = [],
                         view = [-offset[0] * scale, 0, width, height];
-                        // view = [-offset[0] * scale, -offset[1] * scale, width, height];
                         
                     if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
                     if (mode.cells) elements = elements.concat(supercellPixelBoxes);
@@ -231,11 +257,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     for (var path of elements) if (timeStamp !== self.timeStamp) return this;
                         else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
                     
-                    var group = '<g transform="scale(1, -1) translate(0 -' + (height-scale*2) + ')">' + paths.join('') + "</g>",
-                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + group + '</svg>';
-                    
-                    // if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
-                    // plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
+                    var pathGroup = '<g transform="scale(1, -1) translate(0 -' + (height-scale*2) + ')">' + paths.join('') + "</g>",
+                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + pathGroup + '</svg>';
                 }
                 
                 this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
@@ -256,150 +279,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }.bind(this), 0);
                 return this;
             }
-
-            // updatePlot() {
-            //     self = this.updatePlot, clearTimeout(self.timeOut), self.timeStamp = Date.now(), self.timeOut = setTimeout(function (self, timeStamp) {
-            //         if (!/(wires|lines|fills|pixels|cells)/.test(this.$options.shading)) this.$options.shading = 'fills';
-            //         if (!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
-            // 
-            //         var values = this.calculations,
-            //             options = Object.assign({}, grasppe.ColorSheetsApp.SupercellDemoHelper.Options, this.$options),
-            //             plotOptions = options.plotOptions,
-            //             legendOptions = options.legendOptions,
-            //             plotCanvas = $(this.$scope.canvas),
-            //             series = options.seriesOptions,
-            //             strokeFactor = 1,
-            //             mode = {
-            //                 is: options.shading + '-' + options.panning, blockPan: options.panning === 'supercell', cellPan: options.panning !== 'supercell', // options.panning === 'cell',
-            //                 wires: options.shading === 'wires', lines: options.shading === 'lines', fills: options.shading === 'fills', pixels: options.shading === 'pixels', cells: options.shading === 'cells',
-            //             },
-            //             stroke = {
-            //                 is: mode.blockPan ? 'thick' : mode.pixels ? 'none' : (mode.lines || mode.cellPan) ? 'initial' : 'thin', initial: mode.lines || mode.cellPan || false, thick: mode.blockPan, thin: !mode.blockPan && !mode.lines && !mode.cellPan && !mode.pixels, none: mode.pixels,
-            //             },
-            //             styles = {
-            //                 intended: Object.assign({}, series.intendedSeriesStyle, {
-            //                     lineWidth: stroke.initial ? series.intendedSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 1 : 0
-            //                 }),
-            //                 halftone: Object.assign({}, series.halftoneSeriesStyle, {
-            //                     lineWidth: stroke.initial ? series.halftoneSeriesDefaultStyle.lineWidth : stroke.thick ? 2 : stroke.thin ? 0.5 : 0
-            //                 }),
-            //                 supercell: Object.assign({}, series.supercellSeriesStyle, {
-            //                     lineWidth: stroke.initial ? series.supercellSeriesDefaultStyle.lineWidth : stroke.thick ? 0.75 : stroke.thin ? 0.5 : 0
-            //                 }),
-            //                 supercellLines: Object.assign({}, series.supercellSeriesLineStyle, {
-            //                     lineWidth: stroke.initial ? 1 : stroke.thick ? 1 : stroke.thin ? 0.25 : 0
-            //                 }),
-            //                 halftoneFill: Object.assign({}, series.halftoneSeriesFillStyle),
-            //                 supercellFill: Object.assign({}, series.supercellSeriesFillStyle),
-            //                 plotGrid: Object.assign({}, plotOptions.plotGridStyle, {lineWidth: 0.125}),
-            //                 legendBox: Object.assign({}, legendOptions.legendBoxStyle),
-            //             },
-            //             lineXSpots = values.lineXSpots,
-            //             lineYSpots = values.lineYSpots,
-            //             lineRoundXSpots = values.lineRoundXSpots,
-            //             lineRoundYSpots = values.lineRoundYSpots,
-            //             cellRoundXSpots = values.cellRoundXSpots,
-            //             cellRoundYSpots = values.cellRoundYSpots,
-            //             cells = values.cells,
-            //             Box = grasppe.canvas.Box,
-            //             Lines = grasppe.canvas.Lines,
-            //             Bounds = grasppe.canvas.BoundingBox,
-            //             Rectangle = grasppe.canvas.Rectangle,
-            //             ImageFilter = grasppe.canvas.ImageFilter,
-            //             Chart = grasppe.canvas.Chart,
-            //             happy = true;
-            //             
-            //         for (var s in styles) if (styles[s].lineWidth) styles[s].lineWidth = Number(styles[s].lineWidth) * strokeFactor;
-            //         
-            //         if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
-            // 
-            //         BOX_CALCULATIONS: {
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             var intendedBox = new Box(0, 0, lineXSpots, lineYSpots, styles.intended),
-            //                 halftoneBox = new Box(0, 0, lineRoundXSpots, lineRoundYSpots, styles.halftone),
-            //                 supercellBox = new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell),
-            //                 supercellVerticals = new Lines([supercellBox[1][0] / cells, supercellBox[1][1] / cells], Object.assign({
-            //                     offset: supercellBox.getPoint(3),
-            //                 }, styles.supercellSeriesLineStyle)),
-            //                 supercellHorizontals = new Lines([supercellBox[3][0] / cells, supercellBox[3][1] / cells], Object.assign({
-            //                     offset: supercellBox.getPoint(1),
-            //                 }, styles.supercellSeriesLineStyle)),
-            //                 supercellXs, supercellYs;
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             for (var i = 2; i <= cells; i++) supercellVerticals.push([supercellVerticals[0][0] * i, supercellVerticals[0][1] * i]), supercellHorizontals.push([supercellHorizontals[0][0] * i, supercellHorizontals[0][1] * i]);
-            //         }
-            //         BOUNDING_CALCULATIONS: {
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             var paths = [intendedBox, halftoneBox, supercellBox],
-            //                 lines = [supercellVerticals, supercellHorizontals],
-            //                 shapes = paths.concat(lines),
-            //                 bounds = new Bounds(mode.cellPan ? [intendedBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
-            //                 margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 8;
-            //         }
-            //         ADDRESSABILITY_GRID: {
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             var gridMargin = 0 + margin,
-            //                 gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
-            //                 gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
-            //                 // gridMax = [Math.ceil(bounds.xMax + bounds.xMin + gridMargin), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
-            //                 gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
-            //                 gridVerticals = new Lines(gridMin, Object.assign({
-            //                     offset: [0, gridSteps[0]],
-            //                 }, styles.plotGrid)),
-            //                 gridHorizontals = new Lines(gridMin, Object.assign({
-            //                     offset: [gridSteps[1], 0],
-            //                 }, styles.plotGrid));
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
-            //             for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
-            //         }
-            //         SIZING_CALCULATIONS: {
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             var frameWidth = $(plotCanvas).width(),
-            //                 frameHeight = $(plotCanvas).height(),
-            //                 frameRatio = frameWidth / frameHeight;
-            //             var clippingBox = new Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]),
-            //                 scale = options.plotWidth / Math.max(clippingBox.xMax, clippingBox.yMax),
-            //                 offset = [-clippingBox.xMin, -clippingBox.yMin],
-            //                 // width = (offset[0] + clippingBox.xMax) * scale * frameRatio,
-            //                 // height = width  / frameRatio;
-            //                 width = (offset[0] + clippingBox.xMax) * scale,
-            //                 height = width;
-            //         }
-            //         PIXEL_BOXES: {
-            //             if (timeStamp !== self.timeStamp) return this;
-            //             var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
-            //                 halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
-            //                 supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
-            //         }
-            //         PATH_GENERATION: {
-            //             var paths = [],
-            //                 elements = [],
-            //                 view = [-offset[0] * scale, -offset[1] * scale, width, height];
-            //                 
-            //             if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
-            //             if (mode.cells) elements = elements.concat(supercellPixelBoxes);
-            //             elements.push(gridVerticals, gridHorizontals);
-            //             if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellVerticals, supercellHorizontals);
-            //             if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) elements.push(intendedBox);
-            //             if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox);
-            //             if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
-            // 
-            //             for (var path of elements) if (timeStamp !== self.timeStamp) return this;
-            //                 else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
-            //             
-            //             var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + paths.join('') + '</svg>';
-            //             
-            //             if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img style="width: auto; height: 50vh; min-height: 100%; transform: scaleY(-1)">'));
-            //             plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + svg);
-            //         }
-            //         
-            //         this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
-            // 
-            //     }.bind(this), 0, self, self.timeStamp);
-            // 
-            //     return this;
-            // }
             
             /**
              * Renders overlay aspects.
@@ -433,7 +312,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
             getSuperCellsPixelsPath(path, cells) {
                 var pixels = [],
-                    $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: none;">').appendTo('body'),
                     offset = 10,
                     width = path.width + offset * 2,
                     height = path.height + offset * 2,
@@ -445,38 +323,51 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     style2 = {
                         fillStyle: "rgba(127, 127, 255, 0.75)"
                     },
-                    context = $canvas[0].getContext("2d"),
-                    imageData, rawData;
-
+                    $canvas, imageData, rawData;
                 try {
-                    $canvas[0].width = width, $canvas[0].height = height;
-                    context.translate(offset + path.width - path.xMax, offset); // context.clearRect(0, 0, width, height), 
-                    context.rect(0 - offset + xMin, -offset, width, height), context.fillStyle = '#000';
-                    context.lineWidth = 2;
 
                     for (var i = 0; i < cells; i++) for (var j = 0; j < cells; j++) { // if (((i % 2) + (j % 2) !== 1)) {
+                        
                         var box = path.map(function (point) {
                             return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
-                        });
-
-                        context.fillStyle = ((((i % 2) + (j % 2) === 1)) ? '#FFF' : '#000');
-                        context.strokeStyle = ((((i % 2) + (j % 2) === 1)) ? '#FFF' : '#000');
+                        }),
+                            xs = box.map(function (point) {
+                                return point[0];
+                            }),
+                            ys = box.map(function (point) {
+                                return point[1];
+                            }),
+                            x1 = Math.min.apply(null, xs) - offset - xMin,
+                            y1 = Math.min.apply(null, ys) - offset - yMin,
+                            x2 = Math.max.apply(null, xs) + offset - xMin,
+                            y2 = Math.max.apply(null, ys) + offset - yMin;
+                            
+                        $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: block;">');
+                        $canvas[0].width = width, $canvas[0].height = height;
+                        var context = $canvas[0].getContext("2d");
+                        context.fillStyle = '#000', context.lineWidth = 0.5, context.rect(0, 0, width, height);
+                        context.translate(offset + path.width - path.xMax, offset);
+                        context.fillStyle = '#FFF', context.strokeStyle = '#FFF';
                         context.moveTo(box[0][0], box[0][1]), context.beginPath();
                         context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]);
                         context.lineTo(box[3][0], box[3][1]), context.lineTo(box[0][0], box[0][1]);
-                        context.closePath(), context.fill();
+                        context.closePath(), context.fill(), context.stroke();
+                        box.pixels = [];
+                        imageData = context.getImageData(x1, y1, x2-x1, x2-x1);
+                        rawData = imageData.data;
+                        for (var q = 0; q < imageData.height; q++) for (var p = 0; p < imageData.width; p++) if (rawData[(Math.round(imageData.width * q) + Math.round(p)) * 4 + 3] > 110) box.pixels.push(new grasppe.canvas.Path([
+                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
+                            [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
+                            [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
+                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
+                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)]
+                        ], ((i % 2) + (j % 2) === 1) ? style1 : style2));
+                        // var boundingBox = new grasppe.canvas.BoundingBox(box.pixels);
+                        // console.log(box.pixels.length);
+                        pixels = pixels.concat(box.pixels);
+                        $canvas.remove();
                     }
 
-                    imageData = context.getImageData(offset, offset, width - offset * 2, height - offset * 2);
-                    rawData = imageData.data;
-
-                    for (var j = 0; j < imageData.height; j++) for (var i = 0; i < imageData.width; i++) if (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 3] > 110) pixels.push(new grasppe.canvas.Path([
-                        [xMin + i + 0, yMin + j + 0],
-                        [xMin + i + 1, yMin + j + 0],
-                        [xMin + i + 1, yMin + j + 1],
-                        [xMin + i + 0, yMin + j + 1],
-                        [xMin + i + 0, yMin + j + 0]
-                    ], (rawData[(Math.round(imageData.width * j) + Math.round(i)) * 4 + 0] > 127) ? style1 : style2));
                 } catch (err) {
                     console.error('SupercellSheet.getSuperCellsPixels() failed...\n', err);
                 }
@@ -753,7 +644,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 },
             },
             legendOptions: {
-                seriesLabels: ['Requested  Halftone', 'Rounded  Halftone', 'Rounded  Supercell'],
+                seriesLabels: ['Requested\nHalftone', 'Rounded\nHalftone', 'Rounded\nSupercell'],
                 legendBoxStyle: {
                     fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.05)", lineWidth: 1
                 },
