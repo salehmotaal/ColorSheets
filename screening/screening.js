@@ -194,9 +194,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return pixelCache[x][y];
             }
 
-            updateData() {
-                this.calculateStack().updatePlot();
-
+            updateData(force) {
+                if (arguments.length=0) force = !this.hash.firstUpdateDone;
+                this.calculateStack().updatePlot(force);
+                this.hash.firstUpdateDone = true;
                 return this;
             }
             
@@ -284,6 +285,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     },
                     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
                     stochastic = this.getParameter('stochastic') === true,
+                    asCMY = this.getParameter('asCMY') === true,
                     screenView = mode.screen,
                     lineAngle = values.lineAngle,
                     lineAngleOffsets = [-30, 30, 15, -90],
@@ -296,7 +298,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     sinAngle = Math.sin(lineAngle % Math.PI/2) * lineFrequency,
                     cosAngle = Math.cos(lineAngle % Math.PI/2) * lineFrequency,
                     stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)',
-                    sourceImage = this.$scope.processableSourceImage,
+                    rgbImage = this.$scope.processableSourceImage,
+                    sourceImage = rgbImage,
+                    sourceData = Object.assign({}, sourceImage.data), // Object.assign({}, asCMY ? sourceImage.data : sourceImage.cmyData),
                     sourceWidth = sourceImage.width,
                     sourceHeight = sourceImage.height;
                     
@@ -310,18 +314,27 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 screenContext.fillRect(0, 0, screenWidth, screenHeight);
                 var screenData = screenContext.getImageData(0, 0, screenWidth, screenHeight);
                     
-                sourceImage.channel = 1;
-                    
-                console.log('Source Image', sourceImage);
-                    
+                // sourceImage.channel = 1;                    
                 if (!height) height = mode.zoomIn ? 150 : 200;
                 if (!width) width = mode.panFit ? Math.round(height * frameRatio) : height;
 
                 var xStep = Math.ceil(width/2),
                     yStep = Math.ceil(height/2);
                 if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
+                
+                // RGB2CMY_CONVERSION: {
+                //     if (asCMY) {
+                //         if (!sourceImage.cmyData) for (var i = 0; i < screenWidth; i++) {
+                //             for (var j = 0; j < screenHeight; j++) {
+                //                 var n = 4 * (screenWidth * j + i);
+                //                 for (var c = 0; c < 3; c++) sourceData[n+c] = 255 - rgbImage.data[n+c];
+                //             }
+                //         }
+                //         sourceImage.cmyData = sourceData;
+                //     }
+                // }
 
-                HALFTONE_CALCULATIONS: {
+                HALFTONE_SCREENING: {
                     var halftonePixels = Array(height * width),
                         n = 0,
                         lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2,
@@ -333,8 +346,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             lineOffsetY = Math.PI/2 + 0;
                         sinAngle = Math.sin(angle) * lineFrequency;
                         cosAngle = Math.cos(angle) * lineFrequency;
-                        if (timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
                         if (stochastic) for (var i = 0; i < screenWidth; i++) {
+                            if (timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
                             for (var j = 0; j < screenHeight; j++) {
                                 // var v = Math.random(),
                                 var alpha = Math.sin(cosAngle * (j*Math.random()) - sinAngle * (i*Math.random())),
@@ -342,11 +355,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     v = (alpha * beta + 1) / 2, // * Math.random(),
                                     rI = Math.floor(i / screenScale),
                                     rJ = Math.floor(j / screenScale),
-                                    rV = sourceImage.data[4 * (sourceWidth * rJ + rI) + c] / 255,
-                                    t = v <= rV,
+                                    rV = sourceData[4 * (sourceWidth * rJ + rI) + c] / 255,
+                                    t = asCMY ? v >= rV : v <= rV,
                                     p = Math.round(255 * t),
                                     n = 4 * (screenWidth * j + i);
-                                screenData.data[n + c] = p;
+                                screenData.data[n + c] = asCMY ? 255 - p : p;
                             }
                         } else for (var i = 0; i < screenWidth; i++) {
                             for (var j = 0; j < screenHeight; j++) {
@@ -355,21 +368,34 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     v = (alpha * beta + 1) / 2,
                                     rI = Math.floor(i / screenScale),
                                     rJ = Math.floor(j / screenScale),
-                                    rV = sourceImage.data[4 * (sourceWidth * rJ + rI) + c] / 255,
-                                    t = v <= rV,
-                                    // rV !== 0
-                                    p = Math.round(255 * t),
+                                    rV = sourceData[4 * (sourceWidth * rJ + rI) + c] / 255,
                                     n = 4 * (screenWidth * j + i);
-                                screenData.data[n + c] = p;
+                                if (asCMY) screenData.data[n + c] = 255 - Math.round(255 * (v <= 1-rV));
+                                else screenData.data[n + c] = Math.round(255 *  (v <= rV));
                             }
                         }
                     }
-                    
-                    screenContext.putImageData( screenData, 0, 0);
-                    
-                    // var img = Object.assign(new Image(), {src: screenCanvas.toDataURL();});
-                    var src = screenCanvas.toDataURL();
                 }
+                    
+                // CMY2RBG_CONVERSION: {
+                //     if (asCMY) {
+                //         var data = Object.assign({}, screenData.data);
+                //         for (var i = 0; i < screenWidth; i++) {
+                //             for (var j = 0; j < screenHeight; j++) {
+                //                 var n = 4 * (screenWidth * j + i);
+                //                 screenData.data[n+0] = 255 - screenData.data[n+0]; // (data[n+1] + data[n+2])/2,
+                //                 screenData.data[n+1] = 255 - screenData.data[n+1]; // (data[n+0] + data[n+2])/2,
+                //                 screenData.data[n+2] = 255 - screenData.data[n+2]; // (data[n+0] + data[n+1])/2;
+                //             }
+                //         }
+                //     }
+                // }
+                    
+                screenContext.putImageData( screenData, 0, 0);
+                
+                // var img = Object.assign(new Image(), {src: screenCanvas.toDataURL();});
+                var src = screenCanvas.toDataURL();
+                
 
                 PATH_GENERATION: {
                     // var paths = [],
@@ -492,17 +518,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //     return svg;
             // }
 
-            updatePlot() {
+            updatePlot(force) {
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
-                    if (plotCanvas.find('img').length === 0) {
-                        plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; min-height: 50vh; max-height: 100%; max-width: 100%;">'));
-                        $(window).bind('resize', function(){
-                            // this.updatePlot();
-                        }.bind(this));
-                    }
+                    if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; min-height: 50vh; max-height: 100%; max-width: 100%;">'));
                     plotCanvas.find('img').first().attr('src', this.generatePlotImage());
-                }.bind(this), 500);
+                }.bind(this), force ? 0 : 5000);
                 return this;
             }
         };
@@ -612,7 +633,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         
                         if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
                             src: value,
-                        }).getChannel(2);
+                        }); // .getChannel(2);
                         
                         console.log($scope.processableSourceImage);
                     });
@@ -658,6 +679,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <color-sheets-image-control id="sourceImage" label="Image" description="Image to be screened." suffix="" model="sourceImage" value="images/franz-flower-purple.jpg"></color-sheets-image-control>\
                                 <color-sheets-toggle-control flex layout-fill id="stochastic-toggle" label="Stochastic" description="Stochastic screening." value="false" suffix="" model="stochastic" tooltip="@">\
                                     <b>Stochastic screening:</b> Screen using freqeuncy modulation versus amplitude. \
+                                </color-sheets-toggle-control>\
+                                <color-sheets-toggle-control flex layout-fill id="cmy-toggle" label="CMY Color" description="Convert to CMY." value="true" suffix="" model="asCMY" tooltip="@">\
+                                    <b>Convert to CMY:</b> Convert the color from RGB to CMY. \
                                 </color-sheets-toggle-control>\
                             </color-sheets-panel-body>'),
                     }
