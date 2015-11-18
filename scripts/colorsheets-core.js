@@ -113,7 +113,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     stage: {
                         tools: {
                             redraw: {
-                                svgSrc: grasppe.load.url.images + 'magic-wand.svg', label: 'Redraw', classes: 'md-icon-button', click: '$scope.$panel.$broadcast("selected.stage", "redraw", "stage")'
+                                svgSrc: grasppe.load.url.images + 'magic-wand.svg', label: 'Redraw', classes: 'md-icon-button', click: '$scope.$panel.$emit("selected.stage", "redraw", "stage")'
                             },
                         },
                         prefix: 'stage', header: 'Stage', svgSrc: grasppe.load.url.images + 'bar-chart.svg', toolbarClasses: 'grey darken-1', contents: '', footer: '', controller: 'StagePanelController',
