@@ -358,17 +358,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: block;">');
                         $canvas[0].width = width, $canvas[0].height = height;
                         var context = $canvas[0].getContext("2d");
-                        context.fillStyle = '#000', context.lineWidth = 0.5, context.rect(0, 0, width, height);
+                        context.fillStyle = '#000', context.lineWidth = 2, context.rect(0, 0, width, height);
                         context.translate(offset + path.width - path.xMax, offset);
-                        context.fillStyle = '#FFF', context.strokeStyle = '#FFF';
+                        context.fillStyle = '#FFF', context.strokeStyle = '#000';
                         context.moveTo(box[0][0], box[0][1]), context.beginPath();
                         context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]);
                         context.lineTo(box[3][0], box[3][1]), context.lineTo(box[0][0], box[0][1]);
-                        context.closePath(), context.fill(), context.stroke();
+                        context.closePath(), context.fill(); // context.stroke();
                         box.pixels = [];
                         imageData = context.getImageData(x1, y1, x2-x1, x2-x1);
                         rawData = imageData.data;
-                        for (var q = 0; q < imageData.height; q++) for (var p = 0; p < imageData.width; p++) if (rawData[(Math.round(imageData.width * q) + Math.round(p)) * 4 + 3] > 110) box.pixels.push(new grasppe.canvas.Path([
+                        for (var q = 0; q < imageData.height; q++) for (var p = 0; p < imageData.width; p++) if (rawData[(Math.floor(imageData.width * q) + Math.floor(p)) * 4 + 3] > 127) box.pixels.push(new grasppe.canvas.Path([
                             [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
                             [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
                             [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
