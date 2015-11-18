@@ -135,24 +135,75 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 } // Sheet.panels
             } // Sheet
         }); // Object.assign (grasppe.ColorSheetsApp.Models) {}
-        if (grasppe.agent.is('iPhone') || grasppe.agent.is('iPad')) {
+        if (grasppe.agent.is('iPhone')) {
             grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
                 top: {
                     id: 'simulation', attributes: {
-                        'layout': 'row', 'layout-sm': 'column', 'layout-gt-lg': 'row',
+                        // 'layout': 'column', 'layout-sm': 'column', 'layout-gt-lg': 'row',
                     },
                     classes: 'row landscape-row portrait-column col-xs-12', style: {
                         padding: 0, margin: 0, flex: 1
                     },
                     contents: {
                         stage: {
-                            id: 'stage', classes: 'landscape-s-7 portrait-s-12 col-md-8 col-lg-8', style: {
+                            id: 'stage', classes: 'landscape-s-7 portrait-s-12', style: {
+                                padding: 0, margin: 0
+                            }, attributes : {
+                                layout: 'column',
+                            }
+                        },
+                        parameters: {
+                            id: 'parameters', classes: 'landscape-s-5 portrait-s-12', style: {
                                 padding: 0, margin: 0
                             },
                         },
-                        parameters: {
-                            id: 'parameters', classes: 'landscape-s-5 portrait-s-12 col-md-4 col-lg-4', style: {
+                    },
+                },
+                bottom: {
+                    id: 'information', attributes: {
+                        'layout-sm': 'column', 'layout-md': 'row',
+                    },
+                    classes: 'row col-xs-12', style: {
+                        padding: 0, margin: 0, flex: 1
+                    },
+                    contents: {
+                        results: {
+                            id: 'results', attributes: {
+                                'flex-order-sm': 1,
+                            },
+                            classes: 'col-xs-12 col-sm-5', style: {
                                 padding: 0, margin: 0
+                            },
+                        },
+                        overview: {
+                            id: 'overview', attributes: {
+                                'flex-order-sm': -1,
+                            },
+                            classes: 'col-xs-12 col-sm-7', style: {
+                                padding: 0, margin: 0
+                            },
+                        },
+                    },
+                },
+            };
+        } else if (grasppe.agent.is('iPad')) {
+            grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
+                top: {
+                    id: 'simulation', attributes: {
+                        // 'layout': 'column', 'layout-sm': 'column', 'layout-gt-lg': 'row',
+                    },
+                    classes: 'row landscape-row portrait-row col-md-12', style: { // landscape-column portrait-row
+                        padding: 0, margin: 0, flex: 1
+                    },
+                    contents: {
+                        stage: {
+                            id: 'stage', classes: 'landscape-s-7 portrait-s-12 landscape-m-7 portrait-m-12 col-md-7', style: {
+                                padding: 0, margin: 0,
+                            },
+                        },
+                        parameters: {
+                            id: 'parameters', classes: 'landscape-s-5 portrait-s-12 landscape-m-5 portrait-m-12 col-md-5', style: {
+                                padding: 0, margin: 0,
                             },
                         },
                     },
