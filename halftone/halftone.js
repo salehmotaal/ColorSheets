@@ -165,7 +165,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     },
                     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
                     screenView = mode.screen,
-                    lineAngle = values.lineAngle,
+                    lineAngle = values.lineAngle, //  % Math.PI/2,
                     lineFrequency = values.lineFrequency,
                     tint = this.getParameter('tint'),
                     sinAngle = Math.sin(lineAngle),
@@ -192,9 +192,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         //     betaRow = [], 
                         //     beta2Row = [];
                         for (var j = -yStep; j <= yStep; j++) {
-                            var alpha = Math.cos(Math.cos(lineAngle % Math.PI/2) * (j) * lineFrequency - Math.sin(lineAngle % Math.PI/2) * (i) * lineFrequency),
+                            var alpha = Math.cos((Math.cos(lineAngle) * (j) * lineFrequency) - (Math.sin(lineAngle) * (i) * lineFrequency)),
                                 // alpha2 = Math.sin(Math.cos(lineAngle) * (j) * lineFrequency - Math.sin(lineAngle) * (i) * lineFrequency),
-                                beta = Math.sin(Math.cos(lineAngle % Math.PI/2) * (i) * lineFrequency + Math.sin(lineAngle % Math.PI/2) * (j) * lineFrequency),
+                                beta = Math.sin((Math.cos(lineAngle) * (i) * lineFrequency) + (Math.sin(lineAngle) * (j) * lineFrequency)),
                                 // beta2 = Math.sin(Math.cos(lineAngle - Math.PI) * (j) * lineFrequency - Math.sin(lineAngle - Math.PI) * (i) * lineFrequency),
                                 // alpha3 = Math.sin(sinAngle * (j) * lineFrequency -  cosAngle * (i) * lineFrequency),
                                 // beta2 = Math.cos(Math.cos(lineAngle + Math.PI/2) * (j) * lineFrequency - Math.sin(lineAngle + Math.PI/2) * (i) * lineFrequency),
@@ -551,7 +551,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, {
                 id: "angle", hidden: true, type: "p", fn: "ANGLE", decimals: 2,
             }, {
-                id: "angleRadians", hidden: true, type: "c", fn: "angle * (PI/180)", unit: "º rad", decimals: 2,
+                id: "angleRadians", hidden: true, type: "c", fn: "angle * (Math.PI/180)", unit: "º rad", decimals: 2,
             }],
             'GrasppeScreen': [{
                 id: "lineRuling", type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
@@ -562,7 +562,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, {
                 id: "lineFrequency", type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
             }, {
-                id: "lineAngle", type: "c", fn: "PI/4-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
+                id: "lineAngle", type: "c", fn: "(PI/4)-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
             }, {
                 id: "lineXSpots", type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
             }, {
