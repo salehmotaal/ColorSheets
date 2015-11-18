@@ -287,8 +287,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     stochastic = this.getParameter('stochastic') === true,
                     asCMY = this.getParameter('asCMY') === true,
                     screenView = mode.screen,
-                    lineAngle = values.lineAngle,
-                    lineAngleOffsets = [-30, 30, 15, -90],
+                    lineAngle = values.lineAngle/Math.PI*180,
+                    // lineAngleOffsets = [-30, 30, 15, -90],
+                    lineAngleOffsets = [0, 60, 45, -60],
                     lineAngles = lineAngleOffsets.map(function(offset) {
                         return lineAngle + offset;
                     }),
@@ -304,7 +305,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     sourceWidth = sourceImage.width,
                     sourceHeight = sourceImage.height;
                     
-                var screenScale = Math.min(1750/sourceWidth, 1750/sourceHeight),
+                // console.log('lineAngle', values.lineAngle);
+                    
+                var screenScale = Math.min(1250/sourceWidth, 1250/sourceHeight),
                     screenWidth = Math.ceil(sourceWidth * screenScale),
                     screenHeight = Math.ceil(sourceHeight * screenScale),
                     screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">')[0], // .appendTo('body')[0],
@@ -320,7 +323,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 var xStep = Math.ceil(width/2),
                     yStep = Math.ceil(height/2);
-                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
+                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1) return $(screenCanvas).remove() && this; //  || timeStamp !== self.timeStamp
                 
                 // RGB2CMY_CONVERSION: {
                 //     if (asCMY) {
@@ -339,61 +342,42 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         n = 0,
                         lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2,
                         lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row,
-                        valleys = [], peaks = [];
-                    for (var c = 0; c < 3; c++) {
-                        var angle = lineAngles[c]/180 * Math.PI, //(lineAngle + (c-2)*Math.PI/10) % Math.PI/2,
-                            lineOffsetX = Math.PI/2 + Math.PI*(angle<0),
-                            lineOffsetY = Math.PI/2 + 0;
+                        valleys = [], peaks = [],
+                        v, rI, rJ, rV, t, p, n, i, j, c, alpha, beta, angle, lineOffsetX, lineOffsetY, sinAngle, cosAngle, cosI, sinI;
+                    for (c = 0; c < 3; c++) {
+                        angle = lineAngles[c]/180 * Math.PI; //(lineAngle + (c-2)*Math.PI/10) % Math.PI/2,
+                        lineOffsetX = Math.PI/2 + Math.PI*(angle<0);
+                        lineOffsetY = Math.PI/2 + 0;
                         sinAngle = Math.sin(angle) * lineFrequency;
                         cosAngle = Math.cos(angle) * lineFrequency;
                         if (stochastic) for (var i = 0; i < screenWidth; i++) {
-                            if (timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
-                            for (var j = 0; j < screenHeight; j++) {
-                                // var v = Math.random(),
-                                var alpha = Math.sin(cosAngle * (j*Math.random()) - sinAngle * (i*Math.random())),
-                                    beta = Math.sin(cosAngle * (i*Math.random()) + sinAngle * (j*Math.random())),
-                                    v = (alpha * beta + 1) / 2, // * Math.random(),
-                                    rI = Math.floor(i / screenScale),
-                                    rJ = Math.floor(j / screenScale),
-                                    rV = sourceData[4 * (sourceWidth * rJ + rI) + c] / 255,
-                                    t = asCMY ? v >= rV : v <= rV,
-                                    p = Math.round(255 * t),
-                                    n = 4 * (screenWidth * j + i);
+                            // if (i%10===0 && timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
+                            for (j = 0; j < screenHeight; j++) {
+                                v = Math.random(); // alpha = Math.sin(cosAngle * (j*Math.random()) - sinAngle * (i*Math.random())),
+                                rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255;
+                                t = asCMY ? v >= rV : v <= rV;
+                                p = Math.round(255 * t);
+                                n = 4 * (screenWidth * j + i);
                                 screenData.data[n + c] = asCMY ? 255 - p : p;
                             }
-                        } else for (var i = 0; i < screenWidth; i++) {
-                            for (var j = 0; j < screenHeight; j++) {
-                                var alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinAngle * (i + lineOffsetX)),
-                                    beta = Math.sin(cosAngle * (i + lineOffsetX) + sinAngle * (j + lineOffsetY)),
-                                    v = (alpha * beta + 1) / 2,
-                                    rI = Math.floor(i / screenScale),
-                                    rJ = Math.floor(j / screenScale),
-                                    rV = sourceData[4 * (sourceWidth * rJ + rI) + c] / 255,
-                                    n = 4 * (screenWidth * j + i);
-                                if (asCMY) screenData.data[n + c] = 255 - Math.round(255 * (v <= 1-rV));
-                                else screenData.data[n + c] = Math.round(255 *  (v <= rV));
+                        } else for (i = 0; i < screenWidth; i++) {
+                            cosI = cosAngle * (i + lineOffsetX);
+                            sinI = sinAngle * (i + lineOffsetX);
+                            for (j = 0; j < screenHeight; j++) {
+                                alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI);
+                                beta = Math.sin(cosI + sinAngle * (j + lineOffsetY));
+                                v = (alpha * beta + 1) * 127.5;
+                                rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c];
+                                n = 4 * (screenWidth * j + i);
+                                if (asCMY) screenData.data[n + c] = 255 * (1-(v <= 255-rV));
+                                else screenData.data[n + c] = 255 *(v <= rV);
                             }
                         }
                     }
                 }
                     
-                // CMY2RBG_CONVERSION: {
-                //     if (asCMY) {
-                //         var data = Object.assign({}, screenData.data);
-                //         for (var i = 0; i < screenWidth; i++) {
-                //             for (var j = 0; j < screenHeight; j++) {
-                //                 var n = 4 * (screenWidth * j + i);
-                //                 screenData.data[n+0] = 255 - screenData.data[n+0]; // (data[n+1] + data[n+2])/2,
-                //                 screenData.data[n+1] = 255 - screenData.data[n+1]; // (data[n+0] + data[n+2])/2,
-                //                 screenData.data[n+2] = 255 - screenData.data[n+2]; // (data[n+0] + data[n+1])/2;
-                //             }
-                //         }
-                //     }
-                // }
-                    
                 screenContext.putImageData( screenData, 0, 0);
                 
-                // var img = Object.assign(new Image(), {src: screenCanvas.toDataURL();});
                 var src = screenCanvas.toDataURL();
                 
 
@@ -620,12 +604,19 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                     console.log($scope);
                     $scope.$watchCollection('options', function (value, last, $scope) {
-                        $scope.helper.updateData();
-                        // console.log('Options changed %o', $scope.options);
+                        $scope.helper.updateData(); // console.log('Options changed %o', $scope.options);
                     });
                     $scope.$watchCollection('parameters', function (value, last, $scope) {
-                        $scope.helper.updateData();
-                        // console.log('Parameters changed %o', $scope);
+                        $scope.helper.updateData(); // console.log('Parameters changed %o', $scope);
+                    });
+                    $scope.$on('selected.stage', function(event, option, value) {
+                        switch (option) {
+                            case 'redraw':
+                                $scope.helper.updateData(true);
+                            break;
+                            default:
+                        }
+                        // console.log('Selected stage', arguments, this);
                     });
                     
                     $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
