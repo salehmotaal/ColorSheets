@@ -153,6 +153,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 for (var s in styles) if (styles[s].lineWidth) styles[s].lineWidth = Number(styles[s].lineWidth) * strokeFactor;
                 
                 if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+                
+                var plotFont = window.getComputedStyle(plotCanvas[0]).fontFamily;
+                console.log(plotFont);
 
                 BOX_CALCULATIONS: {
                     if (timeStamp !== self.timeStamp) return this;
@@ -210,41 +213,43 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
                         supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
                 }
-                // LEGEND_BOX: {
-                //     var fontSize = 10,
-                //         lineSize = 2,
-                //         legendStyles = [styles.intended, styles.halftone, styles.supercell],
-                //         legendMargin = 1,
-                //         legendPadding = 1,
-                //         legendWidth = gridSteps[0] - legendMargin * 2,
-                //         legendHeight = lineSize * 2 + legendPadding * 2,
-                //         legendColumn = Math.floor(legendWidth / legendOptions.seriesLabels.length),
-                //         legendRow = legendHeight - legendPadding * 2,
-                //         legendBox = new grasppe.canvas.Rectangle(gridMin[0] + legendMargin, gridMin[1] + legendMargin + 2, legendWidth, legendHeight, {
-                //                 fillStyle: 'rgba(255, 255, 255, 0.75)', strokeStyle: 'rgba(0, 0, 0, 0.05)'
-                //             }),
-                //         legendGroup = '<g>';
-                //         
-                //     legendGroup += legendBox.getPath(undefined, undefined, scale);
-                // 
-                //     for (var i = 0; i < legendOptions.seriesLabels.length; i ++) {
-                //         var cellLeft = gridMin[0]  + legendMargin + legendColumn * i + legendPadding,
-                //             cellTop = gridMin[1] + legendMargin + 2 + legendPadding + lineSize,
-                //             markerStyle = legendStyles[i].strokeStyle ||legendStyles[i].fillStyle,
-                //             marker = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14; fill:' + markerStyle + '">•</text>',
-                //             label = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function(line, index) {
-                //                     return '<tspan x="' + (cellLeft + legendPadding * 4) * scale + '" dy="' + index * lineSize * scale + '">' + line + '</tspan>';
-                //                 }).join('\n') + '</text>';
-                //         console.log([cellLeft, cellTop]);
-                //         legendGroup += marker + label;
-                //     }
-                //         
-                //     legendGroup += '</g>';
-                // }
+                LEGEND_BOX: {
+                    var fontSize = 10,
+                        lineSize = 20/scale,
+                        legendStyles = [styles.intended, styles.halftone, styles.supercell],
+                        legendMargin = 2/scale,
+                        legendPadding = 10/scale,
+                        legendWidth = gridSteps[0], // - 1/scale,
+                        legendHeight = lineSize * 2 + legendPadding * 2,
+                        legendLeft = gridMin[0],
+                        legendTop = gridMin[1] - legendHeight,
+                        legendColumn = Math.floor(legendWidth / legendOptions.seriesLabels.length),
+                        legendRow = legendHeight - legendPadding * 2,
+                        legendBox = new grasppe.canvas.Rectangle(legendLeft, legendTop , legendWidth, legendHeight, {
+                                fillStyle: 'rgb(255,255,255)', strokeStyle: 'rgb(192,192,192)',
+                            }),
+                        legendGroup = '<g>';
+                        
+                    legendGroup += legendBox.getPath(undefined, undefined, scale);
+                
+                    for (var i = 0; i < legendOptions.seriesLabels.length; i ++) {
+                        var cellLeft = legendLeft + legendColumn * i + legendPadding,
+                            cellTop = legendTop + legendPadding + lineSize * 0.95,
+                            markerStyle = legendStyles[i].strokeStyle ||legendStyles[i].fillStyle,
+                            marker = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop * scale) + '" dy="' + lineSize * scale / 2 + '" style="font-size: 48; fill:' + markerStyle + '">•</text>',
+                            label = '<text x="' + (cellLeft + legendPadding * 4) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function(line, index) {
+                                    return '<tspan x="' + (cellLeft + legendPadding * 3) * scale + '" dy="' + index * lineSize * scale + '">' + line + '</tspan>';
+                                }).join('\n') + '</text>';
+                        console.log([cellLeft, cellTop]);
+                        legendGroup += marker + label;
+                    }
+                        
+                    legendGroup += '</g>';
+                }
                 PATH_GENERATION: {
                     var paths = [],
                         elements = [],
-                        view = [-offset[0] * scale, 0, width, height];
+                        view = [-offset[0] * scale, (-legendHeight-offset[1]) * scale, width, height];
                         
                     if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
                     if (mode.cells) elements = elements.concat(supercellPixelBoxes);
@@ -255,13 +260,21 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
 
                     for (var path of elements) if (timeStamp !== self.timeStamp) return this;
-                        else if (path.getPath) paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
-                    
-                    var pathGroup = '<g transform="scale(1, -1) translate(0 -' + (height-scale*2) + ')">' + paths.join('') + "</g>",
-                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '">' + pathGroup + '</svg>';
+                    else if (path.getPath) {
+                        paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
+                        if (path.text) { 
+                            paths.push('<g><text style="text-anchor: middle" x="' + (path.xMin + path.width/2) * scale + '" y="' + (path.yMin + path.height/2) * scale + '">' + path.text + '</text></g>'); // transform="scale(1, -1)"
+                            // console.log(path.text);
+                        }
+                    }  
+                    paths.push(new grasppe.canvas.Rectangle(gridMin[0], gridMin[1] - legendHeight , gridSteps[0], gridSteps[0], {
+                                fillStyle: 'transparent', strokeStyle: 'rgb(192,192,192)',
+                    }).getPath(undefined, undefined, scale));
+                    var pathGroup = '<g>' + paths.join('') + "</g>", // transform="scale(1, -1) translate(0, -' + (height-scale*2) + ')"
+                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '"><g font-family="' + plotFont + '">' + pathGroup + legendGroup + '</g></svg>';
                 }
                 
-                this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
+                // this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
 
                 return svg;
             }
@@ -362,9 +375,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
                             [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)]
                         ], ((i % 2) + (j % 2) === 1) ? style1 : style2));
-                        // var boundingBox = new grasppe.canvas.BoundingBox(box.pixels);
+                        var boundingBox = new grasppe.canvas.BoundingBox(box.pixels, {
+                            text: box.pixels.length,
+                        });
                         // console.log(box.pixels.length);
                         pixels = pixels.concat(box.pixels);
+                        pixels.push(boundingBox);
                         $canvas.remove();
                     }
 
