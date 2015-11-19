@@ -4,7 +4,246 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     'use strict';
     grasppe.load.status['colorsheets'] = grasppe.load.status['colorsheets'] || false;
     grasppe.require(['colorsheets'], function () {
+        
+        grasppe.ColorSheetsApp.ScreenedImage = class ScreenedImage extends grasppe.Libre.Object {
+            constructor() {
+                super(... arguments);
+            }
+            
+            get $scope() {
+                return this.hash.$scope;
+            }
+            
+            set $scope($scope) {
+                this.hash.$scope = $scope;
+            }
+            
+            get $definition() {
+                return this.$scope && this.$scope.screenedImage;
+            }
+            
+            set $definition($definition) {
+                if (this.$scope) Object.assign(this.$scope.screenedImage || {}, $definition);
+            }
+            
+            get element() {
+                if (!this.hash.element) this.hash.element = "<img />";
+                return this.hash.element;
+            }
+            
+            set element(element) {
+                this.hash.element = element;
+            }
+            
+            get container() {
+                return $(this.element).parent();
+            }
+            
+            set container(container) {
+                $(this.element).appendTo(container);
+            }
+            
+            get width() {
+                return this.getDefinition('width');
+            }
+            
+            set width(width) {
+                return this.setDefinition('width', Number(width));
+            }
+            
+            get height() {
+                return this.getDefinition('height');
+            }
+            
+            set height(height) {
+                return this.setDefinition('height', Number(height));
+            }
+            
+            get image() {
+                return this.$definition && this.$definition.image
+            }
+            
+            set image(img) {
+                if (!this.$definition) return console.error('No $scope');
+                if (typeof img === 'string' || img instanceof grasppe.ColorSheetsApp.ProcessableImage) {
+                    img = new grasppe.ColorSheetsApp.ProcessableImage(img);
+                    if (this.$definition) this.$definition.image = img;
+                } else {
+                    console.error('Only src String or ProcessableImage are supported so far!');
+                }
+            }
 
+            get spi() {
+                return this.getDefinition('spi');
+            }
+            
+            set spi(spi) {
+                return this.setDefinition('spi', Number(spi));
+            }
+
+            get lpi() {
+                return this.getDefinition('lpi');
+            }
+            
+            set lpi(lpi) {
+                return this.setDefinition('lpi', Number(lpi));
+            }
+
+            get angle() {
+                return this.getDefinition('angle');
+            }
+            
+            set angle(angle) {
+                return this.setDefinition('angle', Number(angle));
+            }
+
+            getDefinition(id) {
+                return this.$definition && this.$definition[id];
+            }
+            
+            setDefinition(id, value) {
+                if (this.$definition) {
+                    if (this.$definition[id] !== value) {
+                        this.$definition[id] = value;
+                        // if (/(spi|lpi|angle|width|height)/.test(id)) this.render();
+                    }
+                } else console.error('No $scope');
+            }
+            
+            render(canvas) {
+                var PI = Math.PI,
+                    angleRadians = this.angle * (PI/180),
+                    lineAngle = PI/4-angleRadians / (PI * 180),
+                    lineAngles = [0, 60, 45, -60].map(function (offset) {
+                        return lineAngle + offset;
+                    }),
+                    lineRuling = round(cos(PI/4)*this.spi/this.lpi),
+                    lineFrequency = PI/lineRuling,
+                    tint = 0,
+                    sinAngle = Math.sin(lineAngle % Math.PI / 2) * lineFrequency,
+                    cosAngle = Math.cos(lineAngle % Math.PI / 2) * lineFrequency,
+                    rgbImage = this.image,
+                    sourceImage = rgbImage,
+                    sourceData = Object.assign({}, sourceImage.data),
+                    sourceWidth = sourceImage.width,
+                    sourceHeight = sourceImage.height;
+                
+                var screenScale = Math.min(this.width / sourceWidth, this.height / sourceHeight),
+                    screenWidth = Math.ceil(sourceWidth * screenScale),
+                    screenHeight = Math.ceil(sourceHeight * screenScale),
+                    screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">')[0],
+                    screenContext = screenCanvas.getContext('2d');
+                    
+                
+                screenContext.fillStyle = 'rgba(255,255,255,1)';
+                screenContext.fillRect(0, 0, screenWidth, screenHeight);
+                var screenData = screenContext.getImageData(0, 0, screenWidth, screenHeight);
+                    
+                HALFTONE_SCREENING: {
+                    for (var c = 0; c < 3; c++) {
+                        for (var i = 0; i < screenWidth; i++) {
+                            for (var j = 0; j < screenHeight; j++) {
+                                var n = 4 * (screenWidth * j + i),
+                                    cosI = cosAngle * (i + lineOffsetX),
+                                    sinI = sinAngle * (i + lineOffsetX),
+                                    alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
+                                    beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
+                                    sV = (alpha * beta + 1) * 127.5,
+                                    rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c];
+                                screenData.data[n + c] = 255 * (sV <= rV);
+                            }
+    
+                        }
+                    }
+                }
+                
+                var renderedImage;
+                
+                if (canvas) {
+                    canvas.getContext('2d').putImageData(screenData, (this.canvas.width-screenWidth)/2, (this.canvas.height-screenHeight)/2);
+                    renderedImage = canvas.toDataURL();
+                } else {
+                    screenContext.putImageData(screenData, 0, 0);
+                    renderedImage = screenCanvas.toDataURL();
+                }
+                
+                $(screenCanvas).remove();
+                
+                return renderedImage;
+                    
+            }
+            
+            get canvas() {
+                return $(this.element).find('canvas').first()[0];
+            }
+            
+            update() {
+                if (!this.$definition) return this; //  || !this.image || !this.element) return this;
+                $(this.canvas).css('opacity', 0.5);
+                console.log('Rendering...');
+                clearTimeout(this.render.timeOut), this.render.timeOut = setTimeout(function () {
+                    this.render(this.canvas);
+                    $(this.canvas).css('opacity', 1)[0];
+                    console.log('Render Complete!'); //this.hash.output
+                }.bind(this), 0);
+                this.$scope.$apply();
+                
+                return this;
+            }
+            
+        }
+        
+        Object.defineProperty(grasppe.ColorSheetsApp.ScreenedImage, 'Directive', {
+            value: grasppe.Libre.Directive.define('colorSheetsScreenedImage', function () {
+                        return {
+                            controller: ['$scope', '$element', function ($scope, element) {
+                                var controller = Object.assign(this, {
+                                    handler: new grasppe.ColorSheetsApp.ScreenedImage({
+                                        $scope: $scope,
+                                        element: element,
+                                    }),
+                                });
+                                $scope.screenedImageHandler = controller.handler;
+                                                                
+                                $scope.screenedImage = {
+                                    width: 1200,
+                                    height: 1200,
+                                    image: 'images/diva.jpg',
+                                    spi: 1200,
+                                    lpi: 600,
+                                    angle: 15,
+                                    output: undefined,
+                                };
+                                
+                            }],
+                            link: function($scope, element, attributes, controller) {
+                                var handler = controller.handler;
+                                Object.assign($scope.screenedImage, {
+                                    width: attributes.width || $scope.screenedImage.width,
+                                    height: attributes.height || $scope.screenedImage.height,
+                                    lpi: attributes.height || $scope.screenedImage.lpi,
+                                    spi: attributes.spi || $scope.screenedImage.spi,
+                                    angle: attributes.angle || $scope.screenedImage.angle,
+                                });
+                                Object.assign(handler, $scope.screenedImage);
+                                console.log(element.find('img'));
+                                element.css({
+                                      flex: 1, display: 'flex', overflow: 'scroll',
+                                });
+                                element.find('canvas').bind('click', {
+                                    $scope: $scope,
+                                    controller: controller, 
+                                    handler: handler,
+                                }, function(event){
+                                    console.log('Click', event.data.handler),
+                                    event.data.handler.update();
+                                });
+                            },
+                            template: ('<canvas class="selectable" width="{{screenedImage.width}}" height="{{screenedImage.height}}" style="object-fit: cover; width: 100%; height: 100%; background-color: #eee; min-height: 50vh; max-height: 100%; max-width: 100%; flex: 1;" />'), // class="selectable" 
+                        }
+                    }),
+        });
+        
         grasppe.ColorSheetsApp.ProcessableImage = class ProcessableImage extends grasppe.Libre.Object {
             constructor(image) {
                 var args = [...arguments];
@@ -14,7 +253,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     window.setTimeout(function (src) {
                         this.src = src;
                     }.bind(this), 0, image.src);
-                } else super(...arguments);
+                } else if (typeof image === 'string') {
+                    args = args.slice(1);
+                    super(...args);
+                    window.setTimeout(function (src) {
+                        this.src = src;
+                    }.bind(this), 0, image);
+                } else super(...args);
             }
 
             set src(src) {
@@ -269,28 +514,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         panSquare: !/fit/.test(this.$options.panning),
                         panFit: /fit/.test(this.$options.panning),
                     },
-                    stroke = {},
-                    style = {
-                        plotGrid: (plotOptions.plotGridStyle),
-                        legendBox: (legendOptions.legendBoxStyle),
-                        filled: {
-                            fillStyle: "black"
-                        },
-                        empty: {
-                            fillStyle: "white"
-                        },
-                    },
                     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
                     stochastic = this.getParameter('stochastic') === true,
                     asCMY = this.getParameter('asCMY') === true,
                     screenView = mode.screen,
                     lineAngle = values.lineAngle / Math.PI * 180,
-                    // lineAngleOffsets = [-30, 30, 15, -90],
                     lineAngleOffsets = [0, 60, 45, -60],
                     lineAngles = lineAngleOffsets.map(function (offset) {
                         return lineAngle + offset;
                     }),
-                    // lineAngles = [15, 75, -60, -45],
                     lineFrequency = values.lineFrequency,
                     tint = 0,
                     sinAngle = Math.sin(lineAngle % Math.PI / 2) * lineFrequency,
@@ -299,16 +531,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     rgbImage = this.$scope.processableSourceImage,
                     sourceImage = rgbImage,
                     sourceData = Object.assign({}, sourceImage.data),
-                    // Object.assign({}, asCMY ? sourceImage.data : sourceImage.cmyData),
                     sourceWidth = sourceImage.width,
                     sourceHeight = sourceImage.height;
 
                 // console.log('lineAngle', values.lineAngle);
-                var screenScale = Math.min(1000 / sourceWidth, 1000 / sourceHeight),
+                var screenScale = Math.min(1000 / sourceWidth, 800 / sourceHeight),
                     screenWidth = Math.ceil(sourceWidth * screenScale),
                     screenHeight = Math.ceil(sourceHeight * screenScale),
                     screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">')[0],
-                    // .appendTo('body')[0],
                     screenContext = screenCanvas.getContext('2d');
 
                 screenContext.fillStyle = 'rgba(255,255,255,1)';
@@ -333,116 +563,80 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 //         sourceImage.cmyData = sourceData;
                 //     }
                 // }
-                HALFTONE_SCREENING: {
-                    var method = (asCMY ? 'cmy' : 'rgb') + (stochastic ? '-fm' : '-am');
-
-                    for (var c = 0; c < 3; c++) {
-                        var angle = lineAngles[c] / 180 * Math.PI,
-                            lineOffsetX = Math.PI / 2 + Math.PI * (angle < 0),
-                            lineOffsetY = Math.PI / 2 + 0,
-                            sinAngle = Math.sin(angle) * lineFrequency,
-                            cosAngle = Math.cos(angle) * lineFrequency;
-
-                        switch (method) {
-                        case 'cmy-fm': for (var i = 0; i < screenWidth; i++) {
-                                for (var j = 0; j < screenHeight; j++) {
-                                    var n = 4 * (screenWidth * j + i),
-                                        v = Math.random(),
-                                        rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255,
-                                        p = Math.round(255 * (v >= rV));
-                                    screenData.data[n + c] = 255 - p;
-                                }
-                            }
-                            break;
-                        case 'cmy-am': for (var i = 0; i < screenWidth; i++) {
-                                var cosI = cosAngle * (i + lineOffsetX),
-                                    sinI = sinAngle * (i + lineOffsetX);
-                                for (var j = 0; j < screenHeight; j++) {
-                                    var n = 4 * (screenWidth * j + i),
-                                        v = Math.random(),
-                                        rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c],
-                                        alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
-                                        beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
-                                        v = (alpha * beta + 1) * 127.5;
-                                    screenData.data[n + c] = 255 * (1 - (v <= 255 - rV));
-                                }
-                            }
-                            break;
-                        case 'rgb-fm': for (var i = 0; i < screenWidth; i++) {
-                                for (var j = 0; j < screenHeight; j++) {
-                                    var n = 4 * (screenWidth * j + i),
-                                        v = Math.random(),
-                                        rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255,
-                                        p = Math.round(255 * (v <= rV));
-                                    screenData.data[n + c] = p;
-                                }
-                            }
-                            break;
-                        case 'rgb-am': default : for (var i = 0; i < screenWidth; i++) {
-                                var cosI = cosAngle * (i + lineOffsetX),
-                                    sinI = sinAngle * (i + lineOffsetX),
-                                    n, v, rV, alpha, beta, v;
-                                for (var j = 0; j < screenHeight; j++) {
-                                    n = 4 * (screenWidth * j + i),
-                                    v = Math.random(),
-                                    rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c],
-                                    alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
-                                    beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
-                                    v = (alpha * beta + 1) * 127.5;
-                                    screenData.data[n + c] = 255 * (v <= rV);
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // HALFTONE_SCREENING: {
-                //     var halftonePixels = Array(height * width),
-                //         n = 0,
-                //         lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2, lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row, valleys = [],
-                //         peaks = [],
-                //         v, rI, rJ, rV, t, p, n, i, j, c, alpha, beta, angle, lineOffsetX, lineOffsetY, sinAngle, cosAngle, cosI, sinI;
+                //     var method = (asCMY ? 'cmy' : 'rgb') + (stochastic ? '-fm' : '-am');
+                // 
                 //     for (var c = 0; c < 3; c++) {
-                //         var angle = lineAngles[c] / 180 * Math.PI; //(lineAngle + (c-2)*Math.PI/10) % Math.PI/2,
-                //         var lineOffsetX = Math.PI / 2 + Math.PI * (angle < 0);
-                //         var lineOffsetY = Math.PI / 2 + 0;
-                //         var sinAngle = Math.sin(angle) * lineFrequency;
-                //         var cosAngle = Math.cos(angle) * lineFrequency;
-                //         // if (i%10===0 && timeStamp !== self.timeStamp) return $(screenCanvas).remove() && this;
-                //         if (stochastic) for (var i = 0; i < screenWidth; i++) {
-                //             for (var j = 0; j < screenHeight; j++) {
-                //                 var v = Math.random(); // alpha = Math.sin(cosAngle * (j*Math.random()) - sinAngle * (i*Math.random())),
-                //                 var rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255;
-                //                 var t = asCMY ? v >= rV : v <= rV;
-                //                 var p = Math.round(255 * t);
-                //                 var n = 4 * (screenWidth * j + i);
-                //                 screenData.data[n + c] = asCMY ? 255 - p : p;
+                //         var angle = lineAngles[c] / 180 * Math.PI,
+                //             lineOffsetX = Math.PI / 2 + Math.PI * (angle < 0),
+                //             lineOffsetY = Math.PI / 2 + 0,
+                //             sinAngle = Math.sin(angle) * lineFrequency,
+                //             cosAngle = Math.cos(angle) * lineFrequency;
+                //             
+                //         switch (method) {
+                //         case 'cmy-fm': for (var i = 0; i < screenWidth; i++) {
+                //                 for (var j = 0; j < screenHeight; j++) {
+                //                     var n = 4 * (screenWidth * j + i),
+                //                         v = Math.random(),
+                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255,
+                //                         p = Math.round(255 * (v >= rV));
+                //                     screenData.data[n + c] = 255 - p;
+                //                 }
                 //             }
-                //         } else for (var i = 0; i < screenWidth; i++) {
-                //             var cosI = cosAngle * (i + lineOffsetX);
-                //             var sinI = sinAngle * (i + lineOffsetX);
-                //             for (var j = 0; j < screenHeight; j++) {
-                //                 var n = 4 * (screenWidth * j + i);
-                //                 var rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c];
-                //                 if (rV < 3) {
-                //                     if (asCMY) screenData.data[n + c] = 255;
-                //                     else screenData.data[n + c] = 0;
-                //                 } else if (rV > 252) {
-                //                     if (asCMY) screenData.data[n + c] = 0;
-                //                     else screenData.data[n + c] = 255;
-                //                 } else {
-                //                     var alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI);
-                //                     var beta = Math.sin(cosI + sinAngle * (j + lineOffsetY));
-                //                     var v = (alpha * beta + 1) * 127.5;
-                //                     if (asCMY) screenData.data[n + c] = 255 * (1 - (v <= 255 - rV));
-                //                     else screenData.data[n + c] = 255 * (v <= rV);
+                //             break;
+                //         case 'cmy-am': for (var i = 0; i < screenWidth; i++) {
+                //                 var cosI = cosAngle * (i + lineOffsetX),
+                //                     sinI = sinAngle * (i + lineOffsetX);
+                //                 for (var j = 0; j < screenHeight; j++) {
+                //                     var n = 4 * (screenWidth * j + i),
+                //                         v = Math.random(),
+                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c],
+                //                         alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
+                //                         beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
+                //                         v = (alpha * beta + 1) * 127.5;
+                //                     screenData.data[n + c] = 255 * (1 - (v <= 255 - rV));
+                //                 }
+                //             }
+                //             break;
+                //         case 'rgb-fm': for (var i = 0; i < screenWidth; i++) {
+                //                 for (var j = 0; j < screenHeight; j++) {
+                //                     var n = 4 * (screenWidth * j + i),
+                //                         v = Math.random(),
+                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255,
+                //                         p = Math.round(255 * (v <= rV));
+                //                     screenData.data[n + c] = p;
+                //                 }
+                //             }
+                //             break;
+                //         case 'rgb-am': default : for (var i = 0; i < screenWidth; i++) {
+                //                 // var screen = Array(screenWidth * screenHeight);
+                //                 // for (var i = 0; i < screenWidth; i++) {
+                //                 //     var cosI = cosAngle * (i + lineOffsetX),
+                //                 //         sinI = sinAngle * (i + lineOffsetX);
+                //                 //     for (var j = 0; j < screenHeight; j++) {
+                //                 //         var alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
+                //                 //             beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
+                //                 //             v = (alpha * beta + 1) * 127.5,
+                //                 //             n = 4 * (screenWidth * j + i);
+                //                 //         screen[n] = v;
+                //                 //     }
+                //                 // }
+                //                 for (var j = 0; j < screenHeight; j++) {
+                //                     var n = 4 * (screenWidth * j + i),
+                //                         cosI = cosAngle * (i + lineOffsetX),
+                //                         sinI = sinAngle * (i + lineOffsetX),
+                //                         alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
+                //                         beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
+                //                         sV = (alpha * beta + 1) * 127.5,
+                //                         // sV = screen[n],
+                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c];
+                //                     screenData.data[n + c] = 255 * (sV <= rV);
                 //                 }
                 //             }
                 //         }
                 //     }
                 // }
-
-                screenContext.putImageData(screenData, 0, 0);
+                // screenContext.putImageData(screenData, 0, 0);
 
                 var src = screenCanvas.toDataURL();
 
@@ -570,7 +764,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var plotCanvas = $(this.$scope.canvas);
                     if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; min-height: 50vh; max-height: 100%; max-width: 100%;">'));
                     plotCanvas.find('img').first().attr('src', this.generatePlotImage());
-                }.bind(this), force ? 0 : 5000);
+                }.bind(this), force ? 0 : 500);
                 return this;
             }
         };
@@ -646,7 +840,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             controllers: {
                 sheetController: grasppe.Libre.Controller.define('ScreeningDemoController', function ($scope, model, module) {
                     // !- ScreeningDemo [Controllers] ScreeningDemoController
-                    console.log('ScreeningDemo [Controllers] ScreeningDemoController');
+                    
+                    var controller = this;
+                    // console.log('ScreeningDemo [Controllers] ScreeningDemoController');
 
                     if ($scope.parameters) {
                         if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
@@ -665,12 +861,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         }),
                     });
 
-                    console.log($scope);
+                    // console.log($scope);
                     $scope.$watchCollection('options', function (value, last, $scope) {
                         $scope.helper.updateData(); // console.log('Options changed %o', $scope.options);
                     });
                     $scope.$watchCollection('parameters', function (value, last, $scope) {
-                        $scope.helper.updateData(); // console.log('Parameters changed %o', $scope);
+                        clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
+                            $scope.helper.updateData(true); // console.log('Parameters changed %o', $scope);
+                        }.bind(controller), 2000, $scope);
                     });
                     $scope.$on('selected.stage', function (event, option, value) {
                         switch (option) {
@@ -682,12 +880,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     });
 
                     $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
-                        console.log('Source image changed %o', value ? ('' + value).match(/^[^;]*/)[0] : undefined);
+                        // console.log('Source image changed %o', value ? ('' + value).match(/^[^;]*/)[0] : undefined);
 
                         if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
                             src: value,
                         }); // .getChannel(2);
-                        console.log($scope.processableSourceImage);
+                        // console.log($scope.processableSourceImage);
                     });
 
                     $scope.$sheet = $scope;
@@ -719,6 +917,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
                     return { // layout="column" flex layout-fill layout-align="start center"
                         template: ('<color-sheets-panel-body style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
+                                <color-sheets-screened-image style="max-height: 25vh; max-width: 100%; height: 25vh;"></color-sheets-screened-image>\
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="100" maximum="2540" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
@@ -788,6 +987,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             }\
                         </style>',
                 }),
+                
+                colorSheetsScreenedImage: grasppe.ColorSheetsApp.ScreenedImage.Directive,
             },
         };
 

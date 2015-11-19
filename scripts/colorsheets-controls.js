@@ -48,7 +48,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <span style="text-overflow: ellipsis; overflow:hidden; min-width: 7em; max-width: 100%">{{control.label}}</span>\
                             </div>\
                             <md-slider flex min="{{control.minimum}}" max="{{control.maximum}}" aria-label="{{control.description}}" id="{{control.id}}" class ng-model="control.value"></md-slider>\
-                            <div flex="25" layout layout-align="center center">\
+                            <div flex="35" layout layout-align="center center">\
                                 <input flex type="number" min="{{control.minimum}}" max="{{control.maximum}}" step="{{control.step}}" aria-label="{{control.description}}" aria-controls="{{control.id}}" ng-model="control.value">\
                                 <span class="control-suffix" style="text-overflow: ellipsis; overflow:hidden; min-width: 3em;">{{control.suffix}}</span>\
                             </div>\
@@ -71,11 +71,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 							maximum: Number(attributes.maximum),
 							step: Number(attributes.step),
 							value: initial || Number(localStorage.getItem($scope.sheet.id + '-' + attributes.model)) || Number(attributes.value),
+							size: Number(attributes.size),
 							initial: initial, tooltip: attributes.tooltip,
 						};
 						$scope.control.size = String($scope.control.maximum || $scope.control.value).length;
 						element.find('md-slider, input').attr('ng-model', 'parameters.' + $scope.control.model);
-						element.find('input').attr('size', $scope.control.size).css('min-width', ($scope.control.size) + 'em');
+						element.find('input').css('min-width', ($scope.control.size) + 'em');
 					},
 					controller: ['$scope', '$element', function ($scope, element) {
 						$scope.$watch('control.value', function (current, last, $scope) {
@@ -99,8 +100,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             <div flex="45" layout layout-align="left center">\
                                 <md-switch flex aria-label="{{control.description}}" id="{{control.id}}" class ng-model="control.value"></md-switch>\
                             </div>\
-                            <!--div flex="25" layout layout-align="center center">\
-                                <input flex type="number" min="{{control.minimum}}" max="{{control.maximum}}" step="{{control.step}}" aria-label="{{control.description}}" aria-controls="{{control.id}}" ng-model="control.value">\
+                            <!--div flex="35" layout layout-align="center center">\
+                                <input flex size="{{control.size}}" type="number" min="{{control.minimum}}" max="{{control.maximum}}" step="{{control.step}}" aria-label="{{control.description}}" aria-controls="{{control.id}}" ng-model="control.value">\
                                 <span class="control-suffix" style="text-overflow: ellipsis; overflow:hidden; min-width: 3em;">{{control.suffix}}</span>\
                             </div-->\
                             <md-tooltip md-delay="1000" md-direction="top" ng-if="control.tooltip===\'@\'">\
@@ -194,7 +195,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 <span style="text-overflow: ellipsis; overflow:hidden; min-width: 7em; max-width: 100%">{{control.label}}</span>\
                             </div>\
                             <div class="control-image image-preview md-button" flex style="height: 6em; background-position: center center; background-size: contain; background-repeat: no-repeat;" ng-style="{\'background-image\': \'url(\' + control.value + \')\'}", layout layout-align="center center">{{control.text}}</div>\
-                            <div flex="25" layout="column" layout-align="center center">\
+                            <div flex="35" layout="column" layout-align="center center">\
                                 <input style="display: none;"class="image-select" type="file" accept="image/*"/>\
                                 <md-button class="image-select-button">Choose</md-button>\
                                 <span class="control-suffix" style="text-overflow: ellipsis; overflow:hidden; min-width: 3em;">{{control.suffix}}</span>\

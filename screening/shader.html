@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>SiggScreen-GL</title>
+    <script type="text/javascript" src="scripts/webgli/loader.js"></script>
+    <script type="text/javascript" src="scripts/sylvester.js"></script>
+    <script type="text/javascript" src="scripts/glUtils.js"></script>
+    <script id="siggScreenVertexShader" type="x-shader/x-vertex">
+        precision mediump float;
+        // Built-in attributes.
+        attribute vec4 a_position;
+        // Built-in uniforms.
+        // Uniforms passed-in from CSS
+        void main(void) {
+            gl_Position = aVertexPosition;
+        }
+    </script>
+
+    <script id="siggScreenFragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+        // Built-in attributes.
+        // Built-in uniforms.
+        // Uniforms passed-in from CSS
+        void main(void) {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.5);
+            console.log('hello');
+        }
+    </script>
+    <style type="text/css">
+        .siggScreen {
+            -webkit-transform: translate3d(0px, 0px, 0px);
+            -webkit-filter: url(#siggScreenVertexShader) mix(url(#siggScreenFragmentShader) multiply source-atop);
+        }
+        
+        #map {
+          width: 400px;
+          height: 400px;
+          -webkit-transform: translate3d(0px, 0px, 0px);
+          -webkit-filter: custom(
+            url(http://html.adobe.com/webstandards/csscustomfilters/cssfilterlab/shaders/vertex/fold.vs) mix(url(http://html.adobe.com/webstandards/csscustomfilters/cssfilterlab/shaders/fragment/fold.fs) multiply source-atop), 
+            8 50, 
+            transform perspective(1000) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg), 
+            t 0.5, 
+            spins 1.5, 
+            phase -0.7, 
+            shadow 1.5, 
+            mapDepth 40, 
+            mapCurve -0.3, 
+            minSpacing 0.3, 
+            useColoredBack 1, 
+            backColor 0.5 0.5 0.5 1
+          );  
+        }
+
+    </style>
+</head>
+<body onload="webGLStart();">
+    <img class="siggScreen" src="images/diva.jpg"/ alt="Diva is the best">
+</body>
+</html>

@@ -266,10 +266,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // }
 
                 PATH_GENERATION: {
+                    if (!scale) scale = 4;
                     var paths = [],
                         view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
                     if (timeStamp !== self.timeStamp) return this;
-                    if (!scale) scale = 4;
                     for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
                     var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
 
@@ -287,7 +287,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             this.updatePlot();
                         }.bind(this));
                     }
-                    plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + this.generatePlotImage());
+                    // plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + this.generatePlotImage());
+                    plotCanvas.empty().append(this.generatePlotImage()).children().first().css({
+                        flex: 1, width: '100%', height: '100%',
+                    });
                 }.bind(this), 0);
                 return this;
             }

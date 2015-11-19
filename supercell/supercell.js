@@ -180,11 +180,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         bounds = new Bounds(mode.cellPan ? [intendedBox, halftoneBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
                         margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 2;
                 }
-                ADDRESSABILITY_GRID: {
+                ADDRESSABILITY_GRID_CALCULATIONS: {
                     if (timeStamp !== self.timeStamp) return this;
                     var gridMargin = 4 + margin,
-                        gridMin = [Math.min(-20, Math.floor(bounds.xMin - gridMargin / 2)), Math.min(-4, Math.floor(bounds.yMin - gridMargin / 8))],
-                        gridMax = [Math.max(20, Math.ceil(bounds.xMax + gridMargin / 2)), Math.max(36, Math.ceil(bounds.yMax + gridMargin))], // * (1 + cells)
+                        gridMin = [Math.min(-4, Math.floor(bounds.xMin - gridMargin / 2)), Math.min(-2, Math.floor(bounds.yMin - gridMargin / 8))],
+                        gridMax = [Math.max(4, Math.ceil(bounds.xMax + gridMargin / 2)), Math.max(4, Math.ceil(bounds.yMax + gridMargin))], // * (1 + cells)
                         gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
                         gridVerticals = new Lines(gridMin, Object.assign({
                             offset: [0, gridSteps[0]],
@@ -193,8 +193,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             offset: [gridSteps[1], 0],
                         }, styles.plotGrid));
                     if (timeStamp !== self.timeStamp) return this;
-                    for (var i = 0; i <= gridSteps[0]; i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
-                    for (var i = 0; i <= gridSteps[1]; i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
                 }
                 SIZING_CALCULATIONS: {
                     if (timeStamp !== self.timeStamp) return this;
@@ -206,12 +204,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         offset = [-clippingBox.xMin, -clippingBox.yMin],
                         width = (offset[0] + clippingBox.xMax) * scale,
                         height = width;
-                }
-                PIXEL_BOXES: {
-                    if (timeStamp !== self.timeStamp) return this;
-                    var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
-                        halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
-                        supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
                 }
                 LEGEND_BOX: {
                     var fontSize = 10,
@@ -246,11 +238,23 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         
                     legendGroup += '</g>';
                 }
+                PATH_CREATION: {
+                    for (var i = 0; i <= Math.min(gridSteps[0], height); i++) gridHorizontals.push([gridMin[0], gridMin[1] + i])
+                    for (var i = 0; i <= Math.min(gridSteps[1], width); i++) gridVerticals.push([gridMin[0] + i, gridMin[1]]);
+                    if (timeStamp !== self.timeStamp) return this;
+                    var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
+                        halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
+                        supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
+                    var clipPath = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]-legendHeight*2, {
+                                fillStyle: 'transparent', strokeStyle: 'rgb(192,192,192)',
+                    }).getPath(undefined, undefined, scale);
+                }
                 PATH_GENERATION: {
                     var paths = [],
                         elements = [],
                         // view = [-offset[0] * scale, (-legendHeight-offset[1]) * scale, width, height];
-                        view = [gridMin[0] * scale, (gridMin[1] - legendHeight) * scale , gridSteps[0] * scale, gridSteps[1] * scale];
+                        // view = [gridMin[0] * scale, (gridMin[1] - legendHeight) * scale , gridSteps[0] * scale, (gridSteps[1]-legendHeight*2) * scale];
+                        view = [legendLeft * scale, legendTop * scale , width, height - (legendHeight*2*scale)];
                         
                     if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
                     if (mode.cells) elements = elements.concat(supercellPixelBoxes);
@@ -268,12 +272,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             // console.log(path.text);
                         }
                     }
-                    var clipPath = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1] - legendHeight , gridSteps[0], gridSteps[1], {
-                                fillStyle: 'transparent', strokeStyle: 'rgb(192,192,192)',
-                    }).getPath(undefined, undefined, scale);
-                    paths.push(clipPath);
+                    // paths.push(clipPath);
                     var pathGroup = '<g>' + paths.join('') + "</g>", // transform="scale(1, -1) translate(0, -' + (height-scale*2) + ')"
-                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '"><g font-family="' + plotFont + '" width="200" height="200">' + pathGroup + '</g><g font-family="' + plotFont + '">' + legendGroup + '</g></svg>';
+                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + view[2] + '" height="' + view[3] + '" viewBox="' + view.join(' ') + '">';
+                    svg +='<defs><clipPath id="plot-mask">' + clipPath + '</clipPath></defs>';
+                    svg +='<g font-family="' + plotFont + '" clip-path="plot-mask">' + pathGroup + '</g>';
+                    svg +='<g font-family="' + plotFont + '">' + legendGroup + '</g>';
+                    svg +='</svg>';
                 }
                 
                 // this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
@@ -290,7 +295,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             this.updatePlot();
                         }.bind(this));
                     }
-                    plotCanvas.find('img').first().attr('src', 'data:image/svg+xml;utf8,' + this.generatePlotImage());
+                    plotCanvas.empty().append(this.generatePlotImage()).children().first().css({
+                        flex: 1, width: '100%', height: '100%', border: '1px solid rgba(0,0,0,0.25)',
+                    });
                 }.bind(this), 0);
                 return this;
             }
@@ -543,7 +550,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 }
                             })
                         }],
-                        template: ('<color-sheets-panel-body layout layout-fill layout-align="top-center" style="/*max-height: 50vh;*/ flex: 1">\
+                        template: ('<color-sheets-panel-body layout layout-fill layout-align="start-center" style="/*max-height: 50vh;*/ flex: 1">\
                             <div class="color-sheets-stage-canvas" flex style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>\
                             </color-sheets-panel-body>'),
                     }
@@ -552,16 +559,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
                     return {
                         template: ('<color-sheets-panel-body layout="column" flex layout-fill layout-align="start center" style="min-height: 30vh; padding: 0.5em 0;">\
-                                <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="150" maximum="4800" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="150" maximum="4800" step="10" value="1200" size="5" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="300" step="1" value="125" suffix="lpi" model="lpi" tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="lpi-slider" label="Frequency" description="Lines per inch screening resolution." minimum="40" maximum="300" step="1" value="125" size="5" suffix="lpi" model="lpi" tooltip="@">\
                                     <b>Line Frequency:</b> Lines per inch screening frequency. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Supercell angle resolution." minimum="0" maximum="90" step="0.5" value="45" suffix="º" model="theta"tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="theta-slider" label="Angle" description="Supercell angle resolution." minimum="0" maximum="90" step="0.5" value="45" size="5" suffix="º" model="theta"tooltip="@">\
                                     <b>Line Angle:</b> Supercell angle resolution. \
                                 </color-sheets-slider-control>\
-                                <color-sheets-slider-control flex layout-fill id="theta-cells" label="Cells" description="Supercell cells." minimum="1" maximum="20" step="1" value="4" suffix=" cells" model="cells"tooltip="@">\
+                                <color-sheets-slider-control flex layout-fill id="theta-cells" label="Cells" description="Supercell cells." minimum="1" maximum="20" step="1" value="4" size="5" suffix=" cells" model="cells"tooltip="@">\
                                     <b>Cells:</b> Number of cells in a supercell block. \
                                 </color-sheets-slider-control>\
                             </color-sheets-panel-body>'),
