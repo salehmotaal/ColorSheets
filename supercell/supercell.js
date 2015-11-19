@@ -155,7 +155,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
                 
                 var plotFont = window.getComputedStyle(plotCanvas[0]).fontFamily;
-                console.log(plotFont);
+                // console.log(plotFont);
 
                 BOX_CALCULATIONS: {
                     if (timeStamp !== self.timeStamp) return this;
@@ -177,14 +177,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var paths = [intendedBox, halftoneBox, supercellBox],
                         lines = [supercellVerticals, supercellHorizontals],
                         shapes = paths.concat(lines),
-                        bounds = new Bounds(mode.cellPan ? [intendedBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
-                        margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 8;
+                        bounds = new Bounds(mode.cellPan ? [intendedBox, halftoneBox] : mode.cells ? [intendedBox, supercellBox] : [intendedBox, halftoneBox, supercellBox]),
+                        margin = 4 + Math.min(bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin) / 2;
                 }
                 ADDRESSABILITY_GRID: {
                     if (timeStamp !== self.timeStamp) return this;
-                    var gridMargin = 0 + margin,
-                        gridMin = [Math.floor(bounds.xMin - gridMargin / 2), Math.floor(bounds.yMin - gridMargin / 8)],
-                        gridMax = [Math.ceil(bounds.xMax + gridMargin / 2), Math.ceil(bounds.yMax + gridMargin * (1 + cells))],
+                    var gridMargin = 4 + margin,
+                        gridMin = [Math.min(-20, Math.floor(bounds.xMin - gridMargin / 2)), Math.min(-4, Math.floor(bounds.yMin - gridMargin / 8))],
+                        gridMax = [Math.max(20, Math.ceil(bounds.xMax + gridMargin / 2)), Math.max(36, Math.ceil(bounds.yMax + gridMargin))], // * (1 + cells)
                         gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
                         gridVerticals = new Lines(gridMin, Object.assign({
                             offset: [0, gridSteps[0]],
@@ -236,11 +236,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         var cellLeft = legendLeft + legendColumn * i + legendPadding,
                             cellTop = legendTop + legendPadding + lineSize * 0.95,
                             markerStyle = legendStyles[i].strokeStyle ||legendStyles[i].fillStyle,
-                            marker = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop * scale) + '" dy="' + lineSize * scale / 2 + '" style="font-size: 48; fill:' + markerStyle + '">•</text>',
-                            label = '<text x="' + (cellLeft + legendPadding * 4) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function(line, index) {
-                                    return '<tspan x="' + (cellLeft + legendPadding * 3) * scale + '" dy="' + index * lineSize * scale + '">' + line + '</tspan>';
+                            marker = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop * scale) + '" dy="' + lineSize * scale / 2 + 'pt" style="font-size: 48pt; fill:' + markerStyle + '">•</text>',
+                            label = '<text x="' + (cellLeft + legendPadding * 4) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14pt; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function(line, index) {
+                                    return '<tspan x="' + (cellLeft + legendPadding * 3) * scale + '" dy="' + index * lineSize *scale + 'pt">' + line + '</tspan>';
                                 }).join('\n') + '</text>';
-                        console.log([cellLeft, cellTop]);
+                        // console.log([cellLeft, cellTop]);
                         legendGroup += marker + label;
                     }
                         
@@ -249,7 +249,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 PATH_GENERATION: {
                     var paths = [],
                         elements = [],
-                        view = [-offset[0] * scale, (-legendHeight-offset[1]) * scale, width, height];
+                        // view = [-offset[0] * scale, (-legendHeight-offset[1]) * scale, width, height];
+                        view = [gridMin[0] * scale, (gridMin[1] - legendHeight) * scale , gridSteps[0] * scale, gridSteps[1] * scale];
                         
                     if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
                     if (mode.cells) elements = elements.concat(supercellPixelBoxes);
@@ -266,12 +267,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             paths.push('<g><text style="text-anchor: middle" x="' + (path.xMin + path.width/2) * scale + '" y="' + (path.yMin + path.height/2) * scale + '">' + path.text + '</text></g>'); // transform="scale(1, -1)"
                             // console.log(path.text);
                         }
-                    }  
-                    paths.push(new grasppe.canvas.Rectangle(gridMin[0], gridMin[1] - legendHeight , gridSteps[0], gridSteps[0], {
+                    }
+                    var clipPath = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1] - legendHeight , gridSteps[0], gridSteps[1], {
                                 fillStyle: 'transparent', strokeStyle: 'rgb(192,192,192)',
-                    }).getPath(undefined, undefined, scale));
+                    }).getPath(undefined, undefined, scale);
+                    paths.push(clipPath);
                     var pathGroup = '<g>' + paths.join('') + "</g>", // transform="scale(1, -1) translate(0, -' + (height-scale*2) + ')"
-                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '"><g font-family="' + plotFont + '">' + pathGroup + legendGroup + '</g></svg>';
+                        svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="' + view.join(' ') + '"><g font-family="' + plotFont + '" width="200" height="200">' + pathGroup + '</g><g font-family="' + plotFont + '">' + legendGroup + '</g></svg>';
                 }
                 
                 // this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
@@ -358,13 +360,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: block;">');
                         $canvas[0].width = width, $canvas[0].height = height;
                         var context = $canvas[0].getContext("2d");
-                        context.fillStyle = '#000', context.lineWidth = 2, context.rect(0, 0, width, height);
+                        context.fillStyle = '#000', context.lineWidth = 0, context.rect(0, 0, width, height);
                         context.translate(offset + path.width - path.xMax, offset);
                         context.fillStyle = '#FFF', context.strokeStyle = '#000';
                         context.moveTo(box[0][0], box[0][1]), context.beginPath();
                         context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]);
                         context.lineTo(box[3][0], box[3][1]), context.lineTo(box[0][0], box[0][1]);
                         context.closePath(), context.fill(); // context.stroke();
+                        // context.beginPath(), context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]), context.closePath();
+                        // context.strokeStyle = '#FFF'; context.stroke();
                         box.pixels = [];
                         imageData = context.getImageData(x1, y1, x2-x1, x2-x1);
                         rawData = imageData.data;
@@ -373,7 +377,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
                             [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
                             [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
-                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)]
+                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
                         ], ((i % 2) + (j % 2) === 1) ? style1 : style2));
                         var boundingBox = new grasppe.canvas.BoundingBox(box.pixels, {
                             text: box.pixels.length,
@@ -674,6 +678,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, {
                 id: "lpi", hidden: true, type: "p", fn: "LPI", decimals: 1,
             }, {
+                // id: "theta", hidden: true, type: "p", fn: "THETA-90%180", decimals: 2,
                 id: "theta", hidden: true, type: "p", fn: "THETA", decimals: 2,
             }, {
                 id: "thetaRadians", hidden: true, type: "c", fn: "theta * (PI/180)", unit: "º rad", decimals: 2,
@@ -689,9 +694,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }, {
                 id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(thetaRadians)", unit: "spots", name: "halftone spots in y direction", description: "", decimals: 2,
             }, {
-                id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots))", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 0,
+                id: "lineRoundXSpots", group: "roundedSpotsX", type: "c", fn: "round(lineXSpots)", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 0,
             }, {
-                id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots))", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 0,
+                id: "lineRoundYSpots", group: "roundedSpotsY", type: "c", fn: "round(lineYSpots)", unit: "spots", name: "halftone spots in x direction", description: "", decimals: 0,
             }, {
                 id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "Round halftone spots at screening angle", description: "", decimals: 2,
             }],
@@ -707,9 +712,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "Single-cell Screen angle error", description: "", decimals: 2,
             }],
             'Supercell Calculations': [{
-                id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "max(1,round(lineXSpots*cells))", unit: "spots", name: "super-cell spots in x direction", description: "", decimals: 0,
+                id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "round(lineXSpots*cells)", unit: "spots", name: "super-cell spots in x direction", description: "", decimals: 0,
             }, {
-                id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "max(1,round(lineYSpots*cells))", unit: "spots", name: "super-cell spots in y direction", description: "", decimals: 0,
+                id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "round(lineYSpots*cells)", unit: "spots", name: "super-cell spots in y direction", description: "", decimals: 0,
             }, {
                 id: "cellSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2))/cells", unit: "spots", name: "Round super-cell spots at screening angle", description: "", decimals: 2,
             }],
