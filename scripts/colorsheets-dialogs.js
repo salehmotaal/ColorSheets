@@ -57,7 +57,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             this.show = function() {
                                 $mdDialog.show(this.dialog);
                             }
-                            console.log(response);
+                            // console.log(response);
                             // this.local
                         }.bind(this), function errorCallback(response) {
                             

@@ -407,7 +407,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     return {
                         controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
                             $scope.$on('selected.stage', function (event, selection) {
-                                // console.log('selected', selection, event);
+                                //console.log('selected', selection, event);
                             });
                             Object.defineProperty($scope.$sheet, 'canvas', {
                                 get: function () {
@@ -618,7 +618,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }],
         };
 
-        window.colorSheetsApp = new grasppe.ColorSheetsApp.Sheet({
+        window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
             sheets: {
                 HalftoneDemo: grasppe.ColorSheetsApp.HalftoneDemo
             },

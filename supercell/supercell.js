@@ -86,20 +86,21 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 return this;
             }
-            
+
             downloadPlot(a) {
-                var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
+                var svg = ('' + this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g, ' '),
+                    // .replace(/(\d)\s/g, '$1')
                     link = Object.assign(document.createElement('a'), {
-                    href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'supercell.svg'
-                });
+                        href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'supercell.svg'
+                    });
                 document.body.appendChild(link), link.click(), $(link).remove();
             }
-            
+
             generatePlotImage(width, height, scale) {
                 var self = this.generatePlotImage,
                     timeStamp = self.timeStamp;
                 self.timeStamp = timeStamp;
-                
+
                 if (!/(wires|lines|fills|pixels|cells)/.test(this.$options.shading)) this.$options.shading = 'fills';
                 if (!/(cell|supercell)/.test(this.$options.panning)) this.$options.panning = 'supercell';
 
@@ -132,7 +133,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         }),
                         halftoneFill: Object.assign({}, series.halftoneSeriesFillStyle),
                         supercellFill: Object.assign({}, series.supercellSeriesFillStyle),
-                        plotGrid: Object.assign({}, plotOptions.plotGridStyle, {lineWidth: 0.125}),
+                        plotGrid: Object.assign({}, plotOptions.plotGridStyle, {
+                            lineWidth: 0.125
+                        }),
                         legendBox: Object.assign({}, legendOptions.legendBoxStyle),
                     },
                     lineXSpots = values.lineXSpots,
@@ -149,14 +152,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     ImageFilter = grasppe.canvas.ImageFilter,
                     Chart = grasppe.canvas.Chart,
                     happy = true;
-                    
+
                 for (var s in styles) if (styles[s].lineWidth) styles[s].lineWidth = Number(styles[s].lineWidth) * strokeFactor;
-                
+
                 if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
-                
+
                 var plotFont = window.getComputedStyle(plotCanvas[0]).fontFamily;
                 // console.log(plotFont);
-
                 BOX_CALCULATIONS: {
                     if (timeStamp !== self.timeStamp) return this;
                     var intendedBox = new Box(0, 0, lineXSpots, lineYSpots, styles.intended),
@@ -184,7 +186,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if (timeStamp !== self.timeStamp) return this;
                     var gridMargin = 4 + margin,
                         gridMin = [Math.min(-4, Math.floor(bounds.xMin - gridMargin / 2)), Math.min(-2, Math.floor(bounds.yMin - gridMargin / 8))],
-                        gridMax = [Math.max(4, Math.ceil(bounds.xMax + gridMargin / 2)), Math.max(4, Math.ceil(bounds.yMax + gridMargin))], // * (1 + cells)
+                        gridMax = [Math.max(4, Math.ceil(bounds.xMax + gridMargin / 2)), Math.max(4, Math.ceil(bounds.yMax + gridMargin))],
+                        // * (1 + cells)
                         gridSteps = [gridMax[0] - gridMin[0], gridMax[1] - gridMin[1]],
                         gridVerticals = new Lines(gridMin, Object.assign({
                             offset: [0, gridSteps[0]],
@@ -207,35 +210,36 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }
                 LEGEND_BOX: {
                     var fontSize = 10,
-                        lineSize = 20/scale,
+                        lineSize = 20 / scale,
                         legendStyles = [styles.intended, styles.halftone, styles.supercell],
-                        legendMargin = 2/scale,
-                        legendPadding = 10/scale,
-                        legendWidth = gridSteps[0], // - 1/scale,
+                        legendMargin = 2 / scale,
+                        legendPadding = 10 / scale,
+                        legendWidth = gridSteps[0],
+                        // - 1/scale,
                         legendHeight = lineSize * 2 + legendPadding * 2,
                         legendLeft = gridMin[0],
                         legendTop = gridMin[1] - legendHeight,
                         legendColumn = Math.floor(legendWidth / legendOptions.seriesLabels.length),
                         legendRow = legendHeight - legendPadding * 2,
-                        legendBox = new grasppe.canvas.Rectangle(legendLeft, legendTop , legendWidth, legendHeight, {
-                                fillStyle: 'rgb(255,255,255)', strokeStyle: 'rgb(192,192,192)',
-                            }),
+                        legendBox = new grasppe.canvas.Rectangle(legendLeft, legendTop, legendWidth, legendHeight, {
+                            fillStyle: 'rgb(255,255,255)', strokeStyle: 'rgb(192,192,192)',
+                        }),
                         legendGroup = '<g>';
-                        
+
                     legendGroup += legendBox.getPath(undefined, undefined, scale);
-                
-                    for (var i = 0; i < legendOptions.seriesLabels.length; i ++) {
+
+                    for (var i = 0; i < legendOptions.seriesLabels.length; i++) {
                         var cellLeft = legendLeft + legendColumn * i + legendPadding,
                             cellTop = legendTop + legendPadding + lineSize * 0.95,
-                            markerStyle = legendStyles[i].strokeStyle ||legendStyles[i].fillStyle,
+                            markerStyle = legendStyles[i].strokeStyle || legendStyles[i].fillStyle,
                             marker = '<text x="' + (cellLeft + legendPadding) * scale + '" y="' + (cellTop * scale) + '" dy="' + lineSize * scale / 2 + 'pt" style="font-size: 48pt; fill:' + markerStyle + '">•</text>',
-                            label = '<text x="' + (cellLeft + legendPadding * 4) * scale + '" y="' + (cellTop-0.5) * scale + '" style="font-size: 14pt; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function(line, index) {
-                                    return '<tspan x="' + (cellLeft + legendPadding * 3) * scale + '" dy="' + index * lineSize *scale + 'pt">' + line + '</tspan>';
-                                }).join('\n') + '</text>';
+                            label = '<text x="' + (cellLeft + legendPadding * 4) * scale + '" y="' + (cellTop - 0.5) * scale + '" style="font-size: 14pt; fill:black;">' + legendOptions.seriesLabels[i].split('\n').map(function (line, index) {
+                                return '<tspan x="' + (cellLeft + legendPadding * 3) * scale + '" dy="' + index * lineSize * scale + 'pt">' + line + '</tspan>';
+                            }).join('\n') + '</text>';
                         // console.log([cellLeft, cellTop]);
                         legendGroup += marker + label;
                     }
-                        
+
                     legendGroup += '</g>';
                 }
                 PATH_CREATION: {
@@ -245,53 +249,55 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     var supercellPixelBoxes = mode.cells ? this.getSuperCellsPixelsPath(supercellBox, cells) : [],
                         halftonePixelBox = (mode.fills || mode.pixels) ? new ImageFilter(halftoneBox, styles.halftoneFill) : [],
                         supercellPixelBox = (mode.fills || mode.pixels || mode.cells) ? new ImageFilter(new Box(0, 0, cellRoundXSpots, cellRoundYSpots, styles.supercell), styles.supercellFill) : [];
-                    var clipPath = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1]-legendHeight*2, {
-                                fillStyle: 'transparent', strokeStyle: 'rgb(192,192,192)',
+                    var clipPath = new grasppe.canvas.Rectangle(gridMin[0], gridMin[1], gridSteps[0], gridSteps[1] - legendHeight * 2, {
+                        fillStyle: 'transparent', strokeStyle: 'rgb(192,192,192)',
                     }).getPath(undefined, undefined, scale);
+                    if (mode.cells) {
+                        this.$scope.$sheet.measuredSpotsCount = Number(supercellPixelBoxes[supercellPixelBoxes.length-1].text);
+                        this.$scope.$sheet.measuredSpotsCountError = this.$scope.$sheet.measuredSpotsCount - values.theoreticalSpotsCount;
+                        console.log(this.$scope.$sheet.measuredSpotsCount, this.$scope.$sheet.measuredSpotsCountError);
+                        setTimeout(this.$scope.$sheet.$apply.bind(this.$scope.$sheet),0);
+                    }
                 }
                 PATH_GENERATION: {
                     var paths = [],
                         elements = [],
-                        // view = [-offset[0] * scale, (-legendHeight-offset[1]) * scale, width, height];
-                        // view = [gridMin[0] * scale, (gridMin[1] - legendHeight) * scale , gridSteps[0] * scale, (gridSteps[1]-legendHeight*2) * scale];
-                        view = [legendLeft * scale, legendTop * scale , width, height - (legendHeight*2*scale)];
-                        
+                        view = [legendLeft * scale, legendTop * scale, width, height - (legendHeight * 2 * scale)];
+
                     if (mode.fills || mode.pixels) elements.push(supercellPixelBox, halftonePixelBox);
                     if (mode.cells) elements = elements.concat(supercellPixelBoxes);
-                    elements.push(gridVerticals, gridHorizontals);
                     if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellVerticals, supercellHorizontals);
                     if (mode.fills || mode.lines || mode.wires || mode.pixels || mode.cells) elements.push(intendedBox);
                     if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(supercellBox);
                     if (mode.fills || mode.lines || mode.wires || mode.cells) elements.push(halftoneBox);
+                    elements.push(gridVerticals, gridHorizontals);
 
                     for (var path of elements) if (timeStamp !== self.timeStamp) return this;
                     else if (path.getPath) {
-                        paths.push(path.getPath(undefined, undefined, scale)); // xTransform, yTransform, scale
-                        if (path.text) { 
-                            paths.push('<g><text style="text-anchor: middle" x="' + (path.xMin + path.width/2) * scale + '" y="' + (path.yMin + path.height/2) * scale + '">' + path.text + '</text></g>'); // transform="scale(1, -1)"
-                            // console.log(path.text);
+                        paths.push(path.getPath(undefined, undefined, scale));
+                        if (path.text) {
+                            paths.push('<g><text style="text-anchor: middle; font-size:' + 12 + 'px" x="' + (path.xMin + path.width / 2) * scale + '" y="' + (path.yMin + path.height / 2) * scale + '">' + path.text + '</text></g>');
                         }
                     }
                     // paths.push(clipPath);
-                    var pathGroup = '<g>' + paths.join('') + "</g>", // transform="scale(1, -1) translate(0, -' + (height-scale*2) + ')"
+                    var pathGroup = '<g>' + paths.join('') + "</g>",
                         svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + view[2] + '" height="' + view[3] + '" viewBox="' + view.join(' ') + '">';
-                    svg +='<defs><clipPath id="plot-mask">' + clipPath + '</clipPath></defs>';
-                    svg +='<g font-family="' + plotFont + '" clip-path="plot-mask">' + pathGroup + '</g>';
-                    svg +='<g font-family="' + plotFont + '">' + legendGroup + '</g>';
-                    svg +='</svg>';
+                    svg += '<defs><clipPath id="plot-mask">' + clipPath + '</clipPath></defs>';
+                    svg += '<g font-family="' + plotFont + '" clip-path="plot-mask">' + pathGroup + '</g>';
+                    svg += '<g font-family="' + plotFont + '">' + legendGroup + '</g>';
+                    svg += '</svg>';
                 }
-                
-                // this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
 
+                // this.drawLegend(legendOptions.seriesLabels, [styles.intended, styles.halftone, styles.supercell], styles.legendBox, plotCanvas);
                 return svg;
             }
-            
+
             updatePlot() {
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                     if (plotCanvas.find('img').length === 0) {
                         plotCanvas.append($('<img style="width: auto; height: 100%; max-width: 100%; max-height: 100%;">'));
-                        $(window).bind('resize', function(){
+                        $(window).bind('resize', function () {
                             this.updatePlot();
                         }.bind(this));
                     }
@@ -301,16 +307,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }.bind(this), 0);
                 return this;
             }
-            
+
             /**
              * Renders overlay aspects.
              */
             drawLegend(legendText, legendStyles, legendBoxStyle, container) {
                 if (legendText && legendText !== '' && legendStyles && legendBoxStyle) {
                     var $legend;
-    
-                    if (this.hash._currentLabels === legendText.join('|').replace(/\s*/g,'')) return this;
-                    
+
+                    if (this.hash._currentLabels === legendText.join('|').replace(/\s*/g, '')) return this;
+
                     $legend = (this.hash.legend instanceof HTMLElement) ? $(this.hash.legend) : $(container).find('.legend-wrapper');
                     if ($legend.length === 0) {
                         $legend = $('<div class="legend-wrapper container-fluid md-whiteframe-1dp" style="background-color: ' + legendBoxStyle.fillStyle + '; border: 1px solid ' + legendBoxStyle.strokeStyle + '; position:absolute; left: 10%; right: 10%; width:auto; flex; overflow:hidden;"></div>').appendTo(container);
@@ -324,17 +330,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             </div>'));
                         });
                     }
-                    this.hash._currentLabels = legendText.join('|').replace(/\s*/g,'');
+                    this.hash._currentLabels = legendText.join('|').replace(/\s*/g, '');
                 } else {
-                     $(this.container).find('.legend-wrapper').remove();
+                    $(this.container).find('.legend-wrapper').remove();
                 }
                 return this;
             }
 
-
             getSuperCellsPixelsPath(path, cells) {
                 var pixels = [],
-                    offset = 10,
+                    offset = 2,
+                    length = 0,
                     width = path.width + offset * 2,
                     height = path.height + offset * 2,
                     xMin = path.xMin,
@@ -347,12 +353,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     },
                     $canvas, imageData, rawData;
                 try {
-
+                    var allPixels = [],
+                        randoms = [];
                     for (var i = 0; i < cells; i++) for (var j = 0; j < cells; j++) { // if (((i % 2) + (j % 2) !== 1)) {
-                        
-                        var box = path.map(function (point) {
-                            return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
-                        }),
+                        var box = path.map(function (point, index) {
+                                return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), 
+                                    point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
+                                // return ([point[0] / cells + ((path[3][0] / cells * i) + (path[1][0] / cells * j)), point[1] / cells + ((path[3][1] / cells * i) + (path[1][1] / cells * j))]);
+                            }),
                             xs = box.map(function (point) {
                                 return point[0];
                             }),
@@ -362,36 +370,52 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             x1 = Math.min.apply(null, xs) - offset - xMin,
                             y1 = Math.min.apply(null, ys) - offset - yMin,
                             x2 = Math.max.apply(null, xs) + offset - xMin,
-                            y2 = Math.max.apply(null, ys) + offset - yMin;
-                            
+                            y2 = Math.max.apply(null, ys) + offset - yMin,
+                            odd = (i % 2) + (j % 2) === 1,
+                            oddI = (i % 2) === 1,
+                            oddJ = (j % 2) === 1,
+                            random = ((oddI ? cells - i : i) / cells + (oddI && oddJ ? cells - j : j) / cells) / 4 * 3; // odd ? i/cells/2 + (cells-j)/cells/2 : (cells-i)/cells/2 + j/cells/2;
+
+                        console.log(box);
+                        var style = {
+                            fillStyle: 'rgba(' + Math.round((odd ? 225 : 127) + 64 * random - 32) + ',' + Math.round((odd ? 196 : 127) + 128 * random - 64) + ',' + Math.round((odd ? 32 : 223) + 64 * random - 32) + ',0.75)', // 
+                        };
+
                         $canvas = $('<canvas style="border: 1px solid red; position: fixed; top: 0; left: 0; display: block;">');
                         $canvas[0].width = width, $canvas[0].height = height;
                         var context = $canvas[0].getContext("2d");
                         context.fillStyle = '#000', context.lineWidth = 0, context.rect(0, 0, width, height);
                         context.translate(offset + path.width - path.xMax, offset);
-                        context.fillStyle = '#FFF', context.strokeStyle = '#000';
-                        context.moveTo(box[0][0], box[0][1]), context.beginPath();
-                        context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]);
-                        context.lineTo(box[3][0], box[3][1]), context.lineTo(box[0][0], box[0][1]);
-                        context.closePath(), context.fill(); // context.stroke();
-                        // context.beginPath(), context.lineTo(box[1][0], box[1][1]), context.lineTo(box[2][0], box[2][1]), context.closePath();
-                        // context.strokeStyle = '#FFF'; context.stroke();
+                        context.fillStyle = '#FFF', context.strokeStyle = 'rgba(255,255,255,0.25)', context.lineWidth = 0.25;
+                        var push = 0.05, pull = 0;
+                        context.moveTo(box[0][0] + push, box[0][1] + push), context.beginPath();
+                        context.lineTo(box[1][0] + push, box[1][1] + push), context.lineTo(box[2][0] + push, box[2][1] + push);
+                        context.lineTo(box[3][0] + push, box[3][1] + push), context.lineTo(box[0][0] + push, box[0][1] + push);
+                        context.closePath(), context.fill(); context.stroke();
+                        context.stroke();
                         box.pixels = [];
-                        imageData = context.getImageData(x1, y1, x2-x1, x2-x1);
+                        imageData = context.getImageData(x1, y1, x2 - x1, x2 - x1);
                         rawData = imageData.data;
-                        for (var q = 0; q < imageData.height; q++) for (var p = 0; p < imageData.width; p++) if (rawData[(Math.floor(imageData.width * q) + Math.floor(p)) * 4 + 3] > 127) box.pixels.push(new grasppe.canvas.Path([
-                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
-                            [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
-                            [Math.floor(xMin + x1 + p + 1 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
-                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 1 - offset)],
-                            [Math.floor(xMin + x1 + p + 0 - offset), Math.floor(yMin + y1 + q + 0 - offset)],
-                        ], ((i % 2) + (j % 2) === 1) ? style1 : style2));
+                        for (var q = 0; q < imageData.height; q++) for (var p = 0; p < imageData.width; p++) if (rawData[(Math.round(imageData.width * q) + Math.round(p)) * 4 + 3] > 127) {
+                            var xPixel = Math.floor((xMin + x1 + p + 0 - offset)),
+                                yPixel = Math.floor((yMin + y1 + q + 0 - offset));
+                            allPixels[xPixel] = allPixels[xPixel] || [];
+                            allPixels[xPixel][yPixel] = allPixels[xPixel][yPixel] || box.pixels.push(new grasppe.canvas.Path([
+                                [xPixel + 0 + pull, yPixel + 0 + pull],
+                                [xPixel + 1 + pull, yPixel + 0 + pull],
+                                [xPixel + 1 + pull, yPixel + 1 + pull],
+                                [xPixel + 0 + pull, yPixel + 1 + pull],
+                                [xPixel + 0 + pull, yPixel + 0 + pull], ], style));
+                        }
                         var boundingBox = new grasppe.canvas.BoundingBox(box.pixels, {
                             text: box.pixels.length,
                         });
+
+                        length += box.pixels.length;
                         // console.log(box.pixels.length);
                         pixels = pixels.concat(box.pixels);
                         pixels.push(boundingBox);
+
                         $canvas.remove();
                     }
 
@@ -400,9 +424,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }
                 $canvas.remove();
 
+                var boundingBox = new grasppe.canvas.BoundingBox(path, {
+                    text: length,
+                });
+                pixels.push(boundingBox);
+
                 return pixels;
             }
-            
+
             adjustPlotSize() {
                 try {
                     var plotCanvas = $(this.template.canvas).first(),
@@ -433,7 +462,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 stage: {
                     directive: 'color-sheet-stage', tools: {
                         save: {
-                            label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function(link, $scope, event){
+                            label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function (link, $scope, event) {
                                 console.log(arguments);
                                 $scope.$sheet.helper.downloadPlot(link);
                             },
@@ -503,7 +532,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 sheetController: grasppe.Libre.Controller.define('SupercellDemoController', function ($scope, model, module) {
                     // !- SupercellDemo [Controllers] SupercellDemoController
                     console.log('SupercellDemo [Controllers] SupercellDemoController');
-                    
+
                     if ($scope.parameters) {
                         if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
                         if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
@@ -530,6 +559,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         $scope.helper.updateData();
                         // console.log('Parameters changed %o', $scope);
                     });
+                    $scope.$on('selected.stage', function (event, option, value) {
+                        switch (option) {
+                        case 'redraw': $scope.helper.updateData(true);
+                            break;
+                        default :
+                        }
+                        // console.log('Selected stage', arguments, this);
+                    });
 
                     $scope.$sheet = $scope;
 
@@ -542,7 +579,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     return {
                         controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
                             $scope.$on('selected.stage', function (event, selection) {
-                                // console.log('selected', selection, event);
+                                console.log('selected', selection, event);
                             });
                             Object.defineProperty($scope.$sheet, 'canvas', {
                                 get: function () {
@@ -584,10 +621,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                     style="padding: 0.125em 0.5em; border-bottom: 1px solid rgba(0,0,0,0.25)">{{section.name}}</color-sheets-table-section-header>\
                                     <color-sheets-table-row ng-repeat="row in section">\
                                         <color-sheets-table-cell style="padding: 0 0.5em;">{{row.name}}</color-sheets-table-cell>\
-                                        <color-sheets-table-cell style="padding: 0 0.5em;">{{row.value|number:row.decimals}}</color-sheets-table-cell>\
+                                        <color-sheets-table-cell ng-if="!row.variable" style="padding: 0 0.5em;">{{row.value|number:row.decimals}}</color-sheets-table-cell>\
+                                        <color-sheets-table-cell ng-if="row.variable" style="padding: 0 0.5em;">{{$sheet[row.variable]}}</color-sheets-table-cell>\
                                     </color-sheets-table-row>\
                                 </color-sheets-table-section>\
-                            </color-sheets-table></color-sheets-panel-body>'),
+                            </color-sheets-table></color-sheets-panel-body>'), // ng-if="row.value || $sheet[row.variable]"
                     }
                 }),
                 // !- SupercellDemo [Directives] colorSheetOverview                
@@ -638,7 +676,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
                 },
                 plotGridStyle: {
-                    lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
+                    lineWidth: 0.5, strokeStyle: "RGBA(0,0,0,0.25)"
                 },
             },
             seriesOptions: {
@@ -708,15 +746,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineRoundXSpots,2)+pow(lineRoundYSpots,2))", unit: "spots", name: "Round halftone spots at screening angle", description: "", decimals: 2,
             }],
             'Halftone Results': [{
-                id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "Single-cell Line Ruling (Round)", description: "", decimals: 2,
+                id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*lineSpots)", unit: "lpi", name: "single-cell line ruling (round)", description: "", decimals: 2,
             }, {
-                id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "Single-cell Line Angle (Round)", description: "", decimals: 2,
+                id: "lineRoundTheta", group: "roundTheta", type: "r", fn: "atan2(lineRoundYSpots, lineRoundXSpots) * (180/PI)", unit: "º", name: "single-cell line angle (round)", description: "", decimals: 2,
             }, {
-                id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "Single-cell Gray Levels (1-bit)", description: "", decimals: 0,
+                id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "single-cell gray levels (1-bit)", description: "", decimals: 0,
             }, {
-                id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "Single-cell Screen ruling error", description: "", decimals: 2,
+                id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "single-cell screen ruling error", description: "", decimals: 2,
             }, {
-                id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "Single-cell Screen angle error", description: "", decimals: 2,
+                id: "lineErrorTheta", group: "errorTheta", type: "r", fn: "lineRoundTheta-theta", unit: "º", name: "single-cell screen angle error", description: "", decimals: 2,
             }],
             'Supercell Calculations': [{
                 id: "cellRoundXSpots", group: "roundedSpotsX", type: "c", fn: "round(lineXSpots*cells)", unit: "spots", name: "super-cell spots in x direction", description: "", decimals: 0,
@@ -724,21 +762,27 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 id: "cellRoundYSpots", group: "roundedSpotsY", type: "c", fn: "round(lineYSpots*cells)", unit: "spots", name: "super-cell spots in y direction", description: "", decimals: 0,
             }, {
                 id: "cellSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2))/cells", unit: "spots", name: "Round super-cell spots at screening angle", description: "", decimals: 2,
+            }, {
+                id: "theoreticalSpotsCount", group: "", type: "c", fn: "pow(cellRoundXSpots,2)+pow(cellRoundYSpots,2)", unit: "spots", name: "theoretical spots in a supercell", description: "", decimals: 0,
+            }, {
+                id: "actualSpotsCount", group: "", type: "c", fn: "NaN", variable: "measuredSpotsCount", unit: "spots", name: "actual spots in a supercell", description: "", decimals: 0,
+            }, {
+                id: "actualSpotsCountError", group: "", type: "c", fn: "NaN", variable: "measuredSpotsCountError", unit: "spots", name: "actual spots error", description: "", decimals: 0,
             }],
             'Supercell Results': [{
-                id: "cellRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*cellSpots)", unit: "lpi", name: "Super-cell Line Ruling (Round)", description: "", decimals: 2,
+                id: "cellRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*cellSpots)", unit: "lpi", name: "super-cell line ruling (round)", description: "", decimals: 2,
             }, {
-                id: "cellRoundTheta", group: "roundTheta", type: "r", fn: "(atan2(cellRoundYSpots, cellRoundXSpots) * (180/PI))", unit: "º", name: "Super-cell Line Angle (Round)", description: "", decimals: 2,
+                id: "cellRoundTheta", group: "roundTheta", type: "r", fn: "(atan2(cellRoundYSpots, cellRoundXSpots) * (180/PI))", unit: "º", name: "super-cell line angle (round)", description: "", decimals: 2,
             }, {
-                id: "cellGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/(cellRoundLPI/cells), 2))+1", unit: "levels", name: "Super-cell Gray Levels (1-bit)", description: "", decimals: 0,
+                id: "cellGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/(cellRoundLPI/cells), 2))+1", unit: "levels", name: "super-cell gray levels (1-bit)", description: "", decimals: 0,
             }, {
-                id: "cellErrorLPI", group: "errorLPI", type: "r", fn: "(cellRoundLPI-lpi)/lpi*100", unit: "%", name: "Super-cell Screen ruling error", description: "", decimals: 2,
+                id: "cellErrorLPI", group: "errorLPI", type: "r", fn: "(cellRoundLPI-lpi)/lpi*100", unit: "%", name: "supercell screen ruling error", description: "", decimals: 2,
             }, {
-                id: "cellErrorTheta", group: "errorTheta", type: "r", fn: "cellRoundTheta-theta", unit: "º", name: "Super-cell Screen angle error", description: "", decimals: 2,
+                id: "cellErrorTheta", group: "errorTheta", type: "r", fn: "cellRoundTheta-theta", unit: "º", name: "supercell screen angle error", description: "", decimals: 2,
             }],
         }
 
-        window.colorSheetsApp = new grasppe.ColorSheetsApp.Sheet({
+        window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
             sheets: {
                 SupercellDemo: grasppe.ColorSheetsApp.SupercellDemo
             },
