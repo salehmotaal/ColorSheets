@@ -9,18 +9,17 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         // !- [Directives]
         if (!grasppe.ColorSheetsApp.Directives) grasppe.ColorSheetsApp.Directives = {}; // Preservable ColorSheetsApp placeholder
         Object.assign(grasppe.ColorSheetsApp.Directives, {
-            // // !- [Directives] Sheet
-            // Sheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
-            //     link: function colorSheetsSheetLink($scope, element, attributes) {
-            //         if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
-            //         window.setTimeout('$(window).resize()', 100);
-            //     },
-            //     template: ('<div class="color-sheets-sheet {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;">\
-            //         <div ng-repeat="segment in layout.contents" \
-            //             {{segment.container}} class="{{segment.classes}}" ng-style="segment.style;" color-sheets-sheet-segment></div>\
-            //         </div><color-sheets-documentation-dialog/>'),
-            // }),
-            // 
+            // !- [Directives] Sheet
+            grasppeSvg: grasppe.Libre.Directive.define('grasppeSvg', {
+                link: function grasppeSvgLink($scope, element, attributes) {
+                    // for (var attribute in attributes.$attr) element.attr(attribute, attributes[attribute]);
+                },
+                controller: ['$scope', '$element', '$transclude', function grasppeSvgController($scope, element, transcludeFunction) {
+    				transcludeFunction($scope, element.append.bind(element.find('svg')), element.find('svg'));
+                }],
+                template: ('<object><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"></svg></object>'), transclude: true, replace: true, // <ng-transclude></ng-transclude>\
+            }),
+            
             // // !- [Directives] SheetSegment
             // SheetSegment: grasppe.Libre.Directive.define('colorSheetsSheetSegment', {
             //     link: function colorSheetsSheetSegmentLink($scope, element, attributes) {

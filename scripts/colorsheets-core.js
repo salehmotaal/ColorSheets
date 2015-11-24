@@ -12,13 +12,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- [Directives] Sheet
             Sheet: grasppe.Libre.Directive.define('colorSheetsSheet', {
                 link: function colorSheetsSheetLink($scope, element, attributes) {
+                    // console.log('colorSheetsSheet::Link', $scope)
+                    if (!$scope.layout && $scope.layouts) $scope.layout = $scope.layouts.default;
                     if ($scope.layout.attributes) $(element).attr($scope.layout.attributes);
                     window.setTimeout('$(window).resize()', 100);
                 },
                 template: ('<div class="color-sheets-sheet {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;">\
                     <div ng-repeat="segment in layout.contents" \
 	                    {{segment.container}} class="{{segment.classes}}" ng-style="segment.style;" color-sheets-sheet-segment></div>\
-                    </div><color-sheets-documentation-dialog/>'),
+                    </div><!--color-sheets-documentation-dialog/-->'),
             }),
 
             // !- [Directives] SheetSegment
@@ -32,8 +34,43 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- [Directives] CopyrightsDirective
             Copyrights: grasppe.Libre.Directive.define('copyrights', {
                 // link: function ($scope, element, attributes) {},
-                template: '<small>Copyrights &copy; 2015, Abdel Motaal, S., Sigg, F. and Grasppe, Inc.</small>',
+                template: '<small>Copyrights &copy; 2015, Abdel Motaal, S., Sigg, F. and Grasppe, Inc.</small>', replace: true,
             }),
+            
+            // !- [Directives] SidePane
+            SidePane: grasppe.Libre.Directive.define('colorSheetsSidePane', {
+                controller: ['$scope', '$element', '$mdSidenav', '$timeout', function colorSheetsSidePaneController($scope, element, $mdSidenav, $timeout) {
+                    var paneTitle = '' + element.attr('color-sheets-side-pane'),
+                        paneID = paneTitle.toLowerCase(),
+                        mdComponentID = element.attr('md-component-id') || 'color-sheets-' + paneID;
+                    $scope.$mdSidenav = $mdSidenav;
+                    $scope.$app['$' + paneID] = Object.assign(Object.create({}),{
+                        paneID: paneID,
+                        paneTitle: paneTitle,
+                        mdComponentID: mdComponentID,
+                        element: element,
+                        toggle: function() {
+                            return $mdSidenav(mdComponentID).toggle();
+                        },
+                        isOpen: function() {
+                            return $mdSidenav(mdComponentID).isOpen();
+                        },
+                        show: function() {
+                            this.element.attr('md-is-locked-open', '$mdMedia("min-width: 333px")'); // .attr('md-is-open', 'true'); //
+                            return $mdSidenav(mdComponentID).open(); //.attr('is-locked-Open', '$mdMedia("sm")');
+                        },
+                        hide: function() {
+                            this.element.attr('md-is-locked-open', 'false');
+                            return $mdSidenav(mdComponentID).close(); //.attr('is-locked-Open', false)
+                        },
+                    });
+                    Object.assign(this, $scope.$app['$' + paneID]);
+                }],
+                link: function($scope, element, attributes, controller) {
+                    element.addClass('md-whiteframe-z2').prepend('<md-toolbar class="md-theme-indigo"><h1 class="md-toolbar-tools">' + (attributes.paneTitle || controller.paneTitle) + '</h1></md-toolbar>');
+                }
+            }),
+
 
             // !- [Directives] colorSheetsCoreStyles
             CoreStyles: grasppe.Libre.Directive.define('colorSheetsCoreStyles', {
@@ -83,7 +120,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         md-button * {opacity: 0.5 !important;}\
                         .color-sheets-panel { width: 100%}\
                     }\
-                </style><color-sheets-styles></color-sheets-styles>',
+                </style>',
             }),
 
         }); // Object.assign (grasppe.ColorSheetsApp.Directives) {}
@@ -93,10 +130,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             Sheet: {
                 // !- [Models] Sheet
                 toolsIconSize: '18px', toolsColor: 'white', menuColor: 'black', menuIcon: 'glyphicon-menu-hamburger', toolsIconClasses: ('tools-icon'),
-                layout: {
-                    id: 'default', classes: 'container-fluid', style: {
-                        padding: 0, margin: 0, flex: 1, maxWidth: '100vw', whiteSpace: 'normal',
-                    },
+                layouts: {
+                    default: {
+                        id: 'default', classes: 'container-fluid', style: {
+                            padding: 0, margin: 0, flex: 1, maxWidth: '100vw', whiteSpace: 'normal',
+                        },
+                    }
                 },
                 panels: {
                     sheet: {
@@ -104,9 +143,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             refresh: {
                                 svgSrc: grasppe.load.url.images + 'refresh.svg', label: 'refresh', classes: 'md-button-flat red black-text', click: 'location.reload()',
                             },
-                            documentation: {
-                                svgSrc: grasppe.load.url.images + 'book.svg', label: 'documentation', classes: 'md-button-flat orange black-text', click: 'console.log($scope.$app.documentationController.dialog); $scope.$app.documentationController.show();', //'$app.',
+                            menu: {
+                                svgSrc: grasppe.load.url.images + 'menu.svg', label: 'menu', classes: 'md-button-flat orange black-text', click: '$scope.$app.$menu.show()', //'$app.',
                             },
+                            /*documentation: {
+                                svgSrc: grasppe.load.url.images + 'book.svg', label: 'documentation', classes: 'md-button-flat orange black-text', click: 'console.log($scope.$app.documentationController.dialog); $scope.$app.documentationController.show();', //'$app.',
+                            },*/
                         },
                         prefix: 'sheet', header: 'ColorSheet', toolbarClasses: 'grey lighten-2 black-text', contents: '', footer: '',
                     },
@@ -136,7 +178,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             } // Sheet
         }); // Object.assign (grasppe.ColorSheetsApp.Models) {}
         if (grasppe.agent.is('iPhone')) {
-            grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
+            grasppe.ColorSheetsApp.Models.Sheet.layouts.default.contents = {
                 top: {
                     id: 'simulation', attributes: {
                         // 'layout': 'column', 'layout-sm': 'column', 'layout-gt-lg': 'row',
@@ -187,7 +229,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 },
             };
         } else if (grasppe.agent.is('iPad')) {
-            grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
+            grasppe.ColorSheetsApp.Models.Sheet.layouts.default.contents = {
                 top: {
                     id: 'simulation', attributes: {
                         // 'layout': 'column', 'layout-sm': 'column', 'layout-gt-lg': 'row',
@@ -236,7 +278,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 },
             };
         } else {
-            grasppe.ColorSheetsApp.Models.Sheet.layout.contents = {
+            grasppe.ColorSheetsApp.Models.Sheet.layouts.default.contents = {
                 top: {
                     id: 'simulation', classes: 'row landscape-row portrait-column col-xs-12', style: {
                         padding: 0, margin: 0, flex: 1, maxWidth: '100vw', minHeight: '50vh', whiteSpace: 'normal',

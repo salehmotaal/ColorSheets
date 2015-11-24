@@ -256,29 +256,31 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'bootstrap', 'angularMaterial','materializeColors', 'd3', 'mobileDetect', 'fontAwesome', 'grasppeCore'],
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'angularMaterial', 'materializeColors', 'd3', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'bootstrapNoColor'], // 'bootstrap',
                 objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),
                 // jQuery: '           scripts:    ["//code.jquery.com/jquery.min.js"]'.toLiteral(),
                 jQuery: '           scripts:    ["jquery.min.js"]'.toLiteral(),
-                bootstrap: '        scripts:    ["bootstrap.min.js"], \
-                                    styles:     ["bootstrap.min.css"]'.toLiteral(),
-                // angularJS: '        scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"]'.toLiteral(),
-                // angularRoute: '     scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"]'.toLiteral(),
-                // angularMessages: '  scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-messages.min.js"]'.toLiteral(),
-                // angularAnimate: '   scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.min.js"]'.toLiteral(),
-                // angularAria: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-aria.min.js"]'.toLiteral(),
-                // angularMaterial: '  scripts:    ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.js"], \
-                //                     styles:     ["//cdn.gitcdn.xyz/cdn/angular/bower-material/v1.0.0-rc2/angular-material.min.css"]'.toLiteral(),
+                bootstrapNoColor: ' styles:     ["bootstrap.no.color.min.css"]'.toLiteral(),
+                // bootstrap: '        scripts:    ["bootstrap.min.js"], \
+                                    // styles:     ["bootstrap.min.css"]'.toLiteral(),
+                // angularJS: '        scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-beta.2/angular.min.js"]'.toLiteral(),
+                // angularRoute: '     scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-beta.2/angular-route.min.js"]'.toLiteral(),
+                // angularMessages: '  scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-beta.2/angular-messages.min.js"]'.toLiteral(),
+                // angularAnimate: '   scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-beta.2/angular-animate.min.js"]'.toLiteral(),
+                // angularAria: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-beta.2/angular-aria.min.js"]'.toLiteral(),
+                // angularTouch: '      scripts:    ["//ajax.googleapis.com/ajax/libs/angularjs/1.5.0-beta.2/angular-touch.min.js"]'.toLiteral(),
                 angularJS: '        scripts:    ["angular.js"]'.toLiteral(),
                 angularRoute: '     scripts:    ["angular-route.js"]'.toLiteral(),
                 angularMessages: '  scripts:    ["angular-messages.js"]'.toLiteral(),
                 angularAnimate: '   scripts:    ["angular-animate.js"]'.toLiteral(),
                 angularAria: '      scripts:    ["angular-aria.js"]'.toLiteral(),
                 angularTouch: '     scripts:    ["angular-touch.js"]'.toLiteral(),
+//                 angularMaterial: '  scripts:    ["//gitcdn.xyz/repo/angular/bower-material/master/angular-material.js"], \
+//                                     styles:     ["//gitcdn.xyz/repo/angular/bower-material/master/angular-material.css"]'.toLiteral(),
                 angularMaterial: '  scripts:    ["angular-material.js"], \
-                                    styles:     ["angular-material.min.css"]'.toLiteral(),
+                                    styles:     ["angular-material.css"]'.toLiteral(),
                 // angularDroplet: '   scripts:    ["ng-droplet.min.js"]'.toLiteral(),
                 materializeColors: 'styles:     ["materialize-colors.min.css"]'.toLiteral(),
                 materializeCSS: '   styles:     ["materialize.min.css"]'.toLiteral(),

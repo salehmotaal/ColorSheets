@@ -366,7 +366,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
         }
 
         Object.defineProperty(grasppe.ColorSheetsApp.ScreenedImage, 'Directive', {
-            value: grasppe.Libre.Directive.define('colorSheetsScreenedImage', function () {
+            value: function () { // grasppe.Libre.Directive.define('colorSheetsScreenedImage',
                 return {
                     controller: ['$scope', '$element', function ($scope, element) {
                         var controller = Object.assign(this, {
@@ -407,7 +407,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     template: ('<canvas class="selectable" width="{{screenedImage.width}}" height="{{screenedImage.height}}" style="object-fit: cover; width: 100%; height: 100%; background-color: #eee; flex: 1;" />'),
                     // class="selectable" 
                 }
-            }),
+            }, // ),
         });
 
         //! - ProcessableImage
@@ -843,12 +843,97 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return this;
             }
         };
+        
+        grasppe.ColorSheetsApp.ScreeningDemoController = function ScreeningDemoController($scope, element) {
+            /*Object.assign(Object.getPrototypeOf(this), grasppe.Libre.$Controller.prototype, {}, Object.getPrototypeOf(this));*/
+            grasppe.Libre.$Controller.apply(this, arguments);
+            console.log(this, this.getPrototype());
+            // !- ScreeningDemo [Controllers] ScreeningDemoController
+            var controller = this;
+            // console.log('ScreeningDemo [Controllers] ScreeningDemoController');
+            if ($scope.parameters) {
+                if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
+                if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
+            }
+
+            // console.log($scope);
+            Object.assign($scope, {
+                helper: new grasppe.ColorSheetsApp.ScreeningDemoHelper({
+                    $scope: $scope,
+                }),
+                calculations: {},
+                stack: {},
+                canvas: {},
+                options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.ScreeningDemo.defaults, {
+                    panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
+                }),
+                screenedImage: {
+                    image: '',
+                },
+            });
+
+            // console.log($scope);
+            $scope.$watchCollection('options', function (value, last, $scope) {
+                $scope.helper.updateData(); // console.log('Options changed %o', $scope.options);
+            });
+            $scope.$watchCollection('parameters', function (value, last, $scope) {
+                clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
+                    // console.log($scope.screenedImage);
+                    $scope.helper.updateData(true);
+
+                }.bind(controller), 500, $scope);
+                Object.assign($scope.screenedImage, {
+                    spi: $scope.parameters.spi, lpi: $scope.parameters.lpi, angle: $scope.parameters.angle, image: $scope.parameters.sourceImage,
+                });
+                // if ($scope.screenedImageHandler) $scope.screenedImageHandler.update();
+            });
+            $scope.$on('selected.stage', function (event, option, value) {
+                switch (option) {
+                case 'redraw': $scope.helper.updateData(true);
+                    break;
+                default :
+                }
+                // console.log('Selected stage', arguments, this);
+            });
+
+            $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
+                if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
+                    src: value,
+                }); // .getChannel(2);
+                // console.log($scope.processableSourceImage);
+            });
+
+            $scope.$sheet = $scope;
+
+            window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
+
+        };
+        
+        grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.Libre.$Controller.prototype, {
+            constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
+            get $options() {
+                return this.$scope && this.$scope.options || {};
+            }
+        });       
+        
+        /*grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoController.prototype, grasppe.Libre.Object.prototype, {
+            constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
+            setOptions: grasppe.Libre.Object.prototype.setOptions,
+        });*/
+        
+//         Object.assign( class ScreeningDemoController extends grasppe.Libre.Object {
+//             constructor(options) {
+//                 super(...arguments);
+//                 console.log('ScreeningDemo [Controllers] ScreeningDemoController');
+//             }
+//         };
+
 
         grasppe.ColorSheetsApp.ScreeningDemo = {
             ID: 'ScreeningDemo', title: ('Screening Demo'),
             panels: {
                 stage: {
-                    directive: 'color-sheet-stage', tools: {
+                    directive: 'screening-sheet-stage', tools: {
                         save: {
                             label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function onSaveClick(link, $scope, event) {
                                 // console.log(arguments);
@@ -885,13 +970,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     }
                 },
                 parameters: {
-                    directive: 'color-sheet-parameters',
+                    directive: 'screening-sheet-parameters',
                 },
                 results: {
-                    directive: 'color-sheet-results',
+                    directive: 'screening-sheet-results',
                 },
                 overview: {
-                    directive: 'color-sheet-overview',
+                    directive: 'screening-sheet-overview',
                 },
             },
             parameters: {
@@ -913,8 +998,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // panning: 'cell', shading: 'fills',
                 },
             },
-            controllers: {
-                sheetController: grasppe.Libre.Controller.define('ScreeningDemoController', function ($scope, model, module) {
+            controller: 'ScreeningDemoController', controllers: {
+                ScreeningDemoController: grasppe.Libre.Controller.define('ScreeningDemoController', function ScreeningDemoController($scope, module, model) {
                     // !- ScreeningDemo [Controllers] ScreeningDemoController
                     var controller = this;
                     // console.log('ScreeningDemo [Controllers] ScreeningDemoController');
@@ -976,13 +1061,21 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
                 }.bind(this))
             },
+            directive: 'screening-demo-sheet',
             directives: {
-                // !- ScreeningDemo [Directives] colorSheetStage                
-                colorSheetStage: grasppe.Libre.Directive.define('colorSheetStage', function () {
+                // !- ScreeningDemo [Directives] screeningDemoSheet                
+                screeningDemoSheet: function screeningDemoSheet() {
+                    return {
+                        controller: ['$scope', '$element', grasppe.ColorSheetsApp.ScreeningDemoController],
+                        template: ('<color-sheets-sheet></color-sheets-sheet>'),
+                    }
+                },
+
+                // !- ScreeningDemo [Directives] screeningSheetStage                
+                screeningSheetStage: function () { // grasppe.Libre.Directive.define('screeningSheetStage', 
                     return {
                         controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
                             $scope.$on('selected.stage', function (event, selection) {
-                                // console.log('selected', selection, event);
                             });
                             Object.defineProperty($scope.$sheet, 'canvas', {
                                 get: function getCanvas() {
@@ -991,27 +1084,33 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             });
 
                         }],
-                        link: function colorSheetStagePostLink($scope, element, attributes) {
-                            // $(document).ready(function () {
-                            //     $(element).on('mouseover', function () {
-                            //         if ($(this).height() > $(this).parent().height())
-                            //             document.body.style.overflow = 'hidden';
-                            //     });
-                            //     $(element).on('mouseout', function () {
-                            //         document.body.style.overflow = 'auto';
-                            //     });
-                            // });
+                        link: function screeningSheetStagePostLink($scope, element, attributes) {
                         },
-                        // layout layout-align="center center"
                         template: ('<color-sheets-panel-body style="overflow: visible; /*max-height: 75vh;*/">\
+                            <style>\
+                                @media all {\
+                                	/* !- ColorSheetsApp [Styles] Legend */\
+                                    .legend-wrapper {position:relative; margin:5px 2vmin -100%; width:auto; display: block; overflow:hidden;}\
+                                    .legend-item {font-size:10pt; padding:0 .25em; display: flex; flex-direction: row;}\
+                                    .legend-item, .legend-item .legend-symbol, {white-space:nowrap; overflow: hidden;}\
+                                    .legend-item .legend-symbol {text-align:right; font-size:75%; margin:.5em 4px 0 2px; height: 100%; float: left;}\
+                                    .legend-item, .legend-item .legend-text, {text-overflow:ellipsis; overflow-x:hidden;}\
+                                    .legend-item .legend-text {white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%;}\
+                                    .legend-item .legend-symbol, .legend-item .legend-text {display:block; vertical-align:text-top;}\
+                                }\
+                                @media screen {\
+                                }\
+                                @media print {\
+                                }\
+                            </style>\
                             <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; max-height: 85vh; min-width: 100%;   display: flex; align-items: flex-start; justify-content: center; overflow: scroll; border: 1px solid rgba(0,0,0,0.25);">\
                                 <color-sheets-screened-image style="max-width: 100%;"></color-sheets-screened-image>\
                             </div>\
                             </color-sheets-panel-body>'),
                     }
-                }),
-                // !- ScreeningDemo [Directives] colorSheetParameters                
-                colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
+                }, // ),
+                // !- ScreeningDemo [Directives] screeningSheetParameters                
+                screeningSheetParameters: function () { //  grasppe.Libre.Directive.define('screeningSheetParameters', 
                     return { // layout="column" flex layout-fill layout-align="start center"
                         template: ('<color-sheets-panel-body style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="100" maximum="2540" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
@@ -1032,8 +1131,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 </color-sheets-toggle-control-->\
                             </color-sheets-panel-body>'),
                     }
-                }),
-                colorSheetResults: grasppe.Libre.Directive.define('colorSheetResults', function () {
+                }, // ),
+                screeningSheetResults: function () { // grasppe.Libre.Directive.define('screeningSheetResults', 
                     return {
                         //controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         //layout
@@ -1049,9 +1148,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 </color-sheets-table-section>\
                             </color-sheets-table></color-sheets-panel-body>'),
                     }
-                }),
-                // !- ScreeningDemo [Directives] colorSheetOverview                
-                colorSheetOverview: grasppe.Libre.Directive.define('colorSheetOverview', function () {
+                }, // ),
+                // !- ScreeningDemo [Directives] screeningSheetOverview                
+                screeningSheetOverview: function () { // grasppe.Libre.Directive.define('screeningSheetOverview', 
                     return {
                         // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
@@ -1060,30 +1159,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             </div></color-sheets-panel-body>'),
                         // ng-bind-html="explaination">
                     }
-                }),
-
-                // !- ScreeningDemo [Directives] colorSheetsStyles
-                colorSheetsStyles: grasppe.Libre.Directive.define('colorSheetsStyles', {
-                    template: '<style ng-init="\
-                            panelHeaderHeight= \'36px\';\
-                            mainHeaderHeight=\'48px\'">\
-                            @media all {\
-                            	/* !- ColorSheetsApp [Styles] Legend */\
-                                .legend-wrapper {position:relative; margin:5px 2vmin -100%; width:auto; display: block; overflow:hidden;}\
-                                .legend-item {font-size:10pt; padding:0 .25em; display: flex; flex-direction: row;}\
-                                .legend-item, .legend-item .legend-symbol, {white-space:nowrap; overflow: hidden;}\
-                                .legend-item .legend-symbol {text-align:right; font-size:75%; margin:.5em 4px 0 2px; height: 100%; float: left;}\
-                                .legend-item, .legend-item .legend-text, {text-overflow:ellipsis; overflow-x:hidden;}\
-                                .legend-item .legend-text {white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%;}\
-                                .legend-item .legend-symbol, .legend-item .legend-text {display:block; vertical-align:text-top;}\
-                            }\
-                            @media screen {\
-                            }\
-                            @media print {\
-                            }\
-                        </style>',
-                }),
-
+                }, // ),
+                
                 colorSheetsScreenedImage: grasppe.ColorSheetsApp.ScreenedImage.Directive,
             },
         };
@@ -1206,11 +1283,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }],
         };
 
-        window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
-            sheets: {
-                ScreeningDemo: grasppe.ColorSheetsApp.ScreeningDemo,
-            },
-        });
-        // grasppe.ColorSheetsApp.InitializeSheet('ScreeningDemo');
+        // window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
+        //     sheets: {
+        //         ScreeningDemo: grasppe.ColorSheetsApp.ScreeningDemo,
+        //     },
+        // });
+        grasppe.ColorSheetsApp.InitializeSheet('ScreeningDemo');
     });
 }(this, this.grasppe));

@@ -300,7 +300,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             title: ('Halftone Demo'),
             panels: {
                 stage: {
-                    directive: 'color-sheet-stage', tools: {
+                    directive: 'halftone-sheet-stage', tools: {
                         save: {
                             label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function(link, $scope, event){
                                 console.log(arguments);
@@ -336,13 +336,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     }
                 },
                 parameters: {
-                    directive: 'color-sheet-parameters',
+                    directive: 'halftone-sheet-parameters',
                 },
                 results: {
-                    directive: 'color-sheet-results',
+                    directive: 'halftone-sheet-results',
                 },
                 overview: {
-                    directive: 'color-sheet-overview',
+                    directive: 'halftone-sheet-overview',
                 },
             },
             parameters: {
@@ -364,8 +364,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // panning: 'cell', shading: 'fills',
                 },
             },
-            controllers: {
-                sheetController: grasppe.Libre.Controller.define('HalftoneDemoController', function ($scope, model, module) {
+            controller: 'HalftoneDemoController', controllers: {
+                HalftoneDemoController: grasppe.Libre.Controller.define('HalftoneDemoController', function HalftoneDemoController($scope, module, model) {
                     // !- HalftoneDemo [Controllers] HalftoneDemoController
                     console.log('HalftoneDemo [Controllers] HalftoneDemoController');
                     
@@ -401,9 +401,53 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
                 }.bind(this))
             },
+            directive: 'halftone-demo-sheet',
             directives: {
-                // !- HalftoneDemo [Directives] colorSheetStage                
-                colorSheetStage: grasppe.Libre.Directive.define('colorSheetStage', function () {
+                // !- HalftoneDemo [Directives] halftoneDemoSheet                
+                halftoneDemoSheet: function halftoneDemoSheet() {
+                    return {
+                        controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
+                            // !- HalftoneDemo [Controllers] HalftoneDemoController
+                            console.log('HalftoneDemo [Controllers] HalftoneDemoController');
+                            
+                            if ($scope.parameters) {
+                                if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
+                                if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
+                            }
+        
+                            Object.assign($scope, {
+                                helper: new grasppe.ColorSheetsApp.HalftoneDemoHelper({
+                                    $scope: $scope,
+                                }),
+                                calculations: {},
+                                stack: {},
+                                canvas: {},
+                                options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.HalftoneDemo.defaults, {
+                                    panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
+                                }),
+                            });
+        
+                            console.log($scope);
+                            $scope.$watchCollection('options', function (value, last, $scope) {
+                                $scope.helper.updateData();
+                                // console.log('Options changed %o', $scope.options);
+                            });
+                            $scope.$watchCollection('parameters', function (value, last, $scope) {
+                                $scope.helper.updateData();
+                                // console.log('Parameters changed %o', $scope);
+                            });
+        
+                            $scope.$sheet = $scope;
+        
+                            window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
+
+                        }],
+                        template: ('<color-sheets-sheet></color-sheets-sheet>'),
+                    }
+                },
+
+                // !- HalftoneDemo [Directives] halftoneSheetStage                
+                halftoneSheetStage: function () { // grasppe.Libre.Directive.define('halftoneSheetStage', 
                     return {
                         controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
                             $scope.$on('selected.stage', function (event, selection) {
@@ -419,9 +463,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             <div class="color-sheets-stage-canvas" style="max-width: 100%; max-height: 100%; min-height: 50vh; min-width: 100%;   display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0,0,0,0.25);"></div>\
                             </color-sheets-panel-body>'),
                     }
-                }),
-                // !- HalftoneDemo [Directives] colorSheetParameters                
-                colorSheetParameters: grasppe.Libre.Directive.define('colorSheetParameters', function () {
+                }, // ),
+                // !- HalftoneDemo [Directives] halftoneSheetParameters                
+                halftoneSheetParameters: function () { // grasppe.Libre.Directive.define('halftoneSheetParameters', 
                     return {
                         template: ('<color-sheets-panel-body layout="column" flex layout-fill layout-align="start center" style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="100" maximum="2540" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
@@ -441,8 +485,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 </color-sheets-toggle-control>\
                             </color-sheets-panel-body>'),
                     }
-                }),
-                colorSheetResults: grasppe.Libre.Directive.define('colorSheetResults', function () {
+                }, // ),
+                halftoneSheetResults: function () { // grasppe.Libre.Directive.define('halftoneSheetResults', 
                     return {
                         //controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout><color-sheets-table class="color-sheets-results-table" ng-cloak>\
@@ -457,9 +501,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 </color-sheets-table-section>\
                             </color-sheets-table></color-sheets-panel-body>'),
                     }
-                }),
-                // !- HalftoneDemo [Directives] colorSheetOverview                
-                colorSheetOverview: grasppe.Libre.Directive.define('colorSheetOverview', function () {
+                }, // ),
+                // !- HalftoneDemo [Directives] halftoneSheetOverview                
+                halftoneSheetOverview: function () { // grasppe.Libre.Directive.define('halftoneSheetOverview', 
                     return {
                         // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
@@ -470,29 +514,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             </div></color-sheets-panel-body>'),
                         // ng-bind-html="explaination">
                     }
-                }),
-
-                // !- HalftoneDemo [Directives] colorSheetsStyles
-                colorSheetsStyles: grasppe.Libre.Directive.define('colorSheetsStyles', {
-                    template: '<style ng-init="\
-                            panelHeaderHeight= \'36px\';\
-                            mainHeaderHeight=\'48px\'">\
-                            @media all {\
-                            	/* !- ColorSheetsApp [Styles] Legend */\
-                                .legend-wrapper {position:relative; margin:5px 2vmin -100%; width:auto; display: block; overflow:hidden;}\
-                                .legend-item {font-size:10pt; padding:0 .25em; display: flex; flex-direction: row;}\
-                                .legend-item, .legend-item .legend-symbol, {white-space:nowrap; overflow: hidden;}\
-                                .legend-item .legend-symbol {text-align:right; font-size:75%; margin:.5em 4px 0 2px; height: 100%; float: left;}\
-                                .legend-item, .legend-item .legend-text, {text-overflow:ellipsis; overflow-x:hidden;}\
-                                .legend-item .legend-text {white-space:normal; margin:0 2px 0 0; text-align:left; padding-right: 10%;}\
-                                .legend-item .legend-symbol, .legend-item .legend-text {display:block; vertical-align:text-top;}\
-                            }\
-                            @media screen {\
-                            }\
-                            @media print {\
-                            }\
-                        </style>',
-                }),
+                }, // ),
             },
         };
 
@@ -618,11 +640,11 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }],
         };
 
-        window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
-            sheets: {
-                HalftoneDemo: grasppe.ColorSheetsApp.HalftoneDemo
-            },
-        });
-
+        // window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
+        //     sheets: {
+        //         HalftoneDemo: grasppe.ColorSheetsApp.HalftoneDemo
+        //     },
+        // });
+        grasppe.ColorSheetsApp.InitializeSheet('HalftoneDemo');
     });
 }(this, this.grasppe));

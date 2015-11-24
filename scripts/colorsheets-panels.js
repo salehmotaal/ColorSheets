@@ -115,8 +115,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     controller: ['$scope', '$element', '$mdSticky', function ($scope, element, $mdSticky) {
                         // $mdSticky($scope, element.find('.color-sheets-panel-footer'));
                     }],
-                    transclude: true, link: function colorSheetsPanelBodyLink ($scope, element, attributes, controller, transcludeFunction) {
-                        transcludeFunction($scope, element.append.bind(element), element.addClass('color-sheets-panel-body'), element);
+                    transclude: true, template: '<ng-transclude class="color-sheets-panel-body" layout-fill></ng-transclude>', link: function colorSheetsPanelBodyLink ($scope, element, attributes, controller, transcludeFunction) {
+                        //transcludeFunction($scope, element.append.bind(element), element.addClass('color-sheets-panel-body'), element);
                     },
                 };
             }),
