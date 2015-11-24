@@ -295,6 +295,229 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return this;
             }
         };
+        
+        grasppe.ColorSheetsApp.HalftoneDemoController = function HalftoneDemoController($scope, element) {
+            grasppe.Libre.$Controller.apply(this, arguments);
+            
+            var controller = this;
+            
+            if ($scope.parameters) {
+                if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
+                if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
+            }
+    
+            Object.assign($scope, {
+                helper: controller,
+                calculations: {},
+                stack: {},
+                canvas: {},
+                options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.HalftoneDemo.defaults, {
+                    panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
+                }),
+            });
+    
+            this.$scope.$watchCollection('options', function (value, last, $scope) {
+                controller.updateData();
+            });
+            this.$scope.$watchCollection('parameters', function (value, last, $scope) {
+                controller.updateData();
+            });
+    
+            // $scope.$sheet = $scope;
+    
+            window.setTimeout(controller.updateData.bind(controller), 0);
+
+        }, grasppe.ColorSheetsApp.HalftoneDemoController.prototype = Object.assign({}, grasppe.Libre.$Controller.prototype, {
+            constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
+            get $options() {
+                return this.$scope && this.$scope.options || {};
+            },
+            get calculations() {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                return this.$scope && this.$scope.calculations || {}
+            },
+            set calculations(calculations) {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                if (this.$scope) this.$scope.calculations = Object.assign(this.$scope.calculations || {}, calculations);
+            },
+            get stack() {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                return this.$scope && this.$scope.stack
+            },
+            set stack(stack) {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                if (this.$scope) this.$scope.stack = Object.assign(this.$scope.stack || {}, stack);
+            },
+            get scenarios() {
+                return grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios
+            },
+            getParameter: function getParameter(parameter) {
+                return this.$scope.parameters && this.$scope.parameters[parameter];
+            },
+            getHeleperOptions: function getHeleperOptions() {
+                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.HalftoneDemoHelper.Options, this.$options);
+                else Object.assign(this.hash._options, this.$options);
+                return this.hash._options;
+            },
+            getGridCache: function getGridCache(steps) {
+                return this.hash['gridCache' + steps];
+            },
+            setGridCache: function setGridCache(steps, grids) {
+                this.hash['gridCache' + steps] = grids;
+            },
+            getPixelBox: function getPixelBox(x, y, fillStyle, strokeStyle) {
+                if (!this.hash.pixelCache) this.hash.pixelCache = [];
+                var pixelCache = this.hash.pixelCache;
+                if (!pixelCache[x]) pixelCache[x] = [];
+                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
+                    [x + 0, y + 0],
+                    [x + 1, y + 0],
+                    [x + 1, y + 1],
+                    [x + 0, y + 1],
+                    [x + 0, y + 0]
+                ]);
+                pixelCache[x][y].fillStyle = fillStyle || 'transparent', pixelCache[x][y].strokeStyle = strokeStyle || 'rgba(0,0,0,0.25)', pixelCache[x][y].lineWidth = 0.05;
+                return pixelCache[x][y];
+            },
+            updateData: function updateData() {
+                this.calculateStack().updatePlot();
+                return this;
+            },
+            calculateStack: function calculateStack() {
+                var modelStack = {},
+                    modelCalculations = {},
+                    scenarios = grasppe.ColorSheetsApp.HalftoneDemoHelper.Scenarios,
+                    stack = [
+                        ['SPI', this.getParameter('spi')],
+                        ['LPI', this.getParameter('lpi')],
+                        ['ANGLE', this.getParameter('angle')],
+                        ['TINT', this.getParameter('tint')]
+                    ];
+                for (var scenario of scenarios._order) {
+                    var jiver = new GrasppeJive({}, scenarios),
+                        output = jiver.run(scenario, stack),
+                        errors = jiver.errors;
+                    for (var row of output) {
+                        modelCalculations[row.id] = row.value;
+                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
+                            name: scenario,
+                        });
+                        if (row.hidden !== true) modelStack[scenario].push(row);
+                    }
+                }
+                this.stack = modelStack;
+                this.calculations = modelCalculations;
+                return this;
+            },
+            downloadPlot: function downloadPlot(a) {
+                var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
+                    link = Object.assign(document.createElement('a'), {
+                    href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
+                });
+                document.body.appendChild(link), link.click(), $(link).remove();
+            },
+            updatePlot: function updatePlot() {
+                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
+                    var plotCanvas = $(this.$scope.canvas);
+                    if (plotCanvas.find('img').length === 0) {
+                        plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                        $(window).bind('resize', function(){
+                            this.updatePlot();
+                        }.bind(this));
+                    }
+                    plotCanvas.empty().append(this.generatePlotImage()).children().first().css({
+                        flex: 1, width: '100%', height: '100%',
+                    });
+                }.bind(this), 0);
+                return this;
+            },
+            generatePlotImage(width, height, scale) {
+                var self = this.generatePlotImage,
+                    timeStamp = self.timeStamp;
+                self.timeStamp = timeStamp;
+                if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
+                if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
+                var values = this.calculations,
+                    options = this.getHeleperOptions(),
+                    plotOptions = options.plotOptions,
+                    legendOptions = options.legendOptions,
+                    plotCanvas = $(this.$scope.canvas),
+                    frameWidth = width || $(plotCanvas).width(),
+                    frameHeight = height || $(plotCanvas).height(),
+                    frameRatio = frameWidth / frameHeight,
+                    series = options.seriesOptions,
+                    mode = {
+                        is: options.shading + '-' + options.panning,
+                        tint: options.shading === 'tint',
+                        screen: options.shading === 'screen',
+                        zoomIn: /zoom-in/.test(this.$options.panning),
+                        zoomOut: /zoom-out/.test(this.$options.panning),
+                        panSquare: !/fit/.test(this.$options.panning),
+                        panFit: /fit/.test(this.$options.panning),
+                    },
+                    stroke = {},
+                    style = {
+                        plotGrid: (plotOptions.plotGridStyle),
+                        legendBox: (legendOptions.legendBoxStyle),
+                        filled: {
+                            fillStyle: "black"
+                        },
+                        empty: {
+                            fillStyle: "white"
+                        },
+                    },
+                    lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
+                    screenView = mode.screen,
+                    lineAngle = values.lineAngle, //  % Math.PI/2,
+                    lineFrequency = values.lineFrequency,
+                    tint = this.getParameter('tint'),
+                    sinAngle = Math.sin(lineAngle),
+                    cosAngle = Math.cos(lineAngle),
+                    stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)';
+                if (!height) height = mode.zoomIn ? 40 : 80;
+                if (!width) width = mode.panFit ? Math.round(height * frameRatio) : height;
+                var xStep = Math.ceil(width/2),
+                    yStep = Math.ceil(height/2);
+                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+                HALFTONE_CALCULATIONS: {
+                    var halftonePixels = Array(height * width),
+                        n = 0,
+                        lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2,
+                        lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row,
+                        valleys = [], peaks = [];
+                    for (var i = -xStep; i <= xStep; i++) {
+                        if (timeStamp !== self.timeStamp) return this;
+                        for (var j = -yStep; j <= yStep; j++) {
+                            var alpha = Math.cos((Math.cos(lineAngle) * (j) * lineFrequency) - (Math.sin(lineAngle) * (i) * lineFrequency)),
+                                beta = Math.sin((Math.cos(lineAngle) * (i) * lineFrequency) + (Math.sin(lineAngle) * (j) * lineFrequency)),
+                                s = alpha * beta,
+                                v = Math.min(1, Math.max(0, (s + 1) / 2)),
+                                t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
+                                fill = Math.round(255 * (screenView ? v : t)),
+                                fillStyle = 'rgb(' + fill + ',' + fill + ',' + fill + ')',
+                                strokeStyle = (screenView || (t === 0)) ? 'black' : stroke;
+                            halftonePixels[n] = Object.assign(this.getPixelBox(xStep+i, yStep+j, fillStyle, strokeStyle), {
+                                id: undefined,//'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j,
+                            });
+                            var idx = (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
+                            if (i===0 && j===0) halftonePixels[n].id = 'ht' + idx;
+                            if (halftonePixels[n].id) halftonePixels[n].fillStyle = 'red';
+                            n++;
+                        }
+                    }
+                }
+                PATH_GENERATION: {
+                    if (!scale) scale = 4;
+                    var paths = [],
+                        view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
+                    if (timeStamp !== self.timeStamp) return this;
+                    for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
+                    var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
+                }
+                return svg;
+            },
+        })
+        
 
         grasppe.ColorSheetsApp.HalftoneDemo = {
             title: ('Halftone Demo'),
@@ -364,84 +587,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // panning: 'cell', shading: 'fills',
                 },
             },
-            controller: 'HalftoneDemoController', controllers: {
-                HalftoneDemoController: grasppe.Libre.Controller.define('HalftoneDemoController', function HalftoneDemoController($scope, module, model) {
-                    // !- HalftoneDemo [Controllers] HalftoneDemoController
-                    console.log('HalftoneDemo [Controllers] HalftoneDemoController');
-                    
-                    if ($scope.parameters) {
-                        if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
-                        if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
-                    }
-
-                    Object.assign($scope, {
-                        helper: new grasppe.ColorSheetsApp.HalftoneDemoHelper({
-                            $scope: $scope,
-                        }),
-                        calculations: {},
-                        stack: {},
-                        canvas: {},
-                        options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.HalftoneDemo.defaults, {
-                            panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
-                        }),
-                    });
-
-                    console.log($scope);
-                    $scope.$watchCollection('options', function (value, last, $scope) {
-                        $scope.helper.updateData();
-                        // console.log('Options changed %o', $scope.options);
-                    });
-                    $scope.$watchCollection('parameters', function (value, last, $scope) {
-                        $scope.helper.updateData();
-                        // console.log('Parameters changed %o', $scope);
-                    });
-
-                    $scope.$sheet = $scope;
-
-                    window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
-                }.bind(this))
-            },
             directive: 'halftone-demo-sheet',
             directives: {
                 // !- HalftoneDemo [Directives] halftoneDemoSheet                
                 halftoneDemoSheet: function halftoneDemoSheet() {
                     return {
-                        controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
-                            // !- HalftoneDemo [Controllers] HalftoneDemoController
-                            console.log('HalftoneDemo [Controllers] HalftoneDemoController');
-                            
-                            if ($scope.parameters) {
-                                if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
-                                if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
-                            }
-        
-                            Object.assign($scope, {
-                                helper: new grasppe.ColorSheetsApp.HalftoneDemoHelper({
-                                    $scope: $scope,
-                                }),
-                                calculations: {},
-                                stack: {},
-                                canvas: {},
-                                options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.HalftoneDemo.defaults, {
-                                    panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
-                                }),
-                            });
-        
-                            console.log($scope);
-                            $scope.$watchCollection('options', function (value, last, $scope) {
-                                $scope.helper.updateData();
-                                // console.log('Options changed %o', $scope.options);
-                            });
-                            $scope.$watchCollection('parameters', function (value, last, $scope) {
-                                $scope.helper.updateData();
-                                // console.log('Parameters changed %o', $scope);
-                            });
-        
-                            $scope.$sheet = $scope;
-        
-                            window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
-
-                        }],
+                        controller: ['$scope', '$element', grasppe.ColorSheetsApp.HalftoneDemoController],
                         template: ('<color-sheets-sheet></color-sheets-sheet>'),
                     }
                 },

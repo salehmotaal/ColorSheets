@@ -850,17 +850,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             console.log(this, this.getPrototype());
             // !- ScreeningDemo [Controllers] ScreeningDemoController
             var controller = this;
-            // console.log('ScreeningDemo [Controllers] ScreeningDemoController');
             if ($scope.parameters) {
                 if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
                 if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
             }
-
-            // console.log($scope);
             Object.assign($scope, {
-                helper: new grasppe.ColorSheetsApp.ScreeningDemoHelper({
-                    $scope: $scope,
-                }),
+                helper: controller, // new grasppe.ColorSheetsApp.ScreeningDemoHelper({$scope: $scope,}),
                 calculations: {},
                 stack: {},
                 canvas: {},
@@ -871,49 +866,125 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     image: '',
                 },
             });
-
-            // console.log($scope);
             $scope.$watchCollection('options', function (value, last, $scope) {
-                $scope.helper.updateData(); // console.log('Options changed %o', $scope.options);
+                controller.updateData(); // console.log('Options changed %o', $scope.options);
             });
             $scope.$watchCollection('parameters', function (value, last, $scope) {
                 clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
-                    // console.log($scope.screenedImage);
-                    $scope.helper.updateData(true);
-
+                    controller.updateData(true);
                 }.bind(controller), 500, $scope);
                 Object.assign($scope.screenedImage, {
                     spi: $scope.parameters.spi, lpi: $scope.parameters.lpi, angle: $scope.parameters.angle, image: $scope.parameters.sourceImage,
                 });
-                // if ($scope.screenedImageHandler) $scope.screenedImageHandler.update();
             });
             $scope.$on('selected.stage', function (event, option, value) {
                 switch (option) {
-                case 'redraw': $scope.helper.updateData(true);
+                case 'redraw': controller.updateData(true);
                     break;
                 default :
                 }
-                // console.log('Selected stage', arguments, this);
             });
-
             $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
                 if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
                     src: value,
-                }); // .getChannel(2);
-                // console.log($scope.processableSourceImage);
+                });
             });
-
-            $scope.$sheet = $scope;
-
-            window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
-
-        };
-        
-        grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.Libre.$Controller.prototype, {
+            window.setTimeout(controller.updateData.bind(controller), 0);
+        }, grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.Libre.$Controller.prototype, {
             constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
             get $options() {
                 return this.$scope && this.$scope.options || {};
-            }
+            },
+            get calculations() {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                return this.$scope && this.$scope.calculations || {}
+            },
+            set calculations(calculations) {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                if (this.$scope) this.$scope.calculations = Object.assign(this.$scope.calculations || {}, calculations);
+            },
+            get stack() {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                return this.$scope && this.$scope.stack
+            },
+            set stack(stack) {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                if (this.$scope) this.$scope.stack = Object.assign(this.$scope.stack || {}, stack);
+            },
+            get scenarios() {
+                return grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios
+            },
+            getParameter: function getParameter(parameter) {
+                return this.$scope.parameters && this.$scope.parameters[parameter];
+            },
+            getPixelBox: function getPixelBox(x, y, fillStyle, strokeStyle) {
+                if (!this.hash.pixelCache) this.hash.pixelCache = [];
+                var pixelCache = this.hash.pixelCache;
+                if (!pixelCache[x]) pixelCache[x] = [];
+                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
+                    [x + 0, y + 0],
+                    [x + 1, y + 0],
+                    [x + 1, y + 1],
+                    [x + 0, y + 1],
+                    [x + 0, y + 0]
+                ]);
+                if (fillStyle) pixelCache[x][y].fillStyle = fillStyle === 'none' ? 'transparent' : fillStyle;
+                if (strokeStyle) pixelCache[x][y].strokeStyle = strokeStyle === 'none' ? 'rgba(0,0,0,0.25)' : strokeStyle;
+                pixelCache[x][y].lineWidth = 0.05;
+                return pixelCache[x][y];
+            },
+            updateData: function updateData(force) {
+                if (arguments.length = 0) force = !this.hash.firstUpdateDone;
+                this.calculateStack().updatePlot(force);
+                this.hash.firstUpdateDone = true;
+                return this;
+            },
+            calculateStack: function calculateStack() {
+                var modelStack = {},
+                    modelCalculations = {},
+                    scenarios = grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios,
+                    stack = [
+                        ['SPI', this.getParameter('spi')],
+                        ['LPI', this.getParameter('lpi')],
+                        ['ANGLE', this.getParameter('angle')],
+                        ['TINT', this.getParameter('tint')]
+                    ];
+                for (var scenario of scenarios._order) {
+                    var jiver = new GrasppeJive({}, scenarios),
+                        output = jiver.run(scenario, stack),
+                        errors = jiver.errors;
+                    for (var row of output) {
+                        modelCalculations[row.id] = row.value;
+                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
+                            name: scenario,
+                        });
+                        if (row.hidden !== true) modelStack[scenario].push(row);
+                    }
+                }
+                this.stack = modelStack;
+                this.calculations = modelCalculations;
+
+                return this;
+            },
+            getHeleperOptions: function getHeleperOptions() {
+                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoHelper.Options, this.$options);
+                else Object.assign(this.hash._options, this.$options);
+                return this.hash._options;
+            },
+            downloadPlot: function downloadPlot(a) {
+                console.log(this.$scope.screenedImageHandler);
+                var src = this.$scope.canvas.toDataURL(),
+                    link = Object.assign(document.createElement('a'), {
+                        href: src, target: '_download', download: 'screening.png'
+                    });
+                document.body.appendChild(link), link.click(), $(link).remove();
+            },
+            updatePlot: function updatePlot(force) {
+                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
+                    var plotCanvas = $(this.$scope.canvas);
+                }.bind(this), force ? 0 : 500);
+                return this;
+            },
         });       
         
         /*grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoController.prototype, grasppe.Libre.Object.prototype, {
@@ -997,69 +1068,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 options: {
                     // panning: 'cell', shading: 'fills',
                 },
-            },
-            controller: 'ScreeningDemoController', controllers: {
-                ScreeningDemoController: grasppe.Libre.Controller.define('ScreeningDemoController', function ScreeningDemoController($scope, module, model) {
-                    // !- ScreeningDemo [Controllers] ScreeningDemoController
-                    var controller = this;
-                    // console.log('ScreeningDemo [Controllers] ScreeningDemoController');
-                    if ($scope.parameters) {
-                        if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
-                        if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
-                    }
-
-                    // console.log($scope);
-                    Object.assign($scope, {
-                        helper: new grasppe.ColorSheetsApp.ScreeningDemoHelper({
-                            $scope: $scope,
-                        }),
-                        calculations: {},
-                        stack: {},
-                        canvas: {},
-                        options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.ScreeningDemo.defaults, {
-                            panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
-                        }),
-                        screenedImage: {
-                            image: '',
-                        },
-                    });
-
-                    // console.log($scope);
-                    $scope.$watchCollection('options', function (value, last, $scope) {
-                        $scope.helper.updateData(); // console.log('Options changed %o', $scope.options);
-                    });
-                    $scope.$watchCollection('parameters', function (value, last, $scope) {
-                        clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
-                            // console.log($scope.screenedImage);
-                            $scope.helper.updateData(true);
-
-                        }.bind(controller), 500, $scope);
-                        Object.assign($scope.screenedImage, {
-                            spi: $scope.parameters.spi, lpi: $scope.parameters.lpi, angle: $scope.parameters.angle, image: $scope.parameters.sourceImage,
-                        });
-                        // if ($scope.screenedImageHandler) $scope.screenedImageHandler.update();
-                    });
-                    $scope.$on('selected.stage', function (event, option, value) {
-                        switch (option) {
-                        case 'redraw': $scope.helper.updateData(true);
-                            break;
-                        default :
-                        }
-                        // console.log('Selected stage', arguments, this);
-                    });
-
-                    $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
-                        // console.log('Source image changed %o', value ? ('' + value).match(/^[^;]*/)[0] : undefined);
-                        if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
-                            src: value,
-                        }); // .getChannel(2);
-                        // console.log($scope.processableSourceImage);
-                    });
-
-                    $scope.$sheet = $scope;
-
-                    window.setTimeout($scope.helper.updateData.bind($scope.helper), 0);
-                }.bind(this))
             },
             directive: 'screening-demo-sheet',
             directives: {
