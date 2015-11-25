@@ -9,255 +9,107 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             constructor() {
                 super(...arguments);
             }
-
             get $scope() {
                 return this.hash.$scope;
             }
-
             set $scope($scope) {
                 var helper = this;
                 $scope.$watchCollection('screenedImage', function (value, last, $scope) {
                     if ($scope !== this.hash.$scope) return;
                     if (value.image !== last.image) this.hash.processableImage = false;
-                    // console.log(value, last);
-                    //if (this.$definition && this.$definition.image !== value.) {
-                    //this.hash.processableImage = false;
-/*if (typeof $scope.image === 'string') {
-                        $scope.image = new grasppe.ColorSheetsApp.ProcessableImage($scope.image);
-                        $scope.apply();
-                    } else this.update(); // console.log('Options changed %o', $scope.options);
-                    */
                     this.update();
                     if (value.image !== last.image) window.setTimeout(this.update.bind(this), 1000);
                 }.bind(this));
-
                 this.hash.$scope = $scope;
             }
-
             get $definition() {
                 return this.$scope && this.$scope.screenedImage;
             }
-
             set $definition($definition) {
                 if (this.$scope) this.$scope.screenedImage = Object.assign(this.$scope.screenedImage || {}, $definition);
             }
-
             get element() {
                 if (!this.hash.element) this.hash.element = "<img />";
                 return this.hash.element;
             }
-
             set element(element) {
                 this.hash.element = element;
             }
-
             get container() {
                 return $(this.element).parent();
             }
-
             set container(container) {
                 $(this.element).appendTo(container);
             }
-
+            get canvas() {
+                return $(this.element).find('canvas').first()[0];
+            }
             get width() {
                 return this.getDefinition('width');
             }
-
             set width(width) {
                 return this.setDefinition('width', Number(width));
             }
-
             get height() {
                 return this.getDefinition('height');
             }
-
             set height(height) {
                 return this.setDefinition('height', Number(height));
             }
-            
             get maximumWidth() {
                 return this.getDefinition('maximumWidth');
             }
-
             set maximumWidth(maximumWidth) {
                 return this.setDefinition('maximumWidth', Number(maximumWidth));
             }
-
             get maximumHeight() {
                 return this.getDefinition('maximumHeight');
             }
-
             set maximumHeight(maximumHeight) {
                 return this.setDefinition('maximumHeight', Number(maximumHeight));
             }
-
-
             get image() {
-                // if (this.$definition && typeof this.$definition.image === 'string') this.$definition.image = new grasppe.ColorSheetsApp.ProcessableImage(this.$definition.image);
-                // var timeout = new Date().getTime() + 1000;
-                // while (new Date().getTime() <= timeout && typeof this.$definition.image === 'object' && this.$definition.image.loading!==false) {}
                 return this.$definition && this.$definition.image;
             }
-
             get processableImage() {
-                if (!this.hash.processableImage) {
-                    this.hash.processableImage = new grasppe.ColorSheetsApp.ProcessableImage(this.$definition.image);
-                }
+                if (!this.hash.processableImage) this.hash.processableImage = new grasppe.ColorSheetsApp.ProcessableImage(this.$definition.image);
                 return this.hash.processableImage;
             }
-
             set image(img) {
                 if (!this.$definition) return console.error('No $scope');
                 if (this.$definition.image !== img) this.$definition.image = img;
                 if (typeof img === 'string') { // || img instanceof grasppe.ColorSheetsApp.ProcessableImage) {
-                    // img = new grasppe.ColorSheetsApp.ProcessableImage(img);
-                    if (this.$definition && this.$definition.image !== img) {
-                        this.hash.processableImage = false;
-                        this.$definition.image = img;
-                        this.hash.processableImage; // getter to trigger update
-                        // window.setTimeout(this.$scope.$apply.bind(this.$scope), 1000);
-                    }
-
+                    if (this.$definition && this.$definition.image !== img) this.hash.processableImage = false, this.$definition.image = img, this.hash.processableImage;
                 } else {
                     console.error('Only src String or ProcessableImage are supported so far!');
                 }
             }
-
             get spi() {
                 return this.getDefinition('spi');
             }
-
             set spi(spi) {
                 return this.setDefinition('spi', Number(spi));
             }
-
             get lpi() {
                 return this.getDefinition('lpi');
             }
-
             set lpi(lpi) {
                 return this.setDefinition('lpi', Number(lpi));
             }
-
             get angle() {
                 return this.getDefinition('angle');
             }
-
             set angle(angle) {
                 return this.setDefinition('angle', Number(angle));
             }
-
             getDefinition(id) {
                 return this.$definition && this.$definition[id];
             }
-
             setDefinition(id, value) {
                 if (this.$definition) {
-                    if (this.$definition[id] !== value) {
-                        this.$definition[id] = value;
-                        // if (/(spi|lpi|angle|width|height)/.test(id)) this.render();
-                    }
+                    if (this.$definition[id] !== value) this.$definition[id] = value;
                 } else console.error('No $scope');
             }
-
-            // render(canvas) {
-            //     if (!this.image) return this;
-            //     var PI = Math.PI,
-            //         angleRadians = this.angle / 180 * PI,
-            //         lineAngle = (PI/4-angleRadians) / PI * 180,
-            //         lineAngles = [0, 60, 45, -60].map(function (offset) {
-            //             console.log(lineAngle, offset);
-            //             return lineAngle + offset;
-            //         }),
-            //         lineRuling = round(cos(PI/4)*this.spi/this.lpi),
-            //         lineFrequency = PI/lineRuling,
-            //         tint = 0,
-            //         rgbImage = this.image,
-            //         sourceImage = rgbImage,
-            //         sourceData = Object.assign({}, sourceImage.data),
-            //         sourceWidth = sourceImage.width,
-            //         sourceHeight = sourceImage.height,
-            //         screenScale = Math.min(this.width / sourceWidth, this.height / sourceHeight),
-            //         screenWidth = Math.ceil(sourceWidth * screenScale),
-            //         screenHeight = Math.ceil(sourceHeight * screenScale),
-            //         screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">')[0],
-            //         tileSize = 150,
-            //         xTiles = Math.ceil(screenWidth / tileSize),
-            //         yTiles = Math.ceil(screenHeight / tileSize),
-            //         renderedImage;
-            //         
-            //     try {
-            //         var screenContext = screenCanvas.getContext('2d');
-            //         
-            //         screenContext.fillStyle = 'rgba(255,255,255,1)';
-            //         screenContext.fillRect(0, 0, screenWidth, screenHeight);
-            //         
-            //         if (canvas) $(canvas).attr({
-            //             width: screenWidth,
-            //             height: screenHeight,
-            //         });
-            //         
-            //         HALFTONE_SCREENING: {
-            //             for (var p = 0; p < xTiles; p++) {
-            //                 for (var q = 0; q < yTiles; q++) {
-            //                     var tileLeft = p * tileSize,
-            //                         tileTop = q * tileSize,
-            //                         tileWidth = p < xTiles-1 ? tileSize : screenWidth % xTiles,
-            //                         tileHeight = q < xTiles-1 ? tileSize : screenHeight % yTiles,
-            //                         screenData = screenContext.getImageData(tileLeft, tileTop, tileWidth, tileHeight);
-            //                     for (var c = 0; c < 3; c++) {
-            //                         var angle = lineAngles[c] / 180 * Math.PI,
-            //                             lineOffsetX = Math.PI / 2 + Math.PI * (angle < 0),
-            //                             lineOffsetY = Math.PI / 2 + 0,
-            //                             sinAngle = Math.sin(angle) * lineFrequency,
-            //                             cosAngle = Math.cos(angle) * lineFrequency;
-            //                         for (var i = 0; i < screenWidth; i++) {
-            //                             for (var j = 0; j < screenHeight; j++) {
-            //                                 var x = tileLeft + i,
-            //                                     y = tileTop + j;
-            //                                 var cosI = cosAngle * (x + lineOffsetX),
-            //                                     sinI = sinAngle * (x + lineOffsetX);
-            //                                 var n = 4 * (screenWidth * y + x),
-            //                                     alpha = Math.cos(cosAngle * (y + lineOffsetY) - sinI),
-            //                                     beta = Math.sin(cosI + sinAngle * (y + lineOffsetY)),
-            //                                     sV = (alpha * beta + 1) * 127.5,
-            //                                     rV = sourceData[4 * (sourceWidth * Math.floor(y / screenScale) + Math.floor(x / screenScale)) + c];
-            //                                 screenData.data[n + c] = 255 * (sV <= rV);
-            //                             }
-            //     
-            //                         }
-            //                     }
-            //                     if (canvas)
-            //                         canvas.getContext('2d').putImageData(screenData, tileLeft, tileTop);
-            //                     else
-            //                         screenContext.putImageData(screenData, tileLeft, tileTop);
-            //                 }
-            //             }
-            // 
-            //         }
-            //         
-            //         // if (canvas) {
-            //         //     $(canvas).attr({
-            //         //         width: screenWidth,
-            //         //         height: screenHeight,
-            //         //     });
-            //         //     canvas.getContext('2d').putImageData(screenData, 0, 0); // (canvas.width-screenWidth)/2, (canvas.height-screenHeight)/2
-            //         //     // renderedImage = canvas.toDataURL();
-            //         // } else {
-            //         //     screenContext.putImageData(screenData, 0, 0);
-            //         //     renderedImage = screenCanvas.toDataURL();
-            //         // }
-            //         
-            //         if (!canvas) renderedImage = screenCanvas.toDataURL();
-            //     } catch(err) {
-            //         console.error(err);
-            //     }
-            //     
-            //     $(screenCanvas).remove();
-            //     
-            //     return renderedImage;
-            //         
-            // }
             render(canvas) {
                 if (!this.processableImage || this.processableImage.width === 0) return this;
                 var PI = Math.PI,
@@ -274,7 +126,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         maximumDataWidth: this.maximumWidth || 1200, maximumDataHeight: this.maximumHeight || 1200,
                     }),
                     sourceData = sourceImage.data.data,
-                    // Object.assign({}, sourceImage.data.data),
                     sourceWidth = sourceImage.data.width,
                     sourceHeight = sourceImage.data.height,
                     screenScale = Math.min(this.width / sourceWidth, this.height / sourceHeight),
@@ -339,11 +190,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return renderedImage;
 
             }
-
-            get canvas() {
-                return $(this.element).find('canvas').first()[0];
-            }
-
             update(force) {
                 if (!this.$definition) return this; //  || !this.image || !this.element) return this;
                 clearTimeout(this.render.timeOut), this.render.timeOut = setTimeout(function () {
@@ -354,7 +200,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }.bind(this), force ? 0 : 10);
                 return this;
             }
-
             download(link) {
                 var src = this.canvas.toDataURL(),
                     link = Object.assign(document.createElement('a'), {
@@ -362,11 +207,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     });
                 document.body.appendChild(link), link.click(), $(link).remove();
             }
-
-        }
-
-        Object.defineProperty(grasppe.ColorSheetsApp.ScreenedImage, 'Directive', {
-            value: function () { // grasppe.Libre.Directive.define('colorSheetsScreenedImage',
+        }, Object.defineProperty(grasppe.ColorSheetsApp.ScreenedImage, 'Directive', {
+            value: function () {
                 return {
                     controller: ['$scope', '$element', function ($scope, element) {
                         var controller = Object.assign(this, {
@@ -377,8 +219,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         $scope.screenedImageHandler = controller.handler;
 
                         $scope.screenedImage = Object.assign($scope.screenedImage || {}, {
-                            width: 1200, height: 1200, image: 'images/diva.jpg', spi: 1200, lpi: 600, angle: 15, output: undefined,
-                            maximumWidth: 1200, maximumHeight: 1200,
+                            width: 1200, height: 1200, image: 'images/diva.jpg', spi: 1200, lpi: 600, angle: 15, output: undefined, maximumWidth: 1200, maximumHeight: 1200,
                         }, $scope.screenedImage);
 
                         $(element).data({
@@ -392,9 +233,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         $scope.screenedImage = Object.assign($scope.screenedImage || {}, {
                             width: attributes.width || $scope.screenedImage.width, height: attributes.height || $scope.screenedImage.height, lpi: attributes.height || $scope.screenedImage.lpi, spi: attributes.spi || $scope.screenedImage.spi, angle: attributes.angle || $scope.screenedImage.angle,
                         });
-                        
+
                         Object.assign(handler, $scope.screenedImage);
-                        // console.log(element.find('canvas'));
                         element.css({
                             flex: 1, display: 'flex', // overflow: 'scroll',
                         });
@@ -405,9 +245,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                         });
                     },
                     template: ('<canvas class="selectable" width="{{screenedImage.width}}" height="{{screenedImage.height}}" style="object-fit: cover; width: 100%; height: 100%; background-color: #eee; flex: 1;" />'),
-                    // class="selectable" 
                 }
-            }, // ),
+            },
         });
 
         //! - ProcessableImage
@@ -428,23 +267,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     }.bind(this), 0, image);
                 } else super(...args);
             }
-
             set src(src) {
-                // window.setTimeout(function(src) {
                 this.hash.src = src;
                 this.loadImage();
-                // }.bind(this), 0, src);
             }
-
             set load(callback) {
                 this.hash.load = callback;
             }
-
             get src() {
                 return this.hash.src;
             }
-
-            //! - ProcessableImage [Getters] data
             get data() {
                 if (!this.hash.data) {
                     var timeout = new Date().getTime() + 2000;
@@ -466,410 +298,71 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }
                 return this.hash.data;
             }
-
             get maximumDataWidth() {
                 return this.hash.maximumDataWidth;
             }
-
             set maximumDataWidth(maximumWidth) {
                 this.hash.maximumDataWidth = maximumWidth;
             }
-
             get maximumDataHeight() {
                 return this.hash.maximumDataHeight;
             }
-
             set maximumDataHeight(maximumHeight) {
                 this.hash.maximumDataHeight = maximumHeight;
             }
-
             get image() {
                 var processableImage = this;
                 if (!this.hash.image) {
                     this.hash.image = new Image();
-                    // this.hash.image.crossOrigin = 'Anonymous';
                     this.hash.image.onload = function onImageLoad() {
-                        if (typeof processableImage.hash.load === 'function') {
-                            processableImage.hash.load.bind(processableImage)();
-                        }
+                        if (typeof processableImage.hash.load === 'function') processableImage.hash.load.bind(processableImage)();
                         processableImage.hash.loading = false;
                         $(processableImage).trigger('load');
                     }
                 };
                 return this.hash.image;
             }
-
             get width() {
                 return this.image.width;
             }
-
             get height() {
                 return this.image.height;
             }
-
             get channels() {
                 return this.data.length / this.width / this.height;
             }
-
             get aspectRatio() {
                 return this.width / this.height;
             }
-
             loadImage(src) {
                 this.hash.loading = true;
                 this.hash.data = undefined;
                 this.image.src = this.src;
             }
-
-            getChannel(channel) {
-                return new grasppe.ColorSheetsApp.ProcessableImageChannel(this, {
-                    channel: channel,
-                });
-            }
         }
 
-        grasppe.ColorSheetsApp.ProcessableImageChannel = class ProcessableImageChannel extends grasppe.ColorSheetsApp.ProcessableImage {
-            get channel() {
-                return this.hash.channel;
-            }
-
-            set channel(channel) {
-                this.hash.channel = channel;
-                this.hash.pixelData = [];
-            }
-
-            get pixelData() {
-                if (!Array.isArray(this.hash.pixelData) || this.hash.pixelData.length === 0) {
-                    for (var y = 0; y < this.height; y++) {
-                        this.hash.pixelData[y] = []
-                        for (var x = 0; x < this.width; x++) {
-                            this.hash.pixelData[y][x] = this.data[4 * (this.width * y + x) + this.channel - 1];
-                        }
-                    }
-                }
-                return this.hash.pixelData;
-            }
-
-            loadImage(src) {
-                super.loadImage(src);
-                this.hash.channel = Math.min(this.channels, this.channel);
-            }
-        }
-
-        grasppe.ColorSheetsApp.ScreeningDemoHelper = class ScreeningDemoHelper extends grasppe.Libre.Object {
-            constructor(options) {
-                super(...arguments);
-            }
-
-            get $scope() {
-                return this.hash.$scope || {};
-            }
-
-            set $scope($scope) {
-                this.hash.$scope = $scope;
-            }
-
-            get $options() {
-                return this.$scope.options || {};
-            }
-
-            get calculations() {
-                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
-                return this.$scope && this.$scope.calculations || {}
-            }
-
-            set calculations(calculations) {
-                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
-                if (this.$scope) this.$scope.calculations = Object.assign(this.$scope.calculations || {}, calculations);
-            }
-
-            get stack() {
-                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
-                return this.$scope && this.$scope.stack
-            }
-
-            set stack(stack) {
-                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
-                if (this.$scope) this.$scope.stack = Object.assign(this.$scope.stack || {}, stack);
-            }
-
-            get scenarios() {
-                return grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios
-            }
-
-            getParameter(parameter) {
-                return this.$scope.parameters && this.$scope.parameters[parameter];
-            }
-
-            getPixelBox(x, y, fillStyle, strokeStyle) {
-                if (!this.hash.pixelCache) this.hash.pixelCache = [];
-                var pixelCache = this.hash.pixelCache;
-                if (!pixelCache[x]) pixelCache[x] = [];
-                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
-                    [x + 0, y + 0],
-                    [x + 1, y + 0],
-                    [x + 1, y + 1],
-                    [x + 0, y + 1],
-                    [x + 0, y + 0]
-                ]);
-                if (fillStyle) pixelCache[x][y].fillStyle = fillStyle === 'none' ? 'transparent' : fillStyle;
-                if (strokeStyle) pixelCache[x][y].strokeStyle = strokeStyle === 'none' ? 'rgba(0,0,0,0.25)' : strokeStyle;
-                pixelCache[x][y].lineWidth = 0.05;
-                return pixelCache[x][y];
-            }
-
-            updateData(force) {
-                if (arguments.length = 0) force = !this.hash.firstUpdateDone;
-                this.calculateStack().updatePlot(force);
-                this.hash.firstUpdateDone = true;
-                return this;
-            }
-
-            calculateStack() {
-                var modelStack = {},
-                    modelCalculations = {},
-                    scenarios = grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios,
-                    stack = [
-                        ['SPI', this.getParameter('spi')],
-                        ['LPI', this.getParameter('lpi')],
-                        ['ANGLE', this.getParameter('angle')],
-                        ['TINT', this.getParameter('tint')]
-                    ];
-
-                for (var scenario of scenarios._order) {
-                    var jiver = new GrasppeJive({}, scenarios),
-                        output = jiver.run(scenario, stack),
-                        errors = jiver.errors;
-
-                    for (var row of output) {
-                        modelCalculations[row.id] = row.value;
-                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
-                            name: scenario,
-                        });
-                        if (row.hidden !== true) modelStack[scenario].push(row);
-                    }
-                }
-
-                this.stack = modelStack;
-                this.calculations = modelCalculations;
-
-                return this;
-            }
-
-            getHeleperOptions() {
-                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoHelper.Options, this.$options);
-                else Object.assign(this.hash._options, this.$options);
-                return this.hash._options;
-            }
-
-            downloadPlot(a) {
-                console.log(this.$scope.screenedImageHandler);
-                var src = this.$scope.canvas.toDataURL(),
-                    // this.generatePlotImage(125, 125, 10),
-                    // svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
-                    link = Object.assign(document.createElement('a'), {
-                        href: src, target: '_download', download: 'screening.png'
-                    });
-                document.body.appendChild(link), link.click(), $(link).remove();
-            }
-
-            generatePlotImage(width, height, scale) {
-                // var self = this.generatePlotImage,
-                //     timeStamp = self.timeStamp;
-                // self.timeStamp = timeStamp;
-                // 
-                // if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
-                // if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
-                // 
-                // var values = this.calculations,
-                //     options = this.getHeleperOptions(),
-                //     plotOptions = options.plotOptions,
-                //     legendOptions = options.legendOptions,
-                //     plotCanvas = $(this.$scope.canvas),
-                //     frameWidth = width || $(plotCanvas).width(),
-                //     frameHeight = height || $(plotCanvas).height(),
-                //     frameRatio = frameWidth / frameHeight,
-                //     series = options.seriesOptions,
-                //     mode = {
-                //         is: options.shading + '-' + options.panning, tint: options.shading === 'tint', screen: options.shading === 'screen', zoomIn: /zoom-in/.test(this.$options.panning),
-                //         zoomOut: /zoom-out/.test(this.$options.panning),
-                //         panSquare: !/fit/.test(this.$options.panning),
-                //         panFit: /fit/.test(this.$options.panning),
-                //     },
-                //     lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
-                //     stochastic = this.getParameter('stochastic') === true,
-                //     asCMY = this.getParameter('asCMY') === true,
-                //     screenView = mode.screen,
-                //     lineAngle = values.lineAngle / Math.PI * 180,
-                //     lineAngleOffsets = [0, 60, 45, -60],
-                //     lineAngles = lineAngleOffsets.map(function (offset) {
-                //         return lineAngle + offset;
-                //     }),
-                //     lineFrequency = values.lineFrequency,
-                //     tint = 0,
-                //     sinAngle = Math.sin(lineAngle % Math.PI / 2) * lineFrequency,
-                //     cosAngle = Math.cos(lineAngle % Math.PI / 2) * lineFrequency,
-                //     stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)',
-                //     rgbImage = this.$scope.processableSourceImage,
-                //     sourceImage = rgbImage,
-                //     sourceData = Object.assign({}, sourceImage.data),
-                //     sourceWidth = sourceImage.width,
-                //     sourceHeight = sourceImage.height;
-                // 
-                // // console.log('lineAngle', values.lineAngle);
-                // var screenScale = Math.min(1000 / sourceWidth, 800 / sourceHeight),
-                //     screenWidth = Math.ceil(sourceWidth * screenScale),
-                //     screenHeight = Math.ceil(sourceHeight * screenScale),
-                //     screenCanvas = $('<canvas width="' + screenWidth + '" height="' + screenHeight + '">')[0],
-                //     screenContext = screenCanvas.getContext('2d');
-                // 
-                // screenContext.fillStyle = 'rgba(255,255,255,1)';
-                // screenContext.fillRect(0, 0, screenWidth, screenHeight);
-                // var screenData = screenContext.getImageData(0, 0, screenWidth, screenHeight);
-                // 
-                // // sourceImage.channel = 1;                    
-                // if (!height) height = mode.zoomIn ? 150 : 200;
-                // if (!width) width = mode.panFit ? Math.round(height * frameRatio) : height;
-                // 
-                // var xStep = Math.ceil(width / 2),
-                //     yStep = Math.ceil(height / 2);
-                // if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1) return $(screenCanvas).remove() && this; //  || timeStamp !== self.timeStamp
-                // // RGB2CMY_CONVERSION: {
-                // //     if (asCMY) {
-                // //         if (!sourceImage.cmyData) for (var i = 0; i < screenWidth; i++) {
-                // //             for (var j = 0; j < screenHeight; j++) {
-                // //                 var n = 4 * (screenWidth * j + i);
-                // //                 for (var c = 0; c < 3; c++) sourceData[n+c] = 255 - rgbImage.data[n+c];
-                // //             }
-                // //         }
-                // //         sourceImage.cmyData = sourceData;
-                // //     }
-                // // }
-                // HALFTONE_SCREENING: {
-                //     var method = (asCMY ? 'cmy' : 'rgb') + (stochastic ? '-fm' : '-am');
-                // 
-                //     for (var c = 0; c < 3; c++) {
-                //         var angle = lineAngles[c] / 180 * Math.PI,
-                //             lineOffsetX = Math.PI / 2 + Math.PI * (angle < 0),
-                //             lineOffsetY = Math.PI / 2 + 0,
-                //             sinAngle = Math.sin(angle) * lineFrequency,
-                //             cosAngle = Math.cos(angle) * lineFrequency;
-                //             
-                //         switch (method) {
-                //         case 'cmy-fm': for (var i = 0; i < screenWidth; i++) {
-                //                 for (var j = 0; j < screenHeight; j++) {
-                //                     var n = 4 * (screenWidth * j + i),
-                //                         v = Math.random(),
-                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255,
-                //                         p = Math.round(255 * (v >= rV));
-                //                     screenData.data[n + c] = 255 - p;
-                //                 }
-                //             }
-                //             break;
-                //         case 'cmy-am': for (var i = 0; i < screenWidth; i++) {
-                //                 var cosI = cosAngle * (i + lineOffsetX),
-                //                     sinI = sinAngle * (i + lineOffsetX);
-                //                 for (var j = 0; j < screenHeight; j++) {
-                //                     var n = 4 * (screenWidth * j + i),
-                //                         v = Math.random(),
-                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c],
-                //                         alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
-                //                         beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
-                //                         v = (alpha * beta + 1) * 127.5;
-                //                     screenData.data[n + c] = 255 * (1 - (v <= 255 - rV));
-                //                 }
-                //             }
-                //             break;
-                //         case 'rgb-fm': for (var i = 0; i < screenWidth; i++) {
-                //                 for (var j = 0; j < screenHeight; j++) {
-                //                     var n = 4 * (screenWidth * j + i),
-                //                         v = Math.random(),
-                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c] / 255,
-                //                         p = Math.round(255 * (v <= rV));
-                //                     screenData.data[n + c] = p;
-                //                 }
-                //             }
-                //             break;
-                //         case 'rgb-am': default : for (var i = 0; i < screenWidth; i++) {
-                //                 // var screen = Array(screenWidth * screenHeight);
-                //                 // for (var i = 0; i < screenWidth; i++) {
-                //                 //     var cosI = cosAngle * (i + lineOffsetX),
-                //                 //         sinI = sinAngle * (i + lineOffsetX);
-                //                 //     for (var j = 0; j < screenHeight; j++) {
-                //                 //         var alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
-                //                 //             beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
-                //                 //             v = (alpha * beta + 1) * 127.5,
-                //                 //             n = 4 * (screenWidth * j + i);
-                //                 //         screen[n] = v;
-                //                 //     }
-                //                 // }
-                //                 for (var j = 0; j < screenHeight; j++) {
-                //                     var n = 4 * (screenWidth * j + i),
-                //                         cosI = cosAngle * (i + lineOffsetX),
-                //                         sinI = sinAngle * (i + lineOffsetX),
-                //                         alpha = Math.cos(cosAngle * (j + lineOffsetY) - sinI),
-                //                         beta = Math.sin(cosI + sinAngle * (j + lineOffsetY)),
-                //                         sV = (alpha * beta + 1) * 127.5,
-                //                         // sV = screen[n],
-                //                         rV = sourceData[4 * (sourceWidth * Math.floor(j / screenScale) + Math.floor(i / screenScale)) + c];
-                //                     screenData.data[n + c] = 255 * (sV <= rV);
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
-                // screenContext.putImageData(screenData, 0, 0);
-                // 
-                // var src = screenCanvas.toDataURL();
-                // 
-                // PATH_GENERATION: {
-                //     // var paths = [],
-                //     //     view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
-                //     // if (timeStamp !== self.timeStamp) return this;
-                //     // if (!scale) scale = 4;
-                //     // for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
-                //     // var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
-                // }
-                // 
-                // $(screenCanvas).remove();
-                // return src;
-            }
-
-            updatePlot(force) {
-                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
-                    var plotCanvas = $(this.$scope.canvas); /*if (plotCanvas.find('img').length === 0) plotCanvas.append($('<img class="selectable" style="object-fit: cover; width: auto; min-height: 50vh; max-height: 100%; max-width: 100%;">'));*/
-                    // plotCanvas.find('img').first().attr('src', this.generatePlotImage());
-                }.bind(this), force ? 0 : 500);
-                return this;
-            }
-        };
-        
-        grasppe.ColorSheetsApp.ScreeningDemoController = function ScreeningDemoController($scope, element) {
-            /*Object.assign(Object.getPrototypeOf(this), grasppe.Libre.$Controller.prototype, {}, Object.getPrototypeOf(this));*/
+        grasppe.ColorSheetsApp.ScreeningDemoController = function ScreeningDemoController($scope, element) { /*Object.assign(Object.getPrototypeOf(this), grasppe.Libre.$Controller.prototype, {}, Object.getPrototypeOf(this));*/
             grasppe.Libre.$Controller.apply(this, arguments);
             console.log(this, this.getPrototype());
             // !- ScreeningDemo [Controllers] ScreeningDemoController
             var controller = this;
-            if ($scope.parameters) {
-                if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
-                if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
-            }
+            // if ($scope.parameters) {
+            //     if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
+            //     if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
+            // }
             Object.assign($scope, {
                 helper: controller, // new grasppe.ColorSheetsApp.ScreeningDemoHelper({$scope: $scope,}),
                 calculations: {},
                 stack: {},
                 canvas: {},
-                options: Object.assign($scope.options || {}, grasppe.ColorSheetsApp.ScreeningDemo.defaults, {
-                    panning: grasppe.getURLParameters().panning, shading: grasppe.getURLParameters().shading,
-                }),
                 screenedImage: {
                     image: '',
                 },
             });
-            $scope.$watchCollection('options', function (value, last, $scope) {
+            $scope.$watchCollection('$sheet.options', function (value, last, $scope) {
                 controller.updateData(); // console.log('Options changed %o', $scope.options);
             });
-            $scope.$watchCollection('parameters', function (value, last, $scope) {
+            $scope.$watchCollection('$sheet.parameters', function (value, last, $scope) {
                 clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
                     controller.updateData(true);
                 }.bind(controller), 500, $scope);
@@ -890,11 +383,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 });
             });
             window.setTimeout(controller.updateData.bind(controller), 0);
-        }, grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.Libre.$Controller.prototype, {
-            constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
-            get $options() {
-                return this.$scope && this.$scope.options || {};
-            },
+        }, grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({
             get calculations() {
                 if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
                 return this.$scope && this.$scope.calculations || {}
@@ -912,12 +401,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 if (this.$scope) this.$scope.stack = Object.assign(this.$scope.stack || {}, stack);
             },
             get scenarios() {
-                return grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios
+                return grasppe.ColorSheetsApp.ScreeningDemoController.Scenarios
             },
-            getParameter: function getParameter(parameter) {
+        }, grasppe.Libre.$Controller.prototype, {
+            constructor: grasppe.ColorSheetsApp.ScreeningDemoController, get $options() {
+                return this.$scope && this.$scope.options || {};
+            },
+            getParameter(parameter) {
                 return this.$scope.parameters && this.$scope.parameters[parameter];
             },
-            getPixelBox: function getPixelBox(x, y, fillStyle, strokeStyle) {
+            getPixelBox(x, y, fillStyle, strokeStyle) {
                 if (!this.hash.pixelCache) this.hash.pixelCache = [];
                 var pixelCache = this.hash.pixelCache;
                 if (!pixelCache[x]) pixelCache[x] = [];
@@ -933,16 +426,16 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 pixelCache[x][y].lineWidth = 0.05;
                 return pixelCache[x][y];
             },
-            updateData: function updateData(force) {
+            updateData(force) {
                 if (arguments.length = 0) force = !this.hash.firstUpdateDone;
                 this.calculateStack().updatePlot(force);
                 this.hash.firstUpdateDone = true;
                 return this;
             },
-            calculateStack: function calculateStack() {
+            calculateStack() {
                 var modelStack = {},
                     modelCalculations = {},
-                    scenarios = grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios,
+                    scenarios = grasppe.ColorSheetsApp.ScreeningDemoController.Scenarios,
                     stack = [
                         ['SPI', this.getParameter('spi')],
                         ['LPI', this.getParameter('lpi')],
@@ -966,12 +459,12 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                 return this;
             },
-            getHeleperOptions: function getHeleperOptions() {
-                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoHelper.Options, this.$options);
+            getHeleperOptions() {
+                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoController.Options, this.$options);
                 else Object.assign(this.hash._options, this.$options);
                 return this.hash._options;
             },
-            downloadPlot: function downloadPlot(a) {
+            downloadPlot(a) {
                 console.log(this.$scope.screenedImageHandler);
                 var src = this.$scope.canvas.toDataURL(),
                     link = Object.assign(document.createElement('a'), {
@@ -979,26 +472,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     });
                 document.body.appendChild(link), link.click(), $(link).remove();
             },
-            updatePlot: function updatePlot(force) {
+            updatePlot(force) {
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                 }.bind(this), force ? 0 : 500);
                 return this;
             },
-        });       
-        
-        /*grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoController.prototype, grasppe.Libre.Object.prototype, {
-            constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
-            setOptions: grasppe.Libre.Object.prototype.setOptions,
-        });*/
-        
-//         Object.assign( class ScreeningDemoController extends grasppe.Libre.Object {
-//             constructor(options) {
-//                 super(...arguments);
-//                 console.log('ScreeningDemo [Controllers] ScreeningDemoController');
-//             }
-//         };
-
+        });
 
         grasppe.ColorSheetsApp.ScreeningDemo = {
             ID: 'ScreeningDemo', title: ('Screening Demo'),
@@ -1007,9 +487,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     directive: 'screening-sheet-stage', tools: {
                         save: {
                             label: 'Save', svgSrc: 'images/download.svg', classes: 'md-icon-button', click: function onSaveClick(link, $scope, event) {
-                                // console.log(arguments);
-                                // $scope.$sheet.helper.downloadPlot(link);
-                                $scope.screenedImageHandler.download(link);
+                                $scope.$sheet.screenedImageHandler.download(link);
                             },
                         },
                         panning: {
@@ -1069,8 +547,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // panning: 'cell', shading: 'fills',
                 },
             },
-            directive: 'screening-demo-sheet',
-            directives: {
+            directive: 'screening-demo-sheet', directives: {
                 // !- ScreeningDemo [Directives] screeningDemoSheet                
                 screeningDemoSheet: function screeningDemoSheet() {
                     return {
@@ -1082,18 +559,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 // !- ScreeningDemo [Directives] screeningSheetStage                
                 screeningSheetStage: function () { // grasppe.Libre.Directive.define('screeningSheetStage', 
                     return {
-                        controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {
-                            $scope.$on('selected.stage', function (event, selection) {
-                            });
-                            Object.defineProperty($scope.$sheet, 'canvas', {
-                                get: function getCanvas() {
-                                    return element.find('canvas').first();
-                                }
-                            });
-
+                        controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element) {
+                            // $scope.$on('selected.stage', function (event, selection) {});
+                            // Object.defineProperty($scope.$app.$sheet, 'canvas', {
+                            //     get: function getCanvas() {
+                            //         return element.find('canvas').first();
+                            //     }
+                            // });
                         }],
-                        link: function screeningSheetStagePostLink($scope, element, attributes) {
-                        },
+                        link: function screeningSheetStagePostLink($scope, element, attributes) {},
                         template: ('<color-sheets-panel-body style="overflow: visible; /*max-height: 75vh;*/">\
                             <style>\
                                 @media all {\
@@ -1116,10 +590,10 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             </div>\
                             </color-sheets-panel-body>'),
                     }
-                }, // ),
+                },
                 // !- ScreeningDemo [Directives] screeningSheetParameters                
-                screeningSheetParameters: function () { //  grasppe.Libre.Directive.define('screeningSheetParameters', 
-                    return { // layout="column" flex layout-fill layout-align="start center"
+                screeningSheetParameters: function () {
+                    return {
                         template: ('<color-sheets-panel-body style="min-height: 30vh; padding: 0.5em 0;" layout-wrap>\
                                 <color-sheets-slider-control flex layout-fill id="spi-slider" label="Addressability" description="Spot per inch imaging resolution." minimum="100" maximum="2540" step="10" value="1200" suffix="spi" model="spi" tooltip="@">\
                                     <b>Addressability:</b> Spot per inch imaging resolution. \
@@ -1139,11 +613,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 </color-sheets-toggle-control-->\
                             </color-sheets-panel-body>'),
                     }
-                }, // ),
-                screeningSheetResults: function () { // grasppe.Libre.Directive.define('screeningSheetResults', 
+                },
+                screeningSheetResults: function () {
                     return {
-                        //controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
-                        //layout
                         template: ('<color-sheets-panel-body><color-sheets-table class="color-sheets-results-table" ng-cloak>\
                                 <color-sheets-table-section ng-repeat="section in stack"\
                                  style="margin-top: 0.125em;">\
@@ -1156,24 +628,21 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                                 </color-sheets-table-section>\
                             </color-sheets-table></color-sheets-panel-body>'),
                     }
-                }, // ),
+                },
                 // !- ScreeningDemo [Directives] screeningSheetOverview                
-                screeningSheetOverview: function () { // grasppe.Libre.Directive.define('screeningSheetOverview', 
+                screeningSheetOverview: function () {
                     return {
-                        // controller: ['$scope', '$element', '$mdToast', '$mdDialog', function ($scope, element, $mdToast, $mdDialog) {}],
                         template: ('<color-sheets-panel-body layout ng-init="values=calculations">\
                             <div flex class="color-sheets-overview-contents" style="max-width: 100%; ">\
                                 <p>Drag an image onto the image field and change the parameters to see the screened image.</p>\
                             </div></color-sheets-panel-body>'),
-                        // ng-bind-html="explaination">
                     }
-                }, // ),
-                
+                },
                 colorSheetsScreenedImage: grasppe.ColorSheetsApp.ScreenedImage.Directive,
             },
         };
 
-        grasppe.ColorSheetsApp.ScreeningDemoHelper.Options = {
+        grasppe.ColorSheetsApp.ScreeningDemoController.Options = {
             panning: 'cell', shading: 'fills', plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
                 plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
                     strokeStyle: "blue", lineWidth: 1
@@ -1222,7 +691,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }
         };
 
-        grasppe.ColorSheetsApp.ScreeningDemoHelper.Scenarios = {
+        grasppe.ColorSheetsApp.ScreeningDemoController.Scenarios = {
             _order: ['Base Calculations', 'GrasppeScreen'],
             // , 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
             'Base Calculations': [{
@@ -1291,11 +760,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             }],
         };
 
-        // window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
-        //     sheets: {
-        //         ScreeningDemo: grasppe.ColorSheetsApp.ScreeningDemo,
-        //     },
-        // });
         grasppe.ColorSheetsApp.InitializeSheet('ScreeningDemo');
     });
 }(this, this.grasppe));

@@ -13,17 +13,6 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             return grasppe.hash(grasppe.Libre);
         }
         
-        // static get ObjectPrototype() {
-        //     var obj = function() {
-        //         var args = [...arguments];
-        //         this.options = (args.length > 0 && typeof args.slice(-1)[0] === 'object') ? args.pop() : undefined;
-        //         this.setOptions(this.options);
-        //     }
-        //     obj.prototype = Object.assign(, {
-        //         
-        //     })
-        // }
-        
         static get $Controller() {
             function LibreController($scope, element) {
                 var controller = this;

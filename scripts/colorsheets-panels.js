@@ -12,8 +12,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- [Directives] PanelToolIcon
             PanelToolIcon: grasppe.Libre.Directive.define('colorSheetsPanelToolIcon', {
                 link: function colorSheetsPanelToolIconLink ($scope, element, attributes) {
-                    var iconColor = $scope.item.iconColor || $scope.toolsColor,
-                        iconSize = $scope.item.iconSize || $scope.toolsIconSize || '20px';
+                    var iconColor = attributes.color || $scope.item.iconColor || $scope.toolsColor,
+                        iconSize = attributes.size || $scope.item.iconSize || $scope.toolsIconSize || '20px';
                     $scope.item.style = {color: iconColor, width: iconSize, height: iconSize, fontSize: iconSize};
                 },
                 template: '\
@@ -27,25 +27,29 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     // console.log($scope.menu.click);
                     if ($scope.menu.model) element.attr('ng-model', $scope.menu.model);
                     $scope.menu.iconColor = 'black';
+                    
+                    // $scope.$attributes = attributes;
 
                     if ($scope.menu.click || (/radio|checkbox/i.test('' + $scope.menu.type))) $(element).bind('click', {
                         $scope: $scope, $menu: $scope.menu,
                     }, function(event, data) {
                         var $scope = event.data.$scope,
                             $menu = event.data.$menu;
+                        // console.log('PanelMenuItem::Click — $sheet.options', $sheet.options);
                         if (typeof $menu.click === 'string')
                             eval($menu.click);
                         else if (typeof $menu.click === 'function')
                             $menu.click($scope, event, data);
                         else if (/radio/i.test('' + $menu.type)) 
-                            if ($menu.model) $scope.options[$menu.model] = $menu.value;
+                            if ($menu.model) $scope.$sheet.options[$menu.model] = $menu.value;
                         else if (/checkbox/i.test('' + $menu.type))
-                            if ($menu.model) $scope.options[$menu.model] = !($scope.options[$menu.model]===true);
+                            if ($menu.model) $scope.$sheet.options[$menu.model] = !($scope.$sheet.options[$menu.model]===true);
+                        // console.log('PanelMenuItem::Click — $sheet.options', $sheet.options);
                     });
 
                 },
                 template: '\
-                    <md-menu-item ng-init="menu.iconColor = menu.iconColor || menuColor" class="md-indent" type="{{menu.type}}">\
+                    <md-menu-item ng-init="menu.iconColor = $attributes.color || menu.iconColor || menuColor" class="md-indent" type="{{menu.type}}">\
                         <md-button class="{{menu.classes}}" aria-label="{{menu.label}}"> \
                             <color-sheets-panel-tool-icon ng-init="item = menu;"></color-sheets-panel-tool-icon>{{item.label}}\
                         </md-button>\
@@ -55,7 +59,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             // !- [Directives] PanelTool
             PanelTool: grasppe.Libre.Directive.define('colorSheetsPanelTool', {
                 link: function colorSheetsPanelToolLink ($scope, element, attributes) {
-                    if (typeof $scope.tool.click) element.bind('click', {
+                    if ($scope.tool.click) element.bind('click', { // typeof 
                         $scope: $scope, $tool: $scope.tool
                     }, function (event, data) {
                         var $scope = event.data.$scope,
@@ -99,9 +103,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 template: ('\
                 <md-toolbar class="color-sheets-toolbar {{toolbarClasses}}"> \
                     <div class="md-toolbar-tools" color="{{toolsColor}}"> \
-                        <md-button ng-if="panel.fontIcon || panel.svgIcon || panel.svgSrc" class="md-icon-button" aria-label="{{header}} Menu" ng-init="menuIcon = panel.fontIcon || panel.svgIcon"> \
-                            <color-sheets-panel-tool-icon ng-init="item = panel"></color-sheets-panel-tool-icon>\
-                        </md-button> \
+                        <md-button ng-if="panel.fontIcon || panel.svgIcon || panel.svgSrc" class="md-icon-button" aria-label="{{header}} Menu" ng-init="menuIcon = panel.fontIcon || panel.svgIcon" ng-click="panel.click && $eval(panel.click)"><color-sheets-panel-tool-icon ng-init="item = panel" style="color: black important;" color="{{panel.textColor || \'white\'}}"></color-sheets-panel-tool-icon></md-button>\
                         <header class="{{headerClasses}}" color="{{headerColor}}" ><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{header}}</span></header> \
                         <span flex></span> \
                         <color-sheets-panel-tool ng-repeat="tool in tools"></color-sheets-panel-tool> \
