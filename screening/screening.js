@@ -661,7 +661,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             });
             window.setTimeout(controller.updateData.bind(controller), 0);
         }, {
-            get isLive() {
+            get isDestructing() {
                 return this.$scope && this.$scope.$sheet && this.$scope.$sheet.destructer && this.$scope.$sheet.destructer.engaged;
             },
             get calculations() {
@@ -706,14 +706,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return pixelCache[x][y];
             },
             updateData(force) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 if (arguments.length = 0) force = !this.hash.firstUpdateDone;
                 this.calculateStack().updatePlot(force);
                 this.hash.firstUpdateDone = true;
                 return this;
             },
             calculateStack() {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var modelStack = {},
                     modelCalculations = {},
                     scenarios = grasppe.ColorSheetsApp.ScreeningDemo.scenarios,
@@ -741,13 +741,13 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return this;
             },
             getHeleperOptions() {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemo.options, this.$options);
                 else Object.assign(this.hash._options, this.$options);
                 return this.hash._options;
             },
             downloadPlot(a) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 console.log(this.$scope.screenedImageHandler);
                 var src = this.$scope.canvas.toDataURL(),
                     link = Object.assign(document.createElement('a'), {
@@ -756,7 +756,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 document.body.appendChild(link), link.click(), $(link).remove();
             },
             updatePlot(force) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                 }.bind(this), force ? 0 : 500);

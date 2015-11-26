@@ -328,7 +328,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             $sheet.helper = controller;
             window.setTimeout(controller.updateData.bind(controller), 0);
         }, {
-            get isLive() {
+            get isDestructing() {
                 return this.$scope && this.$scope.$sheet && this.$scope.$sheet.destructer && this.$scope.$sheet.destructer.engaged;
             },
             get calculations() {
@@ -349,7 +349,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 this.updatePlot();
                 return this;
             }, calculateStack() {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var modelStack = {},
                     modelCalculations = {},
                     scenarios = grasppe.ColorSheetsApp.SupercellDemo.scenarios,
@@ -375,14 +375,14 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 this.calculations = modelCalculations;
                 return this;
             }, downloadPlot(a) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var svg = ('' + this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g, ' '),
                     link = Object.assign(document.createElement('a'), {
                         href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'supercell.svg'
                     });
                 document.body.appendChild(link), link.click(), $(link).remove();
             }, generatePlotImage(width, height, scale) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var self = this.generatePlotImage,
                     timeStamp = self.timeStamp;
                 self.timeStamp = timeStamp;
@@ -563,7 +563,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 }
                 return svg;
             }, updatePlot() {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$sheet.canvas);
                     plotCanvas.empty().append(this.generatePlotImage()).children().first().css({

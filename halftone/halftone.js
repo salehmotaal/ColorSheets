@@ -297,7 +297,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             $scope.$sheet.helper = controller;    
             window.setTimeout(controller.updateData.bind(controller), 0);
         }, {
-            get isLive() {
+            get isDestructing() {
                 return this.$scope && this.$scope.$sheet && this.$scope.$sheet.destructer && this.$scope.$sheet.destructer.engaged;
             },
             get $options() {
@@ -351,7 +351,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return this;
             },
             calculateStack() {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var modelStack = {},
                     modelCalculations = {},
                     scenarios = grasppe.ColorSheetsApp.HalftoneDemo.scenarios,
@@ -378,7 +378,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return this;
             },
             downloadPlot(a) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
                     link = Object.assign(document.createElement('a'), {
                     href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
@@ -386,7 +386,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 document.body.appendChild(link), link.click(), $(link).remove();
             },
             updatePlot() {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
                     var plotCanvas = $(this.$scope.canvas);
                     if (plotCanvas.find('img').length === 0) {
@@ -402,7 +402,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 return this;
             },
             generatePlotImage(width, height, scale) {
-                if (this.isLive) return this;
+                if (this.isDestructing) return this;
                 var self = this.generatePlotImage,
                     timeStamp = self.timeStamp;
                 self.timeStamp = timeStamp;
