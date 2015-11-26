@@ -256,7 +256,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             //console.log('Prefix: %s', prefix);
             if (grasppe.initialize.initialized === true) return;
             var libraries = {
-                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', /*'googleAPI',*/ 'modernizr', 'angularMaterial', 'materializeColors', 'd3', 'mobileDetect', 'fontAwesome', 'grasppeCore', 'bootstrapNoColor'], // 'bootstrap',
+                _order: ['jQuery', 'angularJS', 'angularRoute', 'angularMessages', 'angularAnimate', 'angularAria', 'bootstrapNoColor', /*'googleAPI',*/ 'modernizr', 'angularMaterial', 'materializeColors', 'd3', 'mobileDetect', 'fontAwesome', 'grasppeCore'], // 'bootstrap',
                 objectObserve: '        scripts:    ["object-observe"]'.toLiteral(),
                 googleAPI: '        scripts:    ["//www.google.com/jsapi"]'.toLiteral(),
                 modernizr: '        scripts:    ["modernizr.js"]'.toLiteral(),

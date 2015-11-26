@@ -4,7 +4,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     'use strict';
     grasppe.load.status['colorsheets'] = grasppe.load.status['colorsheets'] || false;
     grasppe.require(['colorsheets'], function () {
-
+        
         grasppe.ColorSheetsApp.ScreenedImage = class ScreenedImage extends grasppe.Libre.Object {
             constructor() {
                 super(...arguments);
@@ -340,148 +340,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 this.image.src = this.src;
             }
         }
-
-        grasppe.ColorSheetsApp.ScreeningDemoController = function ScreeningDemoController($scope, element) { /*Object.assign(Object.getPrototypeOf(this), grasppe.Libre.$Controller.prototype, {}, Object.getPrototypeOf(this));*/
-            grasppe.Libre.$Controller.apply(this, arguments);
-            console.log(this, this.getPrototype());
-            // !- ScreeningDemo [Controllers] ScreeningDemoController
-            var controller = this;
-            // if ($scope.parameters) {
-            //     if ($scope.parameters.panning) $scope.options.panning = $scope.parameters.panning, delete $scope.parameters.panning;
-            //     if ($scope.parameters.shading) $scope.options.shading = $scope.parameters.shading, delete $scope.parameters.shading;
-            // }
-            Object.assign($scope, {
-                helper: controller, // new grasppe.ColorSheetsApp.ScreeningDemoHelper({$scope: $scope,}),
-                calculations: {},
-                stack: {},
-                canvas: {},
-                screenedImage: {
-                    image: '',
-                },
-            });
-            $scope.$watchCollection('$sheet.options', function (value, last, $scope) {
-                controller.updateData(); // console.log('Options changed %o', $scope.options);
-            });
-            $scope.$watchCollection('$sheet.parameters', function (value, last, $scope) {
-                clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
-                    controller.updateData(true);
-                }.bind(controller), 500, $scope);
-                Object.assign($scope.screenedImage, {
-                    spi: $scope.parameters.spi, lpi: $scope.parameters.lpi, angle: $scope.parameters.angle, image: $scope.parameters.sourceImage,
-                });
-            });
-            $scope.$on('selected.stage', function (event, option, value) {
-                switch (option) {
-                case 'redraw': controller.updateData(true);
-                    break;
-                default :
-                }
-            });
-            $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
-                if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
-                    src: value,
-                });
-            });
-            window.setTimeout(controller.updateData.bind(controller), 0);
-        }, grasppe.ColorSheetsApp.ScreeningDemoController.prototype = Object.assign({
-            get calculations() {
-                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
-                return this.$scope && this.$scope.calculations || {}
-            },
-            set calculations(calculations) {
-                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
-                if (this.$scope) this.$scope.calculations = Object.assign(this.$scope.calculations || {}, calculations);
-            },
-            get stack() {
-                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
-                return this.$scope && this.$scope.stack
-            },
-            set stack(stack) {
-                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
-                if (this.$scope) this.$scope.stack = Object.assign(this.$scope.stack || {}, stack);
-            },
-            get scenarios() {
-                return grasppe.ColorSheetsApp.ScreeningDemoController.Scenarios
-            },
-        }, grasppe.Libre.$Controller.prototype, {
-            constructor: grasppe.ColorSheetsApp.ScreeningDemoController, get $options() {
-                return this.$scope && this.$scope.options || {};
-            },
-            getParameter(parameter) {
-                return this.$scope.parameters && this.$scope.parameters[parameter];
-            },
-            getPixelBox(x, y, fillStyle, strokeStyle) {
-                if (!this.hash.pixelCache) this.hash.pixelCache = [];
-                var pixelCache = this.hash.pixelCache;
-                if (!pixelCache[x]) pixelCache[x] = [];
-                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
-                    [x + 0, y + 0],
-                    [x + 1, y + 0],
-                    [x + 1, y + 1],
-                    [x + 0, y + 1],
-                    [x + 0, y + 0]
-                ]);
-                if (fillStyle) pixelCache[x][y].fillStyle = fillStyle === 'none' ? 'transparent' : fillStyle;
-                if (strokeStyle) pixelCache[x][y].strokeStyle = strokeStyle === 'none' ? 'rgba(0,0,0,0.25)' : strokeStyle;
-                pixelCache[x][y].lineWidth = 0.05;
-                return pixelCache[x][y];
-            },
-            updateData(force) {
-                if (arguments.length = 0) force = !this.hash.firstUpdateDone;
-                this.calculateStack().updatePlot(force);
-                this.hash.firstUpdateDone = true;
-                return this;
-            },
-            calculateStack() {
-                var modelStack = {},
-                    modelCalculations = {},
-                    scenarios = grasppe.ColorSheetsApp.ScreeningDemoController.Scenarios,
-                    stack = [
-                        ['SPI', this.getParameter('spi')],
-                        ['LPI', this.getParameter('lpi')],
-                        ['ANGLE', this.getParameter('angle')],
-                        ['TINT', this.getParameter('tint')]
-                    ];
-                for (var scenario of scenarios._order) {
-                    var jiver = new GrasppeJive({}, scenarios),
-                        output = jiver.run(scenario, stack),
-                        errors = jiver.errors;
-                    for (var row of output) {
-                        modelCalculations[row.id] = row.value;
-                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
-                            name: scenario,
-                        });
-                        if (row.hidden !== true) modelStack[scenario].push(row);
-                    }
-                }
-                this.stack = modelStack;
-                this.calculations = modelCalculations;
-
-                return this;
-            },
-            getHeleperOptions() {
-                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemoController.Options, this.$options);
-                else Object.assign(this.hash._options, this.$options);
-                return this.hash._options;
-            },
-            downloadPlot(a) {
-                console.log(this.$scope.screenedImageHandler);
-                var src = this.$scope.canvas.toDataURL(),
-                    link = Object.assign(document.createElement('a'), {
-                        href: src, target: '_download', download: 'screening.png'
-                    });
-                document.body.appendChild(link), link.click(), $(link).remove();
-            },
-            updatePlot(force) {
-                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
-                    var plotCanvas = $(this.$scope.canvas);
-                }.bind(this), force ? 0 : 500);
-                return this;
-            },
-        });
-
-        grasppe.ColorSheetsApp.ScreeningDemo = {
-            ID: 'ScreeningDemo', title: ('Screening Demo'),
+        
+        grasppe.ColorSheetsApp.ScreeningDemo = grasppe.ColorSheetsApp.createModel('ScreeningDemo', {
+            title: ('Screening Demo'),
             panels: {
                 stage: {
                     directive: 'screening-sheet-stage', tools: {
@@ -541,6 +402,122 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 tint: {
                     id: 'tint', name: 'Tint', description: 'The color tint value.', type: 'number', unit: "%", quantifier: 'percent', format: "0",
                 },
+            },
+            options: {
+                panning: 'cell', shading: 'fills', plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
+                    plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
+                        strokeStyle: "blue", lineWidth: 1
+                    },
+                    plotBoxStyle: {
+                        fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
+                    },
+                    plotGridStyle: {
+                        lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
+                    },
+                },
+                seriesOptions: {
+                    intendedSeriesDefaultStyle: {
+                        fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                    },
+                    halftoneSeriesDefaultStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    supercellSeriesDefaultStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    intendedSeriesStyle: {
+                        fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                    },
+                    halftoneSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    halftoneSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 255, 64, 0.5)"
+                    },
+                    supercellSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    supercellSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 64, 255, 0.25)"
+                    },
+                    supercellSeriesLineStyle: {
+                        lineWidth: 0, strokeStyle: "#0000FF", lineDash: [1, 3]
+                    },
+                },
+                legendOptions: {
+                    seriesLabels: ['Requested  Halftone', 'Rounded  Halftone', 'Rounded  Halftone'],
+                    legendBoxStyle: {
+                        fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.05)", lineWidth: 1
+                    },
+                }
+            },
+            scenarios: {
+                _order: ['Base Calculations', 'GrasppeScreen'],
+                // , 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
+                'Base Calculations': [{
+                    id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
+                }, {
+                    id: "lpi", hidden: true, type: "p", fn: "LPI", decimals: 1,
+                }, {
+                    id: "angle", hidden: true, type: "p", fn: "ANGLE", decimals: 2,
+                }, {
+                    id: "angleRadians", hidden: true, type: "c", fn: "angle * (PI/180)", unit: "º rad", decimals: 2,
+                }],
+                'GrasppeScreen': [{
+                    id: "lineRuling", hidden: true, type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
+                }, {
+                    id: "effectiveSPL", type: "c", fn: "lineRuling/cos(PI/4)", unit: 'spl', decimals: 1, name: "effective spots per line"
+                }, {
+                    id: "effectiveLPI", type: "c", fn: "SPI/effectiveSPL", unit: 'lpi', decimals: 2, name: "effective lines per inch"
+                }, {
+                    id: "lineFrequency", hidden: true, type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
+                }, {
+                    id: "lineAngle", hidden: true, type: "c", fn: "PI/4-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
+                }, {
+                    id: "lineXSpots", hidden: true, type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+                }, {
+                    id: "lineYSpots", hidden: true, type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+                }, {
+                    id: "lineOffsetX", hidden: true, type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
+                }, {
+                    id: "lineOffsetY", hidden: true, type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
+                }],
+                'Intended Halftone': [{
+                    id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
+                }, {
+                    id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: "", decimals: 2,
+                }, {
+                    id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+                }, {
+                    id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(angleRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+                }, {
+                    id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
+                    // }, {
+                    //     id: "lineSpots", group: "roundedSpots", type: "c", fn: "lineLength/spotLength", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
+                }],
+                'Periodically-Rounded Halftone': [{
+                    id: "linePerroundLPI", group: "roundLPI", type: "r", fn: "SPI/(floor(sin(Math.PI/4)*SPI/LPI)/sin(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
+                }, {
+                    id: "linePerroundSpots", group: "roundLPI", type: "r", fn: "25400/linePerroundLPI/spotLength", unit: "spots", name: "per-rounded halftone spots at screening angle", description: "", decimals: 2,
+                }, {
+                    id: "linePerroundLength", type: "c", fn: "25400/linePerroundLPI", unit: "µ", name: "per-rounded halftone side length", description: "", decimals: 2,
+                }, {
+                    id: "linePerroundXSpots", group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                }, {
+                    id: "linePerroundYSpots", group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                }],
+                // lineRoundLPI = 25400/(spotLength*lineSpots) // lineRoundLPI*spotLength/25400 = 1/lineSpots // 25400/lineRoundLPI/spotLength
+                'Periodic-Rounding Results': [{
+                    id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*linePerroundSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
+                }, {
+                    id: "lineRoundAngle", group: "roundAngle", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
+                }, {
+                    id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "rounded gray-levels (1-bit)", description: "", decimals: 0,
+                }, {
+                    id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "line ruling error", description: "", decimals: 2,
+                }, {
+                    id: "lineErrorAngle", group: "errorAngle", type: "r", fn: "lineRoundAngle-angle", unit: "º", name: "line angle error", description: "", decimals: 2,
+                }],
             },
             defaults: {
                 options: {
@@ -640,125 +617,152 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 },
                 colorSheetsScreenedImage: grasppe.ColorSheetsApp.ScreenedImage.Directive,
             },
-        };
 
-        grasppe.ColorSheetsApp.ScreeningDemoController.Options = {
-            panning: 'cell', shading: 'fills', plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
-                plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
-                    strokeStyle: "blue", lineWidth: 1
-                },
-                plotBoxStyle: {
-                    fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
-                },
-                plotGridStyle: {
-                    lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
-                },
-            },
-            seriesOptions: {
-                intendedSeriesDefaultStyle: {
-                    fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
-                },
-                halftoneSeriesDefaultStyle: {
-                    lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
-                },
-                supercellSeriesDefaultStyle: {
-                    lineWidth: 2, strokeStyle: "#0000FF"
-                },
-                intendedSeriesStyle: {
-                    fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
-                },
-                halftoneSeriesStyle: {
-                    lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
-                },
-                halftoneSeriesFillStyle: {
-                    fillStyle: "RGBA(64, 255, 64, 0.5)"
-                },
-                supercellSeriesStyle: {
-                    lineWidth: 2, strokeStyle: "#0000FF"
-                },
-                supercellSeriesFillStyle: {
-                    fillStyle: "RGBA(64, 64, 255, 0.25)"
-                },
-                supercellSeriesLineStyle: {
-                    lineWidth: 0, strokeStyle: "#0000FF", lineDash: [1, 3]
-                },
-            },
-            legendOptions: {
-                seriesLabels: ['Requested  Halftone', 'Rounded  Halftone', 'Rounded  Halftone'],
-                legendBoxStyle: {
-                    fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.05)", lineWidth: 1
-                },
-            }
-        };
+        });
+        
+        // grasppe.ColorSheetsApp.ScreeningDemoController = function ScreeningDemoController($scope, element) { /*Object.assign(Object.getPrototypeOf(this), grasppe.Libre.$Controller.prototype, {}, Object.getPrototypeOf(this));*/
+        grasppe.ColorSheetsApp.ScreeningDemoController = grasppe.ColorSheetsApp.createController(function ScreeningDemoController($scope, element) {
+            // grasppe.Libre.$Controller.apply(this, arguments);
+            grasppe.ColorSheetsApp.ColorSheetController.apply(this, arguments);
+            // !- ScreeningDemo [Controllers] ScreeningDemoController
+            var controller = this;
 
-        grasppe.ColorSheetsApp.ScreeningDemoController.Scenarios = {
-            _order: ['Base Calculations', 'GrasppeScreen'],
-            // , 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
-            'Base Calculations': [{
-                id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
-            }, {
-                id: "lpi", hidden: true, type: "p", fn: "LPI", decimals: 1,
-            }, {
-                id: "angle", hidden: true, type: "p", fn: "ANGLE", decimals: 2,
-            }, {
-                id: "angleRadians", hidden: true, type: "c", fn: "angle * (PI/180)", unit: "º rad", decimals: 2,
-            }],
-            'GrasppeScreen': [{
-                id: "lineRuling", hidden: true, type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
-            }, {
-                id: "effectiveSPL", type: "c", fn: "lineRuling/cos(PI/4)", unit: 'spl', decimals: 1, name: "effective spots per line"
-            }, {
-                id: "effectiveLPI", type: "c", fn: "SPI/effectiveSPL", unit: 'lpi', decimals: 2, name: "effective lines per inch"
-            }, {
-                id: "lineFrequency", hidden: true, type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
-            }, {
-                id: "lineAngle", hidden: true, type: "c", fn: "PI/4-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
-            }, {
-                id: "lineXSpots", hidden: true, type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
-            }, {
-                id: "lineYSpots", hidden: true, type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
-            }, {
-                id: "lineOffsetX", hidden: true, type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
-            }, {
-                id: "lineOffsetY", hidden: true, type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
-            }],
-            'Intended Halftone': [{
-                id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
-            }, {
-                id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: "", decimals: 2,
-            }, {
-                id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
-            }, {
-                id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(angleRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
-            }, {
-                id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
-                // }, {
-                //     id: "lineSpots", group: "roundedSpots", type: "c", fn: "lineLength/spotLength", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
-            }],
-            'Periodically-Rounded Halftone': [{
-                id: "linePerroundLPI", group: "roundLPI", type: "r", fn: "SPI/(floor(sin(Math.PI/4)*SPI/LPI)/sin(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
-            }, {
-                id: "linePerroundSpots", group: "roundLPI", type: "r", fn: "25400/linePerroundLPI/spotLength", unit: "spots", name: "per-rounded halftone spots at screening angle", description: "", decimals: 2,
-            }, {
-                id: "linePerroundLength", type: "c", fn: "25400/linePerroundLPI", unit: "µ", name: "per-rounded halftone side length", description: "", decimals: 2,
-            }, {
-                id: "linePerroundXSpots", group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
-            }, {
-                id: "linePerroundYSpots", group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
-            }],
-            // lineRoundLPI = 25400/(spotLength*lineSpots) // lineRoundLPI*spotLength/25400 = 1/lineSpots // 25400/lineRoundLPI/spotLength
-            'Periodic-Rounding Results': [{
-                id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*linePerroundSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
-            }, {
-                id: "lineRoundAngle", group: "roundAngle", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
-            }, {
-                id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "rounded gray-levels (1-bit)", description: "", decimals: 0,
-            }, {
-                id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "line ruling error", description: "", decimals: 2,
-            }, {
-                id: "lineErrorAngle", group: "errorAngle", type: "r", fn: "lineRoundAngle-angle", unit: "º", name: "line angle error", description: "", decimals: 2,
-            }],
-        };
+            Object.assign($scope, {
+                helper: controller, // new grasppe.ColorSheetsApp.ScreeningDemoHelper({$scope: $scope,}),
+                calculations: {},
+                stack: {},
+                canvas: {},
+                screenedImage: {
+                    image: '',
+                },
+            });
+            $scope.$watchCollection('$sheet.options', function (value, last, $scope) {
+                controller.updateData(); // console.log('Options changed %o', $scope.options);
+            });
+            $scope.$watchCollection('$sheet.parameters', function (value, last, $scope) {
+                clearTimeout($scope.parametersTimeOut), $scope.parametersTimeOut = setTimeout(function ($scope) {
+                    controller.updateData(true);
+                }.bind(controller), 500, $scope);
+                Object.assign($scope.screenedImage, {
+                    spi: $scope.parameters.spi, lpi: $scope.parameters.lpi, angle: $scope.parameters.angle, image: $scope.parameters.sourceImage,
+                });
+            });
+            $scope.$on('selected.stage', function (event, option, value) {
+                switch (option) {
+                case 'redraw': controller.updateData(true);
+                    break;
+                default :
+                }
+            });
+            $scope.$watchCollection('parameters.sourceImage', function (value, last, $scope) {
+                if (value) $scope.processableSourceImage = new grasppe.ColorSheetsApp.ProcessableImage({
+                    src: value,
+                });
+            });
+            window.setTimeout(controller.updateData.bind(controller), 0);
+        }, {
+            get isLive() {
+                return this.$scope && this.$scope.$sheet && this.$scope.$sheet.destructer && this.$scope.$sheet.destructer.engaged;
+            },
+            get calculations() {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                return this.$scope && this.$scope.calculations || {}
+            },
+            set calculations(calculations) {
+                if (this.$scope && !this.$scope.calculations) this.$scope.calculations = {};
+                if (this.$scope) this.$scope.calculations = Object.assign(this.$scope.calculations || {}, calculations);
+            },
+            get stack() {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                return this.$scope && this.$scope.stack
+            },
+            set stack(stack) {
+                if (this.$scope && !this.$scope.stack) this.$scope.stack = {};
+                if (this.$scope) this.$scope.stack = Object.assign(this.$scope.stack || {}, stack);
+            },
+            get scenarios() {
+                return grasppe.ColorSheetsApp.ScreeningDemo.scenarios
+            },
+            get $options() {
+                return this.$scope && this.$scope.options || {};
+            },
+            getParameter(parameter) {
+                return this.$scope.parameters && this.$scope.parameters[parameter];
+            },
+            getPixelBox(x, y, fillStyle, strokeStyle) {
+                if (!this.hash.pixelCache) this.hash.pixelCache = [];
+                var pixelCache = this.hash.pixelCache;
+                if (!pixelCache[x]) pixelCache[x] = [];
+                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
+                    [x + 0, y + 0],
+                    [x + 1, y + 0],
+                    [x + 1, y + 1],
+                    [x + 0, y + 1],
+                    [x + 0, y + 0]
+                ]);
+                if (fillStyle) pixelCache[x][y].fillStyle = fillStyle === 'none' ? 'transparent' : fillStyle;
+                if (strokeStyle) pixelCache[x][y].strokeStyle = strokeStyle === 'none' ? 'rgba(0,0,0,0.25)' : strokeStyle;
+                pixelCache[x][y].lineWidth = 0.05;
+                return pixelCache[x][y];
+            },
+            updateData(force) {
+                if (this.isLive) return this;
+                if (arguments.length = 0) force = !this.hash.firstUpdateDone;
+                this.calculateStack().updatePlot(force);
+                this.hash.firstUpdateDone = true;
+                return this;
+            },
+            calculateStack() {
+                if (this.isLive) return this;
+                var modelStack = {},
+                    modelCalculations = {},
+                    scenarios = grasppe.ColorSheetsApp.ScreeningDemo.scenarios,
+                    stack = [
+                        ['SPI', this.getParameter('spi')],
+                        ['LPI', this.getParameter('lpi')],
+                        ['ANGLE', this.getParameter('angle')],
+                        ['TINT', this.getParameter('tint')]
+                    ];
+                for (var scenario of scenarios._order) {
+                    var jiver = new GrasppeJive({}, scenarios),
+                        output = jiver.run(scenario, stack),
+                        errors = jiver.errors;
+                    for (var row of output) {
+                        modelCalculations[row.id] = row.value;
+                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
+                            name: scenario,
+                        });
+                        if (row.hidden !== true) modelStack[scenario].push(row);
+                    }
+                }
+                this.stack = modelStack;
+                this.calculations = modelCalculations;
+
+                return this;
+            },
+            getHeleperOptions() {
+                if (this.isLive) return this;
+                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.ScreeningDemo.options, this.$options);
+                else Object.assign(this.hash._options, this.$options);
+                return this.hash._options;
+            },
+            downloadPlot(a) {
+                if (this.isLive) return this;
+                console.log(this.$scope.screenedImageHandler);
+                var src = this.$scope.canvas.toDataURL(),
+                    link = Object.assign(document.createElement('a'), {
+                        href: src, target: '_download', download: 'screening.png'
+                    });
+                document.body.appendChild(link), link.click(), $(link).remove();
+            },
+            updatePlot(force) {
+                if (this.isLive) return this;
+                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
+                    var plotCanvas = $(this.$scope.canvas);
+                }.bind(this), force ? 0 : 500);
+                return this;
+            },
+        });
 
         grasppe.ColorSheetsApp.InitializeSheet('ScreeningDemo');
     });

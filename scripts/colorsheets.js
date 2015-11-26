@@ -198,6 +198,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
 
                         // Prepare new $sheet scope
                         $app.$sheet = Object.assign($app.$new(false), {
+                            title: sheet.title,
+                            id: sheet.id,
+                            path: sheet.path,
                             destroy() {
                                 console.log('Destroy Sheet!');
                                 if (this.destructer) this.destructer();

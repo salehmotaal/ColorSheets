@@ -5,222 +5,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
     grasppe.load.status['colorsheets'] = grasppe.load.status['colorsheets'] || false;
     grasppe.require(['colorsheets'], function () {
         
-        grasppe.ColorSheetsApp.HalftoneDemoController = function HalftoneDemoController($scope, element) {
-            grasppe.Libre.$Controller.apply(this, arguments);
-            var controller = this;
-            Object.assign($scope, {
-                helper: controller,
-                calculations: {},
-                stack: {},
-                canvas: {},
-                destructer() {
-                    this.destructer.engaged = true;
-                    console.log('\t Destructer Sheet!');
-                },
-            });
-            this.$scope.$watchCollection('$sheet.options', function (value, last, $scope) {
-                controller.updateData();
-            });
-            this.$scope.$watchCollection('$sheet.parameters', function (value, last, $scope) {
-                controller.updateData();
-            });
-            $scope.$sheet.helper = controller;    
-            window.setTimeout(controller.updateData.bind(controller), 0);
-        }, grasppe.ColorSheetsApp.HalftoneDemoController.prototype = Object.assign({
-            get $options() {
-                return this.$scope && this.$scope.options || {};
-            },
-            get calculations() {
-                return this.$scope && this.$scope.$sheet.calculations || {}
-            },
-            set calculations(calculations) {
-                if (this.$scope) this.$scope.$sheet.calculations = Object.assign(this.$scope.$sheet.calculations || {}, calculations);
-            },
-            get stack() {
-                return this.$scope && this.$scope.stack
-            },
-            set stack(stack) {
-                if (this.$scope) this.$scope.$sheet.stack = Object.assign(this.$scope.$sheet.stack || {}, stack);
-            },
-            get scenarios() {
-                return grasppe.ColorSheetsApp.HalftoneDemoController.Scenarios
-            },
-
-        }, grasppe.Libre.$Controller.prototype, {
-            constructor: grasppe.ColorSheetsApp.ScreeningDemoController,
-            getParameter(parameter) {
-                return this.$scope.parameters && this.$scope.parameters[parameter];
-            },
-            getHeleperOptions() {
-                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.HalftoneDemoController.Options, this.$options);
-                else Object.assign(this.hash._options, this.$options);
-                return this.hash._options;
-            },
-            getGridCache(steps) {
-                return this.hash['gridCache' + steps];
-            },
-            setGridCache(steps, grids) {
-                this.hash['gridCache' + steps] = grids;
-            },
-            getPixelBox(x, y, fillStyle, strokeStyle) {
-                if (!this.hash.pixelCache) this.hash.pixelCache = [];
-                var pixelCache = this.hash.pixelCache;
-                if (!pixelCache[x]) pixelCache[x] = [];
-                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
-                    [x + 0, y + 0],
-                    [x + 1, y + 0],
-                    [x + 1, y + 1],
-                    [x + 0, y + 1],
-                    [x + 0, y + 0]
-                ]);
-                pixelCache[x][y].fillStyle = fillStyle || 'transparent', pixelCache[x][y].strokeStyle = strokeStyle || 'rgba(0,0,0,0.25)', pixelCache[x][y].lineWidth = 0.05;
-                return pixelCache[x][y];
-            },
-            updateData() {
-                this.calculateStack().updatePlot();
-                return this;
-            },
-            calculateStack() {
-                if (this.$scope.$sheet.destructer.engaged) return this;
-                var modelStack = {},
-                    modelCalculations = {},
-                    scenarios = grasppe.ColorSheetsApp.HalftoneDemoController.Scenarios,
-                    stack = [
-                        ['SPI', this.getParameter('spi')],
-                        ['LPI', this.getParameter('lpi')],
-                        ['ANGLE', this.getParameter('angle')],
-                        ['TINT', this.getParameter('tint')]
-                    ];
-                for (var scenario of scenarios._order) {
-                    var jiver = new GrasppeJive({}, scenarios),
-                        output = jiver.run(scenario, stack),
-                        errors = jiver.errors;
-                    for (var row of output) {
-                        modelCalculations[row.id] = row.value;
-                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
-                            name: scenario,
-                        });
-                        if (row.hidden !== true) modelStack[scenario].push(row);
-                    }
-                }
-                this.stack = modelStack;
-                this.calculations = modelCalculations;
-                return this;
-            },
-            downloadPlot(a) {
-                if (this.$scope.$sheet.destructer.engaged) return this;
-                var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
-                    link = Object.assign(document.createElement('a'), {
-                    href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
-                });
-                document.body.appendChild(link), link.click(), $(link).remove();
-            },
-            updatePlot() {
-                if (this.$scope.$sheet.destructer.engaged) return this;
-                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
-                    var plotCanvas = $(this.$scope.canvas);
-                    if (plotCanvas.find('img').length === 0) {
-                        plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
-                        $(window).bind('resize', function(){
-                            this.updatePlot();
-                        }.bind(this));
-                    }
-                    plotCanvas.empty().append(this.generatePlotImage()).children().first().css({
-                        flex: 1, width: '100%', height: '100%',
-                    });
-                }.bind(this), 0);
-                return this;
-            },
-            generatePlotImage(width, height, scale) {
-                if (this.$scope.$sheet.destructer.engaged) return this;
-                var self = this.generatePlotImage,
-                    timeStamp = self.timeStamp;
-                self.timeStamp = timeStamp;
-                if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
-                if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
-                var values = this.calculations,
-                    options = this.getHeleperOptions(),
-                    plotOptions = options.plotOptions,
-                    legendOptions = options.legendOptions,
-                    plotCanvas = $(this.$scope.canvas),
-                    frameWidth = width || $(plotCanvas).width(),
-                    frameHeight = height || $(plotCanvas).height(),
-                    frameRatio = frameWidth / frameHeight,
-                    series = options.seriesOptions,
-                    mode = {
-                        is: options.shading + '-' + options.panning,
-                        tint: options.shading === 'tint',
-                        screen: options.shading === 'screen',
-                        zoomIn: /zoom-in/.test(this.$options.panning),
-                        zoomOut: /zoom-out/.test(this.$options.panning),
-                        panSquare: !/fit/.test(this.$options.panning),
-                        panFit: /fit/.test(this.$options.panning),
-                    },
-                    stroke = {},
-                    style = {
-                        plotGrid: (plotOptions.plotGridStyle),
-                        legendBox: (legendOptions.legendBoxStyle),
-                        filled: {
-                            fillStyle: "black"
-                        },
-                        empty: {
-                            fillStyle: "white"
-                        },
-                    },
-                    lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
-                    screenView = mode.screen,
-                    lineAngle = values.lineAngle, //  % Math.PI/2,
-                    lineFrequency = values.lineFrequency,
-                    tint = this.getParameter('tint'),
-                    sinAngle = Math.sin(lineAngle),
-                    cosAngle = Math.cos(lineAngle),
-                    stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)';
-                if (!height) height = mode.zoomIn ? 40 : 80;
-                if (!width) width = mode.panFit ? Math.round(height * frameRatio) : height;
-                var xStep = Math.ceil(width/2),
-                    yStep = Math.ceil(height/2);
-                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
-                HALFTONE_CALCULATIONS: {
-                    var halftonePixels = Array(height * width),
-                        n = 0,
-                        lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2,
-                        lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row,
-                        valleys = [], peaks = [];
-                    for (var i = -xStep; i <= xStep; i++) {
-                        if (timeStamp !== self.timeStamp) return this;
-                        for (var j = -yStep; j <= yStep; j++) {
-                            var alpha = Math.cos((Math.cos(lineAngle) * (j) * lineFrequency) - (Math.sin(lineAngle) * (i) * lineFrequency)),
-                                beta = Math.sin((Math.cos(lineAngle) * (i) * lineFrequency) + (Math.sin(lineAngle) * (j) * lineFrequency)),
-                                s = alpha * beta,
-                                v = Math.min(1, Math.max(0, (s + 1) / 2)),
-                                t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
-                                fill = Math.round(255 * (screenView ? v : t)),
-                                fillStyle = 'rgb(' + fill + ',' + fill + ',' + fill + ')',
-                                strokeStyle = (screenView || (t === 0)) ? 'black' : stroke;
-                            halftonePixels[n] = Object.assign(this.getPixelBox(xStep+i, yStep+j, fillStyle, strokeStyle), {
-                                id: undefined,//'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j,
-                            });
-                            var idx = (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
-                            if (i===0 && j===0) halftonePixels[n].id = 'ht' + idx;
-                            if (halftonePixels[n].id) halftonePixels[n].fillStyle = 'red';
-                            n++;
-                        }
-                    }
-                }
-                PATH_GENERATION: {
-                    if (!scale) scale = 4;
-                    var paths = [],
-                        view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
-                    if (timeStamp !== self.timeStamp) return this;
-                    for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
-                    var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
-                }
-                return svg;
-            },
-        })
-        
-
-        grasppe.ColorSheetsApp.HalftoneDemo = {
+        grasppe.ColorSheetsApp.HalftoneDemo = grasppe.ColorSheetsApp.createModel('HalftoneDemo', {
             title: ('Halftone Demo'),
             panels: {
                 stage: {
@@ -282,6 +67,126 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 tint: {
                     id: 'tint', name: 'Tint', description: 'The color tint value.', type: 'number', unit: "%", quantifier: 'percent', format: "0",
                 },
+            },
+            options: {
+                panning: 'cell', shading: 'fills', plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
+                    plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
+                        strokeStyle: "blue", lineWidth: 1
+                    },
+                    plotBoxStyle: {
+                        fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
+                    },
+                    plotGridStyle: {
+                        lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
+                    },
+                },
+                seriesOptions: {
+                    intendedSeriesDefaultStyle: {
+                        fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                    },
+                    halftoneSeriesDefaultStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    supercellSeriesDefaultStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    intendedSeriesStyle: {
+                        fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
+                    },
+                    halftoneSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
+                    },
+                    halftoneSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 255, 64, 0.5)"
+                    },
+                    supercellSeriesStyle: {
+                        lineWidth: 2, strokeStyle: "#0000FF"
+                    },
+                    supercellSeriesFillStyle: {
+                        fillStyle: "RGBA(64, 64, 255, 0.25)"
+                    },
+                    supercellSeriesLineStyle: {
+                        lineWidth: 0, strokeStyle: "#0000FF", lineDash: [1, 3]
+                    },
+                },
+                legendOptions: {
+                    seriesLabels: ['Requested  Halftone', 'Rounded  Halftone', 'Rounded  Halftone'],
+                    legendBoxStyle: {
+                        fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.05)", lineWidth: 1
+                    },
+                }
+            },
+            scenarios: {
+                _order: ['Base Calculations', 'GrasppeScreen', 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
+                'Base Calculations': [{
+                    id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
+                }, {
+                    id: "lpi", hidden: true, type: "p", fn: "LPI", decimals: 1,
+                }, {
+                    id: "angle", hidden: true, type: "p", fn: "ANGLE", decimals: 2,
+                }, {
+                    id: "angleRadians", hidden: true, type: "c", fn: "angle * (Math.PI/180)", unit: "º rad", decimals: 2,
+                }],
+                'GrasppeScreen': [{
+                    id: "lineRuling", type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
+                }, {
+                    id: "effectiveSPL", type: "c", fn: "lineRuling/cos(PI/4)", unit: 'spl', decimals: 1, name: "effective spots per line"
+                }, {
+                    id: "effectiveLPI", type: "c", fn: "SPI/effectiveSPL", unit: 'lpi', decimals: 2, name: "effective lines per inch"
+                }, {
+                    id: "lineFrequency", type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
+                }, {
+                    id: "lineAngle", type: "c", fn: "(PI/4)-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
+                }, {
+                    id: "lineXSpots", type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+                }, {
+                    id: "lineYSpots", type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+                }, {
+                    id: "lineOffsetX", hidden: true, type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
+                }, {
+                    id: "lineOffsetY", hidden: true, type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
+                }, {
+                    id: "angleRadians90", hidden: true, type: "c", fn: "((angleRadians+PI*2)%(PI/2)) + PI/2", unit: "º rad", decimals: 2,
+                }, {
+                    id: "lineSpotsX2", hidden: true, type: "c", fn: "Math.abs(cos(angleRadians90) * effectiveSPL - sin(angleRadians90) * effectiveSPL)", unit: "spots", decimals: 2, name: "line width in imaging angle"
+                }, {
+                    id: "lineSpotsY2", hidden: true, type: "c", fn: "sqrt(pow(lineSpotsX2,2) - pow(effectiveSPL,2))", unit: "spots", decimals: 2, name: "line height in imaging angle"
+                }],
+                'Intended Halftone': [{
+                    id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
+                }, {
+                    id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: "", decimals: 2,
+                }, {
+                    id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
+                }, {
+                    id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(angleRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
+                }, {
+                    id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
+                // }, {
+                //     id: "lineSpots", group: "roundedSpots", type: "c", fn: "lineLength/spotLength", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
+                }],
+                'Periodically-Rounded Halftone': [{
+                    id: "linePerroundLPI", hidden: true, group: "roundLPI", type: "r", fn: "SPI/(floor(sin(Math.PI/4)*SPI/LPI)/sin(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
+                }, {
+                    id: "linePerroundSpots", hidden: true, group: "roundLPI", type: "r", fn: "25400/linePerroundLPI/spotLength", unit: "spots", name: "per-rounded halftone spots at screening angle", description: "", decimals: 2,
+                }, {
+                    id: "linePerroundLength", hidden: true, type: "c", fn: "25400/linePerroundLPI", unit: "µ", name: "per-rounded halftone side length", description: "", decimals: 2,
+                }, {
+                    id: "linePerroundXSpots", hidden: true, group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                }, {
+                    id: "linePerroundYSpots", hidden: true, group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
+                }], // lineRoundLPI = 25400/(spotLength*lineSpots) // lineRoundLPI*spotLength/25400 = 1/lineSpots // 25400/lineRoundLPI/spotLength
+                'Periodic-Rounding Results': [{
+                    id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*linePerroundSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
+                }, {
+                    id: "lineRoundAngle", group: "roundAngle", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
+                }, {
+                    id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "rounded gray-levels (1-bit)", description: "", decimals: 0,
+                }, {
+                    id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "line ruling error", description: "", decimals: 2,
+                }, {
+                    id: "lineErrorAngle", group: "errorAngle", type: "r", fn: "lineRoundAngle-angle", unit: "º", name: "line angle error", description: "", decimals: 2,
+                }],
             },
             defaults: {
                 options: {
@@ -368,135 +273,222 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     }
                 }, // ),
             },
-        };
-
-        grasppe.ColorSheetsApp.HalftoneDemoController.Options = {
-            panning: 'cell', shading: 'fills', plotWidth: 700, plotHeight: 700, plotBufferScale: 2, plotOptions: {
-                plotTypeFactor: 1 / 72, plotLineFactor: 1 / 72 / 12, plotFrameStyle: {
-                    strokeStyle: "blue", lineWidth: 1
+        });
+        
+        grasppe.ColorSheetsApp.HalftoneDemoController = grasppe.ColorSheetsApp.createController(function HalftoneDemoController($scope, element) {
+            grasppe.Libre.$Controller.apply(this, arguments);
+            var controller = this;
+            Object.assign($scope, {
+                helper: controller,
+                calculations: {},
+                stack: {},
+                canvas: {},
+                destructer() {
+                    this.destructer.engaged = true;
+                    console.log('\t Destructer Sheet!');
                 },
-                plotBoxStyle: {
-                    fillStyle: "white", lineWidth: 1, strokeStyle: "RGBA(255,0,0,0.75)"
-                },
-                plotGridStyle: {
-                    lineWidth: 1, strokeStyle: "RGBA(127,127,127,0.25)"
-                },
+            });
+            this.$scope.$watchCollection('$sheet.options', function (value, last, $scope) {
+                controller.updateData();
+            });
+            this.$scope.$watchCollection('$sheet.parameters', function (value, last, $scope) {
+                controller.updateData();
+            });
+            $scope.$sheet.helper = controller;    
+            window.setTimeout(controller.updateData.bind(controller), 0);
+        }, {
+            get isLive() {
+                return this.$scope && this.$scope.$sheet && this.$scope.$sheet.destructer && this.$scope.$sheet.destructer.engaged;
             },
-            seriesOptions: {
-                intendedSeriesDefaultStyle: {
-                    fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
-                },
-                halftoneSeriesDefaultStyle: {
-                    lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
-                },
-                supercellSeriesDefaultStyle: {
-                    lineWidth: 2, strokeStyle: "#0000FF"
-                },
-                intendedSeriesStyle: {
-                    fillStyle: "RGBA(255, 64, 64, 0.1)", lineWidth: 4, strokeStyle: "#FF0000", lineDash: [12, 6],
-                },
-                halftoneSeriesStyle: {
-                    lineWidth: 2, strokeStyle: "#00FF00", lineDash: [12, 12]
-                },
-                halftoneSeriesFillStyle: {
-                    fillStyle: "RGBA(64, 255, 64, 0.5)"
-                },
-                supercellSeriesStyle: {
-                    lineWidth: 2, strokeStyle: "#0000FF"
-                },
-                supercellSeriesFillStyle: {
-                    fillStyle: "RGBA(64, 64, 255, 0.25)"
-                },
-                supercellSeriesLineStyle: {
-                    lineWidth: 0, strokeStyle: "#0000FF", lineDash: [1, 3]
-                },
+            get $options() {
+                return this.$scope && this.$scope.options || {};
             },
-            legendOptions: {
-                seriesLabels: ['Requested  Halftone', 'Rounded  Halftone', 'Rounded  Halftone'],
-                legendBoxStyle: {
-                    fillStyle: "RGBA(255,255,255,0.75)", strokeStyle: "RGBA(0,0,0,0.05)", lineWidth: 1
-                },
-            }
-        };
+            get calculations() {
+                return this.$scope && this.$scope.$sheet.calculations || {}
+            },
+            set calculations(calculations) {
+                if (this.$scope) this.$scope.$sheet.calculations = Object.assign(this.$scope.$sheet.calculations || {}, calculations);
+            },
+            get stack() {
+                return this.$scope && this.$scope.stack
+            },
+            set stack(stack) {
+                if (this.$scope) this.$scope.$sheet.stack = Object.assign(this.$scope.$sheet.stack || {}, stack);
+            },
+            get scenarios() {
+                return grasppe.ColorSheetsApp.HalftoneDemo.scenarios
+            },
+            getParameter(parameter) {
+                return this.$scope.parameters && this.$scope.parameters[parameter];
+            },
+            getHeleperOptions() {
+                if (!this.hash._options) this.hash._options = Object.assign({}, grasppe.ColorSheetsApp.HalftoneDemo.options, this.$options);
+                else Object.assign(this.hash._options, this.$options);
+                return this.hash._options;
+            },
+            getGridCache(steps) {
+                return this.hash['gridCache' + steps];
+            },
+            setGridCache(steps, grids) {
+                this.hash['gridCache' + steps] = grids;
+            },
+            getPixelBox(x, y, fillStyle, strokeStyle) {
+                if (!this.hash.pixelCache) this.hash.pixelCache = [];
+                var pixelCache = this.hash.pixelCache;
+                if (!pixelCache[x]) pixelCache[x] = [];
+                if (!pixelCache[x][y]) pixelCache[x][y] = new grasppe.canvas.Path([
+                    [x + 0, y + 0],
+                    [x + 1, y + 0],
+                    [x + 1, y + 1],
+                    [x + 0, y + 1],
+                    [x + 0, y + 0]
+                ]);
+                pixelCache[x][y].fillStyle = fillStyle || 'transparent', pixelCache[x][y].strokeStyle = strokeStyle || 'rgba(0,0,0,0.25)', pixelCache[x][y].lineWidth = 0.05;
+                return pixelCache[x][y];
+            },
+            updateData() {
+                this.calculateStack().updatePlot();
+                return this;
+            },
+            calculateStack() {
+                if (this.isLive) return this;
+                var modelStack = {},
+                    modelCalculations = {},
+                    scenarios = grasppe.ColorSheetsApp.HalftoneDemo.scenarios,
+                    stack = [
+                        ['SPI', this.getParameter('spi')],
+                        ['LPI', this.getParameter('lpi')],
+                        ['ANGLE', this.getParameter('angle')],
+                        ['TINT', this.getParameter('tint')]
+                    ];
+                for (var scenario of scenarios._order) {
+                    var jiver = new GrasppeJive({}, scenarios),
+                        output = jiver.run(scenario, stack),
+                        errors = jiver.errors;
+                    for (var row of output) {
+                        modelCalculations[row.id] = row.value;
+                        if (!modelStack[scenario]) modelStack[scenario] = Object.assign([], {
+                            name: scenario,
+                        });
+                        if (row.hidden !== true) modelStack[scenario].push(row);
+                    }
+                }
+                this.stack = modelStack;
+                this.calculations = modelCalculations;
+                return this;
+            },
+            downloadPlot(a) {
+                if (this.isLive) return this;
+                var svg = (''+this.generatePlotImage(125, 125, 10)).replace(/id=".*?"/g, '').replace(/stroke-width="0.\d*"/g, 'stroke-width="0.5"').replace(/stroke-width="(1-9\d?).(\d*)"/g, 'stroke-width="$1"').replace(/\s+/g,' '), // .replace(/(\d)\s/g, '$1')
+                    link = Object.assign(document.createElement('a'), {
+                    href: 'data:image/svg+xml;utf8,' + svg, target: '_download', download: 'halftone.svg'
+                });
+                document.body.appendChild(link), link.click(), $(link).remove();
+            },
+            updatePlot() {
+                if (this.isLive) return this;
+                clearTimeout(this.updatePlot.timeOut), this.updatePlot.timeOut = setTimeout(function () {
+                    var plotCanvas = $(this.$scope.canvas);
+                    if (plotCanvas.find('img').length === 0) {
+                        plotCanvas.append($('<img style="object-fit: contain; width: auto; height: 50vh; max-height: 100%;">'));
+                        $(window).bind('resize', function(){
+                            this.updatePlot();
+                        }.bind(this));
+                    }
+                    plotCanvas.empty().append(this.generatePlotImage()).children().first().css({
+                        flex: 1, width: '100%', height: '100%',
+                    });
+                }.bind(this), 0);
+                return this;
+            },
+            generatePlotImage(width, height, scale) {
+                if (this.isLive) return this;
+                var self = this.generatePlotImage,
+                    timeStamp = self.timeStamp;
+                self.timeStamp = timeStamp;
+                if (!/(tint|screen)/.test(this.$options.shading)) this.$options.shading = 'tint';
+                if (!/(zoom-in|zoom-out|zoom-in-fit|zoom-out-fit)/.test(this.$options.panning)) this.$options.panning = 'zoom-in-fit';
+                var values = this.calculations,
+                    options = this.getHeleperOptions(),
+                    plotOptions = options.plotOptions,
+                    legendOptions = options.legendOptions,
+                    plotCanvas = $(this.$scope.canvas),
+                    frameWidth = width || $(plotCanvas).width(),
+                    frameHeight = height || $(plotCanvas).height(),
+                    frameRatio = frameWidth / frameHeight,
+                    series = options.seriesOptions,
+                    mode = {
+                        is: options.shading + '-' + options.panning,
+                        tint: options.shading === 'tint',
+                        screen: options.shading === 'screen',
+                        zoomIn: /zoom-in/.test(this.$options.panning),
+                        zoomOut: /zoom-out/.test(this.$options.panning),
+                        panSquare: !/fit/.test(this.$options.panning),
+                        panFit: /fit/.test(this.$options.panning),
+                    },
+                    stroke = {},
+                    style = {
+                        plotGrid: (plotOptions.plotGridStyle),
+                        legendBox: (legendOptions.legendBoxStyle),
+                        filled: {
+                            fillStyle: "black"
+                        },
+                        empty: {
+                            fillStyle: "white"
+                        },
+                    },
+                    lineSpots = this.getParameter('perrounding') ? values.linePerroundSpots : values.lineRuling,
+                    screenView = mode.screen,
+                    lineAngle = values.lineAngle, //  % Math.PI/2,
+                    lineFrequency = values.lineFrequency,
+                    tint = this.getParameter('tint'),
+                    sinAngle = Math.sin(lineAngle),
+                    cosAngle = Math.cos(lineAngle),
+                    stroke = screenView ? 'rgb(127,127,127)' : 'rgb(224,224,224)';
+                if (!height) height = mode.zoomIn ? 40 : 80;
+                if (!width) width = mode.panFit ? Math.round(height * frameRatio) : height;
+                var xStep = Math.ceil(width/2),
+                    yStep = Math.ceil(height/2);
+                if (typeof plotCanvas !== 'object' || plotCanvas.length !== 1 || timeStamp !== self.timeStamp) return this;
+                HALFTONE_CALCULATIONS: {
+                    var halftonePixels = Array(height * width),
+                        n = 0,
+                        lastAlpha, lastAlpha2, lastAlpha3, lastBeta, lastBeta2,
+                        lastAlphaRow, lastAlpha2Row, lastBetaRow, lastBeta2Row,
+                        valleys = [], peaks = [];
+                    for (var i = -xStep; i <= xStep; i++) {
+                        if (timeStamp !== self.timeStamp) return this;
+                        for (var j = -yStep; j <= yStep; j++) {
+                            var alpha = Math.cos((Math.cos(lineAngle) * (j) * lineFrequency) - (Math.sin(lineAngle) * (i) * lineFrequency)),
+                                beta = Math.sin((Math.cos(lineAngle) * (i) * lineFrequency) + (Math.sin(lineAngle) * (j) * lineFrequency)),
+                                s = alpha * beta,
+                                v = Math.min(1, Math.max(0, (s + 1) / 2)),
+                                t = 1 * (tint !== 100 && (v*100 <= 100-tint)),
+                                fill = Math.round(255 * (screenView ? v : t)),
+                                fillStyle = 'rgb(' + fill + ',' + fill + ',' + fill + ')',
+                                strokeStyle = (screenView || (t === 0)) ? 'black' : stroke;
+                            halftonePixels[n] = Object.assign(this.getPixelBox(xStep+i, yStep+j, fillStyle, strokeStyle), {
+                                id: undefined,//'ht' + (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j,
+                            });
+                            var idx = (i>=0 ? '+' : '') + i + (j>=0 ? '+' : '') + j;
+                            if (i===0 && j===0) halftonePixels[n].id = 'ht' + idx;
+                            if (halftonePixels[n].id) halftonePixels[n].fillStyle = 'red';
+                            n++;
+                        }
+                    }
+                }
+                PATH_GENERATION: {
+                    if (!scale) scale = 4;
+                    var paths = [],
+                        view = [0, 0, (xStep * 2 + 1) * scale, (yStep * 2 + 1) * scale];
+                    if (timeStamp !== self.timeStamp) return this;
+                    for (var n = 0; n < halftonePixels.length; n++) if (halftonePixels[n].getPath) paths.push(halftonePixels[n].getPath(undefined, undefined, scale));
+                    var svg = '<?xml version="1.0" encoding="utf-8"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + (xStep * 2 + 1) * scale + '" height="' + (yStep * 2 + 1) * scale + '" viewBox="' + view.join(' ') + '"><g vector-effect="non-scaling-stroke">' + paths.join('') + '</g></svg>';
+                }
+                return svg;
+            },
+        });
 
-        grasppe.ColorSheetsApp.HalftoneDemoController.Scenarios = {
-            _order: ['Base Calculations', 'GrasppeScreen', 'Intended Halftone', 'Periodically-Rounded Halftone', 'Periodic-Rounding Results'],
-            'Base Calculations': [{
-                id: "spi", hidden: true, type: "p", fn: "SPI", decimals: 0,
-            }, {
-                id: "lpi", hidden: true, type: "p", fn: "LPI", decimals: 1,
-            }, {
-                id: "angle", hidden: true, type: "p", fn: "ANGLE", decimals: 2,
-            }, {
-                id: "angleRadians", hidden: true, type: "c", fn: "angle * (Math.PI/180)", unit: "º rad", decimals: 2,
-            }],
-            'GrasppeScreen': [{
-                id: "lineRuling", type: "c", fn: "round(cos(PI/4)*SPI/LPI)", unit: 'spl', decimals: 0, name: "screen ruling"
-            }, {
-                id: "effectiveSPL", type: "c", fn: "lineRuling/cos(PI/4)", unit: 'spl', decimals: 1, name: "effective spots per line"
-            }, {
-                id: "effectiveLPI", type: "c", fn: "SPI/effectiveSPL", unit: 'lpi', decimals: 2, name: "effective lines per inch"
-            }, {
-                id: "lineFrequency", type: "c", fn: "PI/lineRuling", unit: "lines", decimals: 2, name: "line frequency"
-            }, {
-                id: "lineAngle", type: "c", fn: "(PI/4)-angleRadians", unit: "º rad", decimals: 2, name: "line angle"
-            }, {
-                id: "lineXSpots", type: "c", fn: "effectiveSPL*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
-            }, {
-                id: "lineYSpots", type: "c", fn: "effectiveSPL*cos(angleRadians+Math.PI/2)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
-            }, {
-                id: "lineOffsetX", hidden: true, type: "c", fn: "PI/2 + PI*(angle<0)", unit: "spots", decimals: 2, name: "line x-offset"
-            }, {
-                id: "lineOffsetY", hidden: true, type: "c", fn: "PI/2 + 0", unit: "spots", decimals: 2, name: "line y-offset"
-            }, {
-                id: "angleRadians90", hidden: true, type: "c", fn: "((angleRadians+PI*2)%(PI/2)) + PI/2", unit: "º rad", decimals: 2,
-            }, {
-                id: "lineSpotsX2", hidden: true, type: "c", fn: "Math.abs(cos(angleRadians90) * effectiveSPL - sin(angleRadians90) * effectiveSPL)", unit: "spots", decimals: 2, name: "line width in imaging angle"
-            }, {
-                id: "lineSpotsY2", hidden: true, type: "c", fn: "sqrt(pow(lineSpotsX2,2) - pow(effectiveSPL,2))", unit: "spots", decimals: 2, name: "line height in imaging angle"
-            }],
-            'Intended Halftone': [{
-                id: "spotLength", type: "c", fn: "25400/spi", unit: "µ", name: "spot side length", description: "", decimals: 2,
-            }, {
-                id: "lineLength", type: "c", fn: "25400/lpi", unit: "µ", name: "halftone side length", description: "", decimals: 2,
-            }, {
-                id: "lineXSpots", type: "c", fn: "lineLength/spotLength*cos(angleRadians)", unit: "spots", name: "intended halftone spots in x direction", description: "", decimals: 2,
-            }, {
-                id: "lineYSpots", type: "c", fn: "lineLength/spotLength*sin(angleRadians)", unit: "spots", name: "intended halftone spots in y direction", description: "", decimals: 2,
-            }, {
-                id: "lineSpots", group: "roundedSpots", type: "c", fn: "sqrt(pow(lineXSpots,2)+pow(lineYSpots,2))", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
-            // }, {
-            //     id: "lineSpots", group: "roundedSpots", type: "c", fn: "lineLength/spotLength", unit: "spots", name: "round halftone spots at screening angle", description: "", decimals: 2,
-            }],
-            'Periodically-Rounded Halftone': [{
-                id: "linePerroundLPI", hidden: true, group: "roundLPI", type: "r", fn: "SPI/(floor(sin(Math.PI/4)*SPI/LPI)/sin(Math.PI/4))", unit: "lpi", name: "per-rounded line ruling", description: "", decimals: 2,
-            }, {
-                id: "linePerroundSpots", hidden: true, group: "roundLPI", type: "r", fn: "25400/linePerroundLPI/spotLength", unit: "spots", name: "per-rounded halftone spots at screening angle", description: "", decimals: 2,
-            }, {
-                id: "linePerroundLength", hidden: true, type: "c", fn: "25400/linePerroundLPI", unit: "µ", name: "per-rounded halftone side length", description: "", decimals: 2,
-            }, {
-                id: "linePerroundXSpots", hidden: true, group: "roundedSpotsX", type: "c", fn: "linePerroundLength/spotLength*cos(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
-            }, {
-                id: "linePerroundYSpots", hidden: true, group: "roundedSpotsY", type: "c", fn: "linePerroundLength/spotLength*sin(angleRadians)", unit: "spots", name: "rounded halftone spots in x direction", description: "", decimals: 0,
-            }], // lineRoundLPI = 25400/(spotLength*lineSpots) // lineRoundLPI*spotLength/25400 = 1/lineSpots // 25400/lineRoundLPI/spotLength
-            'Periodic-Rounding Results': [{
-                id: "lineRoundLPI", group: "roundLPI", type: "r", fn: "25400/(spotLength*linePerroundSpots)", unit: "lpi", name: "rounded line ruling", description: "", decimals: 2,
-            }, {
-                id: "lineRoundAngle", group: "roundAngle", type: "r", fn: "atan2(linePerroundYSpots, linePerroundXSpots) * (180/PI)", unit: "º", name: "rounded line angle", description: "", decimals: 2,
-            }, {
-                id: "lineGrayLevels", group: "grayLevels", type: "r", fn: "round(pow(spi/lineRoundLPI, 2))+1", unit: "levels", name: "rounded gray-levels (1-bit)", description: "", decimals: 0,
-            }, {
-                id: "lineErrorLPI", group: "errorLPI", type: "r", fn: "(lineRoundLPI-lpi)/lpi*100", unit: "%", name: "line ruling error", description: "", decimals: 2,
-            }, {
-                id: "lineErrorAngle", group: "errorAngle", type: "r", fn: "lineRoundAngle-angle", unit: "º", name: "line angle error", description: "", decimals: 2,
-            }],
-        };
-
-        // window.colorSheetsApp = new grasppe.ColorSheetsApp.ColorSheet({
-        //     sheets: {
-        //         HalftoneDemo: grasppe.ColorSheetsApp.HalftoneDemo
-        //     },
-        // });
         grasppe.ColorSheetsApp.InitializeSheet('HalftoneDemo');
     });
 }(this, this.grasppe));

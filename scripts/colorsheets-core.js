@@ -16,15 +16,15 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                     if (typeof this.initialize === 'function') this.initialize.apply(this, arguments);
                 },
             }).constructor, {
-                Create(id, prototype) {
-                    var controller = eval('function ' + id + '() {grasppe.ColorSheetsApp.ColorSheetController.apply(this, arguments);}; ' + id + ';');
-                    controller.prototype = Object.assign({}, grasppe.ColorSheetsApp.ColorSheetController.prototype, {
+                Create(controller, prototype, propertyMethods) {
+                    controller = (typeof controller === 'string') ? eval('function ' + controller + '() {grasppe.ColorSheetsApp.ColorSheetController.apply(this, arguments);}; ' + controller + ';') : controller;
+                    controller.prototype = Object.assign(prototype, grasppe.Libre.$Controller.prototype, grasppe.ColorSheetsApp.ColorSheetController.prototype, {
                         constructor: controller,
-                    }, prototype);
+                    }); // , prototype);
                     return controller;
                 }
             }),
-            createController(id, prototype) {
+            createController(controller, prototype, propertyMethods) {
                 return grasppe.ColorSheetsApp.ColorSheetController.Create.apply(null, arguments);
             },
 
@@ -133,7 +133,7 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                 template: ('<div class="color-sheets-sheet {{layout.classes}}" {{layout.attributes}} ng-style="layout.style;">\
                     <div ng-repeat="segment in layout.contents" \
 	                    {{segment.container}} class="{{segment.classes}}" ng-style="segment.style;" color-sheets-sheet-segment></div>\
-                    </div><!--color-sheets-documentation-dialog/-->'),
+                    </div>'),
             }),
 
             // !- [Directives] SheetSegment
@@ -251,9 +251,8 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
                             refresh: {
                                 svgSrc: grasppe.load.url.images + 'refresh.svg', label: 'refresh', classes: 'md-button-flat red black-text', click: 'location.reload()',
                             },
-                            // menu: {svgSrc: grasppe.load.url.images + 'menu.svg', label: 'menu', classes: 'md-button-flat orange black-text', click: '$scope.$app.$menu.show()', //'$app.',},
                             documentation: {
-                                svgSrc: grasppe.load.url.images + 'book.svg', label: 'documentation', classes: 'md-button-flat orange black-text', click: 'console.log($scope.$app.documentationController.dialog); $scope.$app.documentationController.show();', //'$app.',
+                                svgSrc: grasppe.load.url.images + 'book.svg', label: 'documentation', classes: 'md-button-flat orange black-text', click: 'console.log($scope.$sheet.documentationController.dialog); $scope.$sheet.documentationController.show();', //'$app.',
                             },
                         },
                         prefix: 'sheet', header: 'ColorSheet', svgSrc: grasppe.load.url.images + 'menu.svg', toolbarClasses: 'grey lighten-2 black-text', contents: '', footer: '', 

@@ -13,8 +13,9 @@ grasppe = eval("(function (w) {'use strict'; if (typeof w.grasppe !== 'function'
             DocumentationDialog: grasppe.Libre.Directive.define('colorSheetsDocumentationDialog', function () {
                 return {
                     controller: ['$scope', '$element', '$mdDialog', '$http', function ($scope, element, $mdDialog, $http) {
-                        $scope.$app.documentationController = this;
-                        $http.get('documentation.html').then(function successCallback(response) {
+                        $scope.$sheet.documentationController = this;
+                        console.log($scope.$sheet, $scope.$app);
+                        $http.get($scope.$sheet.path + '/documentation.html').then(function successCallback(response) {
                             var contents = angular.element(response.data),
                                 article = {
                                     contents: contents,
