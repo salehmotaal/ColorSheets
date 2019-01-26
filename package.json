@@ -1,0 +1,17 @@
+﻿{
+  "private": true,
+  "name": "color-sheets",
+  "version": "0.0.0-alpha.0",
+  "exports": {},
+  "scripts": {
+    "serve": "http-server --cors",
+    "nes": "~/Projects/@smotaal/node/node-esm/out/Release/node",
+    "nex": "node --experimental-modules --loader ~/Projects/@smotaal/@esm/common/node/loader/legacy"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "typescript": "next",
+    "rollup": "*",
+    "http-server": "*"
+  }
+}
