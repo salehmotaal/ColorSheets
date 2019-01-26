@@ -1,0 +1,10 @@
+﻿# * SEE: https://jekyllrb.com/docs/configuration/options/
+theme: 'jekyll-theme-cayman'
+
+include: [
+    # Framework
+    'alpha',
+    'beta',
+  ]
+
+exclude: ['.vscode', '[more]', 'trash']
